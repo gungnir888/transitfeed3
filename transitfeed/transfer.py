@@ -42,13 +42,13 @@ class Transfer(GtfsObjectBase):
       self.transfer_type = 0
     else:
       try:
-        self.transfer_type = util.NonNegIntStringToInt(self.transfer_type)
+        self.transfer_type = util.non_neg_int_string_to_int(self.transfer_type)
       except (TypeError, ValueError):
         pass
 
     if hasattr(self, 'min_transfer_time'):
       try:
-        self.min_transfer_time = util.NonNegIntStringToInt(self.min_transfer_time)
+        self.min_transfer_time = util.non_neg_int_string_to_int(self.min_transfer_time)
       except (TypeError, ValueError):
         pass
     else:
@@ -60,29 +60,29 @@ class Transfer(GtfsObjectBase):
       schedule.AddTransferObject(self)
 
   def ValidateFromStopIdIsPresent(self, problems):
-    if util.IsEmpty(self.from_stop_id):
-      problems.MissingValue('from_stop_id')
+    if util.is_empty(self.from_stop_id):
+      problems.missing_value('from_stop_id')
       return False
     return True
 
   def ValidateToStopIdIsPresent(self, problems):
-    if util.IsEmpty(self.to_stop_id):
-      problems.MissingValue('to_stop_id')
+    if util.is_empty(self.to_stop_id):
+      problems.missing_value('to_stop_id')
       return False
     return True
 
   def ValidateTransferType(self, problems):
-    if not util.IsEmpty(self.transfer_type):
+    if not util.is_empty(self.transfer_type):
       if (not isinstance(self.transfer_type, int)) or \
           (self.transfer_type not in range(0, 4)):
-        problems.InvalidValue('transfer_type', self.transfer_type)
+        problems.invalid_value('transfer_type', self.transfer_type)
         return False
     return True
 
   def ValidateMinimumTransferTime(self, problems):
-    if not util.IsEmpty(self.min_transfer_time):
+    if not util.is_empty(self.min_transfer_time):
       if self.transfer_type != 2:
-        problems.MinimumTransferTimeSetWithInvalidTransferType(
+        problems.minimum_transfer_time_set_with_invalid_transfer_type(
             self.transfer_type)
 
       # If min_transfer_time is negative, equal to or bigger than 24h, issue
@@ -91,23 +91,23 @@ class Transfer(GtfsObjectBase):
       # from being added to the schedule.
       if (isinstance(self.min_transfer_time, int)):
         if self.min_transfer_time < 0:
-          problems.InvalidValue('min_transfer_time', self.min_transfer_time,
+          problems.invalid_value('min_transfer_time', self.min_transfer_time,
                                 reason="This field cannot contain a negative " \
                                        "value.")
         elif self.min_transfer_time >= 24*3600:
-          problems.InvalidValue('min_transfer_time', self.min_transfer_time,
+          problems.invalid_value('min_transfer_time', self.min_transfer_time,
                                 reason="The value is very large for a " \
                                        "transfer time and most likely " \
                                        "indicates an error.")
         elif self.min_transfer_time >= 3*3600:
-          problems.InvalidValue('min_transfer_time', self.min_transfer_time,
+          problems.invalid_value('min_transfer_time', self.min_transfer_time,
                                 type=problems_module.TYPE_WARNING,
                                 reason="The value is large for a transfer " \
                                        "time and most likely indicates " \
                                        "an error.")
       else:
         # It has a value, but it is not an integer
-        problems.InvalidValue('min_transfer_time', self.min_transfer_time,
+        problems.invalid_value('min_transfer_time', self.min_transfer_time,
                               reason="If present, this field should contain " \
                                 "an integer value.")
         return False
@@ -116,18 +116,18 @@ class Transfer(GtfsObjectBase):
   def GetTransferDistance(self):
     from_stop = self._schedule.stops[self.from_stop_id]
     to_stop = self._schedule.stops[self.to_stop_id]
-    distance = util.ApproximateDistanceBetweenStops(from_stop, to_stop)
+    distance = util.approximate_distance_between_stops(from_stop, to_stop)
     return distance
 
   def ValidateFromStopIdIsValid(self, problems):
     if self.from_stop_id not in self._schedule.stops.keys():
-      problems.InvalidValue('from_stop_id', self.from_stop_id)
+      problems.invalid_value('from_stop_id', self.from_stop_id)
       return False
     return True
 
   def ValidateToStopIdIsValid(self, problems):
     if self.to_stop_id not in self._schedule.stops.keys():
-      problems.InvalidValue('to_stop_id', self.to_stop_id)
+      problems.invalid_value('to_stop_id', self.to_stop_id)
       return False
     return True
 
@@ -135,17 +135,17 @@ class Transfer(GtfsObjectBase):
     distance = self.GetTransferDistance()
 
     if distance > 10000:
-      problems.TransferDistanceTooBig(self.from_stop_id,
+      problems.transfer_distance_too_big(self.from_stop_id,
                                       self.to_stop_id,
                                       distance)
     elif distance > 2000:
-      problems.TransferDistanceTooBig(self.from_stop_id,
+      problems.transfer_distance_too_big(self.from_stop_id,
                                       self.to_stop_id,
                                       distance,
                                       type=problems_module.TYPE_WARNING)
 
   def ValidateTransferWalkingTime(self, problems):
-    if util.IsEmpty(self.min_transfer_time):
+    if util.is_empty(self.min_transfer_time):
       return
 
     if self.min_transfer_time < 0:
@@ -161,7 +161,7 @@ class Transfer(GtfsObjectBase):
     # warning, regardless of min_transfer_time.
     FAST_WALKING_SPEED= 2 # 2m/s
     if self.min_transfer_time + 120 < distance / FAST_WALKING_SPEED:
-      problems.TransferWalkingSpeedTooFast(from_stop_id=self.from_stop_id,
+      problems.transfer_walking_speed_too_fast(from_stop_id=self.from_stop_id,
                                            to_stop_id=self.to_stop_id,
                                            transfer_time=self.min_transfer_time,
                                            distance=distance)

@@ -140,12 +140,12 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
     period3.Validate(self.problems)
     e = self.accumulator.PopDateOutsideValidRange('start_date')
     self.assertEquals('18990101', e.value)
-    e.FormatProblem() #should not throw any exceptions
-    e.FormatContext() #should not throw any exceptions
+    e.format_problem() #should not throw any exceptions
+    e.format_context() #should not throw any exceptions
     e = self.accumulator.PopDateOutsideValidRange('end_date')
     self.assertEqual('29991231', e.value)
-    e.FormatProblem() #should not throw any exceptions
-    e.FormatContext() #should not throw any exceptions
+    e.format_problem() #should not throw any exceptions
+    e.format_context() #should not throw any exceptions
     self.accumulator.AssertNoMoreExceptions()
 
   def testServicePeriodExceptionDateOutsideValidRange(self):
@@ -164,14 +164,14 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
     # check for error from first date exception
     e = self.accumulator.PopDateOutsideValidRange('date')
     self.assertEqual('10070102', e.value)
-    e.FormatProblem() #should not throw any exceptions
-    e.FormatContext() #should not throw any exceptions
+    e.format_problem() #should not throw any exceptions
+    e.format_context() #should not throw any exceptions
 
     # check for error from third date exception
     e = self.accumulator.PopDateOutsideValidRange('date')
     self.assertEqual('21070101', e.value)
-    e.FormatProblem() #should not throw any exceptions
-    e.FormatContext() #should not throw any exceptions
+    e.format_problem() #should not throw any exceptions
+    e.format_context() #should not throw any exceptions
     self.accumulator.AssertNoMoreExceptions()
 
 
@@ -342,13 +342,13 @@ class ExpirationDateTestCase(util.TestCase):
     service_period.SetEndDate(time.strftime(date_format, two_weeks_from_now))
     schedule.Validate()
     e = accumulator.PopException('ExpirationDate')
-    self.assertTrue(e.FormatProblem().index('will soon expire'))
+    self.assertTrue(e.format_problem().index('will soon expire'))
     accumulator.AssertNoMoreExceptions()
 
     service_period.SetEndDate(time.strftime(date_format, two_weeks_ago))
     schedule.Validate()
     e = accumulator.PopException('ExpirationDate')
-    self.assertTrue(e.FormatProblem().index('expired'))
+    self.assertTrue(e.format_problem().index('expired'))
     accumulator.AssertNoMoreExceptions()
 
 

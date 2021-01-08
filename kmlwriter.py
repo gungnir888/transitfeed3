@@ -796,8 +796,8 @@ https://github.com/google/transitfeed/wiki/KMLWriter
         "\n\nGTFS feed must load without any errors.\n"
         "While loading %s the following error was found:\n%s\n%s\n" %
         (input_path,
-         e.FormatContext(),
-         e.FormatProblem())), file=sys.stderr)
+         e.format_context(),
+         e.format_problem())), file=sys.stderr)
     sys.exit(1)
                          
   print("Writing %s" % output_path)
@@ -812,4 +812,4 @@ https://github.com/google/transitfeed/wiki/KMLWriter
 
 
 if __name__ == '__main__':
-  util.RunWithCrashHandler(main)
+  util.run_with_crash_handler(main)

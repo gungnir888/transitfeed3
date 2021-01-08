@@ -68,22 +68,22 @@ class Agency(GtfsObjectBase):
     self.__dict__.update(field_dict)
 
   def ValidateAgencyUrl(self, problems):
-    return not util.ValidateURL(self.agency_url, 'agency_url', problems)
+    return not util.validate_url(self.agency_url, 'agency_url', problems)
 
   def ValidateAgencyLang(self, problems):
-    return not util.ValidateLanguageCode(self.agency_lang, 'agency_lang',
+    return not util.validate_language_code(self.agency_lang, 'agency_lang',
                                          problems)
 
   def ValidateAgencyTimezone(self, problems):
-    return not util.ValidateTimezone(self.agency_timezone, 'agency_timezone',
+    return not util.validate_timezone(self.agency_timezone, 'agency_timezone',
                                      problems)
 
   def ValidateAgencyFareUrl(self, problems):
-    return not util.ValidateURL(
+    return not util.validate_url(
         self.agency_fare_url, 'agency_fare_url', problems)
 
   def ValidateAgencyEmail(self, problems):
-    return not util.ValidateEmail(self.agency_email, 'agency_email', problems)
+    return not util.validate_email(self.agency_email, 'agency_email', problems)
 
   def Validate(self, problems=default_problem_reporter):
     """Validate attribute values and this object's internal consistency.
@@ -92,7 +92,7 @@ class Agency(GtfsObjectBase):
       True iff all validation checks passed.
     """
     found_problem = False
-    found_problem = ((not util.ValidateRequiredFieldsAreNotEmpty(
+    found_problem = ((not util.validate_required_fields_are_not_empty(
                           self, self._REQUIRED_FIELD_NAMES, problems))
                           or found_problem)
     found_problem = self.ValidateAgencyUrl(problems) or found_problem

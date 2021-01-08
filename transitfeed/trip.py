@@ -138,18 +138,18 @@ class Trip(GtfsObjectBase):
       # This is the first stop_time of the trip
       stoptime.stop_sequence = 1
       if new_secs == None:
-        problems.OtherProblem(
+        problems.other_problem(
             'No time for first StopTime of trip_id "%s"' % (self.trip_id,))
     else:
       stoptime.stop_sequence = row[0] + 1
       prev_secs = max(row[1], row[2])
       if new_secs != None and new_secs < prev_secs:
-        problems.OtherProblem(
+        problems.other_problem(
             'out of order stop time for stop_id=%s trip_id=%s %s < %s' %
             (stoptime.stop_id,
              self.trip_id,
-             util.FormatSecondsSinceMidnight(new_secs),
-             util.FormatSecondsSinceMidnight(prev_secs)))
+             util.format_seconds_since_midnight(new_secs),
+             util.format_seconds_since_midnight(prev_secs)))
     self._AddStopTimeObjectUnordered(stoptime, schedule)
 
   def GetTimeStops(self):
@@ -200,14 +200,14 @@ class Trip(GtfsObjectBase):
         distance_traveled_between_timepoints = 0
         if i + 1 < len(stoptimes):
           k = i + 1
-          distance_between_timepoints += util.ApproximateDistanceBetweenStops(stoptimes[k-1].stop, stoptimes[k].stop)
+          distance_between_timepoints += util.approximate_distance_between_stops(stoptimes[k-1].stop, stoptimes[k].stop)
           while stoptimes[k].GetTimeSecs() == None:
             k += 1
-            distance_between_timepoints += util.ApproximateDistanceBetweenStops(stoptimes[k-1].stop, stoptimes[k].stop)
+            distance_between_timepoints += util.approximate_distance_between_stops(stoptimes[k-1].stop, stoptimes[k].stop)
           next_timepoint = stoptimes[k]
         rv.append( (st.GetTimeSecs(), st, True) )
       else:
-        distance_traveled_between_timepoints += util.ApproximateDistanceBetweenStops(stoptimes[i-1].stop, st.stop)
+        distance_traveled_between_timepoints += util.approximate_distance_between_stops(stoptimes[i-1].stop, st.stop)
         distance_percent = distance_traveled_between_timepoints / distance_between_timepoints
         total_time = next_timepoint.GetTimeSecs() - cur_timepoint.GetTimeSecs()
         time_estimate = distance_percent * total_time + cur_timepoint.GetTimeSecs()
@@ -423,9 +423,9 @@ class Trip(GtfsObjectBase):
     if start_time == None or start_time == '':  # 0 is OK
       problem_reporter.MissingValue('start_time')
       return
-    if isinstance(start_time, basestring):
+    if isinstance(start_time, str):
       try:
-        start_time = util.TimeToSecondsSinceMidnight(start_time)
+        start_time = util.time_to_seconds_since_midnight(start_time)
       except problems_module.Error:
         problem_reporter.InvalidValue('start_time', start_time)
         return
@@ -435,9 +435,9 @@ class Trip(GtfsObjectBase):
     if end_time == None or end_time == '':
       problem_reporter.MissingValue('end_time')
       return
-    if isinstance(end_time, basestring):
+    if isinstance(end_time, str):
       try:
-        end_time = util.TimeToSecondsSinceMidnight(end_time)
+        end_time = util.time_to_seconds_since_midnight(end_time)
       except problems_module.Error:
         problem_reporter.InvalidValue('end_time', end_time)
         return
@@ -475,8 +475,8 @@ class Trip(GtfsObjectBase):
 
   def _HeadwayOutputTuple(self, headway):
       return (self.trip_id,
-              util.FormatSecondsSinceMidnight(headway[0]),
-              util.FormatSecondsSinceMidnight(headway[1]),
+              util.format_seconds_since_midnight(headway[0]),
+              util.format_seconds_since_midnight(headway[1]),
               unicode(headway[2]),
               unicode(headway[3]))
 
@@ -501,8 +501,8 @@ class Trip(GtfsObjectBase):
       return GtfsObjectBase.__getattr__(self, name)
 
   def ValidateRouteId(self, problems):
-    if util.IsEmpty(self.route_id):
-      problems.MissingValue('route_id')
+    if util.is_empty(self.route_id):
+      problems.missing_value('route_id')
 
   def ValidateServicePeriod(self, problems):
     if 'service_period' in self.__dict__:
@@ -510,15 +510,15 @@ class Trip(GtfsObjectBase):
       # proceeding with validation. See also comment in Trip.__init__.
       self.service_id = self.__dict__['service_period'].service_id
       del self.service_period
-    if util.IsEmpty(self.service_id):
-      problems.MissingValue('service_id')
+    if util.is_empty(self.service_id):
+      problems.missing_value('service_id')
 
   def ValidateTripId(self, problems):
-    if util.IsEmpty(self.trip_id):
-      problems.MissingValue('trip_id')
+    if util.is_empty(self.trip_id):
+      problems.missing_value('trip_id')
 
   def ValidateDirectionId(self, problems):
-    if hasattr(self, 'direction_id') and (not util.IsEmpty(self.direction_id)) \
+    if hasattr(self, 'direction_id') and (not util.is_empty(self.direction_id)) \
         and (self.direction_id != '0') and (self.direction_id != '1'):
       problems.InvalidValue('direction_id', self.direction_id,
                             'direction_id must be "0" or "1"')
@@ -541,11 +541,11 @@ class Trip(GtfsObjectBase):
 
   def ValidateBikesAllowed(self, problems):
     if self.bikes_allowed:
-      util.ValidateYesNoUnknown(self.bikes_allowed, 'bikes_allowed', problems)
+      util.validate_yes_no_unknown(self.bikes_allowed, 'bikes_allowed', problems)
 
   def ValidateWheelchairAccessible(self, problems):
     if self.wheelchair_accessible:
-      util.ValidateYesNoUnknown(
+      util.validate_yes_no_unknown(
           self.wheelchair_accessible, 'wheelchair_accessible', problems)
 
   def Validate(self, problems, validate_children=True):
@@ -586,10 +586,10 @@ class Trip(GtfsObjectBase):
   def ValidateTripStartAndEndTimes(self, problems, stoptimes):
     if stoptimes:
       if stoptimes[0].arrival_time is None and stoptimes[0].departure_time is None:
-        problems.OtherProblem(
+        problems.other_problem(
           'No time for start of trip_id "%s""' % (self.trip_id))
       if stoptimes[-1].arrival_time is None and stoptimes[-1].departure_time is None:
-        problems.OtherProblem(
+        problems.other_problem(
           'No time for end of trip_id "%s""' % (self.trip_id))
 
   def ValidateStopTimesSequenceHasIncreasingTimeAndDistance(self,
@@ -636,7 +636,7 @@ class Trip(GtfsObjectBase):
             prev_departure = timepoint.departure_secs
             prev_stop = timepoint.stop
           else:
-            problems.OtherProblem('Timetravel detected! Arrival time '
+            problems.other_problem('Timetravel detected! Arrival time '
                                   'is before previous departure '
                                   'at sequence number %s in trip %s' %
                                   (timepoint.stop_sequence, self.trip_id))
@@ -651,7 +651,7 @@ class Trip(GtfsObjectBase):
         st = stoptimes[-1]
         if (st.shape_dist_traveled and
             st.shape_dist_traveled > max_shape_dist):
-          problems.OtherProblem(
+          problems.other_problem(
               'In stop_times.txt, the stop with trip_id=%s and '
               'stop_sequence=%d has shape_dist_traveled=%f, which is larger '
               'than the max shape_dist_traveled=%f of the corresponding '
@@ -675,11 +675,11 @@ class Trip(GtfsObjectBase):
             if pt:
               stop = self._schedule.GetStop(st.stop_id)
               if stop.stop_lat and stop.stop_lon:
-                distance = util.ApproximateDistance(stop.stop_lat,
+                distance = util.approximate_distance(stop.stop_lat,
                                                     stop.stop_lon,
                                                     pt[0], pt[1])
                 if distance > problems_module.MAX_DISTANCE_FROM_STOP_TO_SHAPE:
-                  problems.StopTooFarFromShapeWithDistTraveled(
+                  problems.stop_too_far_from_shape_with_dist_traveled(
                       self.trip_id, stop.stop_name, stop.stop_id, pt[2],
                       self.shape_id, distance,
                       problems_module.MAX_DISTANCE_FROM_STOP_TO_SHAPE)
@@ -689,7 +689,7 @@ class Trip(GtfsObjectBase):
     for headway_index, headway in enumerate(self._headways[0:-1]):
       for other in self._headways[headway_index + 1:]:
         if (other[0] < headway[1]) and (other[1] > headway[0]):
-          problems.OtherProblem('Trip contains overlapping headway periods '
+          problems.other_problem('Trip contains overlapping headway periods '
                                 '%s and %s' %
                                 (self._HeadwayOutputTuple(headway),
                                  self._HeadwayOutputTuple(other)))
@@ -726,7 +726,7 @@ class Trip(GtfsObjectBase):
         return
 
       dist_between_stops = \
-        util.ApproximateDistanceBetweenStops(next_stop, prev_stop)
+        util.approximate_distance_between_stops(next_stop, prev_stop)
       if dist_between_stops is None:
         return
 
@@ -739,7 +739,7 @@ class Trip(GtfsObjectBase):
         # Show a warning if times are not rounded to the nearest minute or
         # distance is more than max_speed for one minute.
         if depart_time % 60 != 0 or dist_between_stops / 1000 * 60 > max_speed:
-          problems.TooFastTravel(self.trip_id,
+          problems.too_fast_travel(self.trip_id,
                                  prev_stop.stop_name,
                                  next_stop.stop_name,
                                  dist_between_stops,
@@ -751,7 +751,7 @@ class Trip(GtfsObjectBase):
       speed_between_stops = ((float(dist_between_stops) / 1000) /
                                 (float(time_between_stops) / 3600))
       if speed_between_stops > max_speed:
-        problems.TooFastTravel(self.trip_id,
+        problems.too_fast_travel(self.trip_id,
                                prev_stop.stop_name,
                                next_stop.stop_name,
                                dist_between_stops,

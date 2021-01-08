@@ -34,37 +34,37 @@ class FeedInfo(transitfeed.GtfsObjectBase):
       self.__dict__.update(field_dict)
 
   def ValidateFeedInfoLang(self, problems):
-    return not transitfeed.ValidateLanguageCode(self.feed_lang, 'feed_lang',
+    return not transitfeed.validate_language_code(self.feed_lang, 'feed_lang',
                                                 problems)
 
   def ValidateFeedInfoPublisherUrl(self, problems):
-    return not transitfeed.ValidateURL(self.feed_publisher_url,
+    return not transitfeed.validate_url(self.feed_publisher_url,
                                        'feed_publisher_url', problems)
 
-  def ValidateDates(self, problems):
+  def validate_dates(self, problems):
     # Both validity dates are currently set to optional, thus they don't have
     # to be provided and it's currently OK to provide one but not the other.
-    start_date_valid = transitfeed.ValidateDate(self.feed_start_date,
+    start_date_valid = transitfeed.validate_date(self.feed_start_date,
                                                'feed_start_date', problems)
 
-    end_date_valid = transitfeed.ValidateDate(self.feed_end_date,
+    end_date_valid = transitfeed.validate_date(self.feed_end_date,
                                                 'feed_end_date', problems)
     if not self.feed_end_date or not self.feed_start_date:
         return
     if (start_date_valid and end_date_valid and
         self.feed_end_date < self.feed_start_date):
-        problems.InvalidValue('feed_end_date', self.feed_end_date,
+        problems.invalid_value('feed_end_date', self.feed_end_date,
                               'feed_end_date %s is earlier than '
                               'feed_start_date "%s"' %
                               (self.feed_end_date, self.feed_start_date))
 
   def ValidateBeforeAdd(self, problems):
-    transitfeed.ValidateRequiredFieldsAreNotEmpty(self,
+    transitfeed.validate_required_fields_are_not_empty(self,
                                                   self._REQUIRED_FIELD_NAMES,
                                                   problems)
     self.ValidateFeedInfoLang(problems)
     self.ValidateFeedInfoPublisherUrl(problems)
-    self.ValidateDates(problems)
+    self.validate_dates(problems)
     return True # none of the above validations is blocking
 
   def ValidateAfterAdd(self, problems):

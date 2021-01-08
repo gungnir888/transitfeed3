@@ -112,7 +112,7 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException("InvalidValue")
     self.assertEquals("parent_station", e.column_name)
-    self.assertTrue(e.FormatProblem().find("location_type=1") != -1)
+    self.assertTrue(e.format_problem().find("location_type=1") != -1)
     e = self.accumulator.PopException("InvalidValue")
     self.assertEquals("location_type", e.column_name)
     self.accumulator.AssertNoMoreExceptions()
@@ -156,15 +156,15 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
         "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException("StopsTooClose")
-    self.assertMatchesRegex("BEATTY_AIRPORT", e.FormatProblem())
-    self.assertMatchesRegex("BULLFROG", e.FormatProblem())
-    self.assertMatchesRegex("are 0.00m apart", e.FormatProblem())
+    self.assertMatchesRegex("BEATTY_AIRPORT", e.format_problem())
+    self.assertMatchesRegex("BULLFROG", e.format_problem())
+    self.assertMatchesRegex("are 0.00m apart", e.format_problem())
     e = self.accumulator.PopException("DifferentStationTooClose")
     self.assertMatchesRegex(
-        "The parent_station of stop \"Airport\"", e.FormatProblem())
+        "The parent_station of stop \"Airport\"", e.format_problem())
     e = self.accumulator.PopException("DifferentStationTooClose")
     self.assertMatchesRegex(
-        "The parent_station of stop \"Bullfrog\"", e.FormatProblem())
+        "The parent_station of stop \"Bullfrog\"", e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
   def testStopTooFarFromParentStation(self):
@@ -178,12 +178,12 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException("StopTooFarFromParentStation")
     self.assertEqual(0, e.type)  # Error
-    self.assertTrue(e.FormatProblem().find(
+    self.assertTrue(e.format_problem().find(
         "Stagecoach (ID STAGECOACH) is too far from its parent"
         " station Bullfrog (ID BULLFROG_ST)") != -1)
     e = self.accumulator.PopException("StopTooFarFromParentStation")
     self.assertEqual(1, e.type)  # Warning
-    self.assertTrue(e.FormatProblem().find(
+    self.assertTrue(e.format_problem().find(
         "Bullfrog (ID BULLFROG) is too far from its parent"
         " station Bullfrog (ID BULLFROG_ST)") != -1)
     self.accumulator.AssertNoMoreExceptions()
@@ -266,7 +266,7 @@ class StopBlankHeaders(util.MemoryZipTestCase):
     self.SetArchiveContents("stops.txt", "\n".join(new))
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException("CsvSyntax")
-    self.assertTrue(e.FormatProblem().
+    self.assertTrue(e.format_problem().
                     find("header row should not contain any blank") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
@@ -284,7 +284,7 @@ class StopBlankHeaders(util.MemoryZipTestCase):
     self.SetArchiveContents("stops.txt", "\n".join(new))
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException("CsvSyntax")
-    self.assertTrue(e.FormatProblem().
+    self.assertTrue(e.format_problem().
                     find("header row should not contain any blank") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
@@ -304,7 +304,7 @@ class StopBlankHeaders(util.MemoryZipTestCase):
     self.SetArchiveContents("stops.txt", "\n".join(new))
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException("CsvSyntax")
-    self.assertTrue(e.FormatProblem().
+    self.assertTrue(e.format_problem().
                     find("header row should not contain any blank") != -1)
     e = self.accumulator.PopException("UnrecognizedColumn")
     self.assertEquals("test_name", e.column_name)

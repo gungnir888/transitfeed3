@@ -434,8 +434,8 @@ class ValidationTestCase(TestCase):
     if value != INVALID_VALUE:
       self.assertEqual(value, e.value)
     # these should not throw any exceptions
-    e.FormatProblem()
-    e.FormatContext()
+    e.format_problem()
+    e.format_context()
     self.accumulator.AssertNoMoreExceptions()
 
   def SimpleSchedule(self):
@@ -474,10 +474,10 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self._ignore_types = ignore_types or set()
     self._sorted = False
 
-  def _report(self, e):
+  def report(self, e):
     # Ensure that these don't crash
-    e.FormatProblem()
-    e.FormatContext()
+    e.format_problem()
+    e.format_context()
     if e.__class__.__name__ in self._ignore_types:
       return
     # Keep the 7 nearest stack frames. This should be enough to identify
@@ -500,7 +500,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
 
   def format_exception(self, exce, tb):
     return ("%s\nwith gtfs file context %s\nand traceback\n%s" %
-            (exce.FormatProblem(), exce.FormatContext(), tb))
+            (exce.format_problem(), exce.format_context(), tb))
 
   def TearDownAssertNoMoreExceptions(self):
     """Assert that there are no unexpected problems left after a test has run.
@@ -579,7 +579,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     Notice the order of exception types does not change, but grouped exceptions
     of the same type are sorted within their group.
 
-    The ExceptionWithContext.GetOrderKey method id used for generating the sort
+    The ExceptionWithContext.get_order_key method id used for generating the sort
     key for exceptions.
     """
     sorted_exceptions = []
@@ -587,7 +587,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     current_exception_type = None
 
     def ProcessExceptionGroup():
-      exception_group.sort(key=lambda x: x[0].GetOrderKey())
+      exception_group.sort(key=lambda x: x[0].get_order_key())
       sorted_exceptions.extend(exception_group)
 
     for e_tuple in self.exceptions:
@@ -607,10 +607,10 @@ class TestFailureProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self.test_case = test_case
     self._ignore_types = ignore_types or set()
 
-  def _report(self, e):
+  def report(self, e):
     # These should never crash
-    formatted_problem = e.FormatProblem()
-    formatted_context = e.FormatContext()
+    formatted_problem = e.format_problem()
+    formatted_context = e.format_context()
     exception_class = e.__class__.__name__
     if exception_class in self._ignore_types:
       return
@@ -636,5 +636,5 @@ class ExceptionProblemReporterNoExpiration(transitfeed.ProblemReporter):
     accumulator = transitfeed.ExceptionProblemAccumulator(raise_warnings=True)
     transitfeed.ProblemReporter.__init__(self, accumulator)
 
-  def ExpirationDate(self, expiration, context=None):
+  def expiration_date(self, expiration, context=None):
     pass  # We don't want to give errors about our test data

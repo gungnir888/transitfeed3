@@ -228,7 +228,7 @@ class MareyGraph:
       # indicating the approximate distance
       [0,33,140, ... ,X]
     """
-    e_dists2 = [transitfeed.ApproximateDistanceBetweenStops(stop, tail) for
+    e_dists2 = [transitfeed.approximate_distance_between_stops(stop, tail) for
                 (stop,tail) in itertools.izip(slist, slist[1:])]
 
     return e_dists2
@@ -336,7 +336,7 @@ class MareyGraph:
         if j>0 and not colpar:
           color="purple"
         scriptcall = 'onmouseover="LineClick(\'%s\',\'Trip %s starting %s\')"' % (t.trip_id,
-            t.trip_id, transitfeed.FormatSecondsSinceMidnight(t.GetStartTime()))
+            t.trip_id, transitfeed.format_seconds_since_midnight(t.GetStartTime()))
         tmpstrhead = '<polyline class="T" id="%s" stroke="%s" %s points="' % \
           (str(t.trip_id),color, scriptcall)
         tmpstrs.append(tmpstrhead)

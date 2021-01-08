@@ -79,7 +79,7 @@ class Route(transitfeed.Route):
   # reverse lookup by name. The new non GTFS route types are only valid as int.
 
   def ValidateCo2PerKm(self, problems):
-    if not util.IsEmpty(self.co2_per_km):
+    if not util.is_empty(self.co2_per_km):
       try:
         self.co2_per_km = float(self.co2_per_km)
       except ValueError:

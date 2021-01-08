@@ -238,7 +238,7 @@ class StopExtensionTestCase(ValidationTestCase):
     self._entrance.stop_timezone = 'America/Los_Angeles'
     self._entrance.Validate(self.problems)
     e = self.accumulator.PopInvalidValue('stop_timezone')
-    self.assertMatchesRegex(r'stop_timezone', e.FormatProblem())
+    self.assertMatchesRegex(r'stop_timezone', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
     self._entrance.stop_timezone = None
 
@@ -253,7 +253,7 @@ class StopExtensionTestCase(ValidationTestCase):
     self._entrance.parent_station = None
     self._entrance.Validate(self.problems)
     e = self.accumulator.PopInvalidValue('location_type')
-    self.assertMatchesRegex(r'parent_station', e.FormatProblem())
+    self.assertMatchesRegex(r'parent_station', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
   def testChildExceptions(self):
@@ -265,8 +265,8 @@ class StopExtensionTestCase(ValidationTestCase):
     self._child_stop.stop_timezone = 'America/Los_Angeles'
     self._child_stop.Validate(self.problems)
     e = self.accumulator.PopInvalidValue('stop_timezone')
-    self.assertMatchesRegex(r'stop_timezone', e.FormatProblem())
-    self.assertTrue(e.IsWarning())
+    self.assertMatchesRegex(r'stop_timezone', e.format_problem())
+    self.assertTrue(e.is_warning())
     self.accumulator.AssertNoMoreExceptions()
     self._child_stop.stop_timezone = None
 
@@ -274,7 +274,7 @@ class StopExtensionTestCase(ValidationTestCase):
     self._child_stop.vehicle_type = 200
     self._child_stop.Validate(self.problems)
     e = self.accumulator.PopInvalidValue('vehicle_type')
-    self.assertTrue(e.IsWarning())
+    self.assertTrue(e.is_warning())
     self.accumulator.AssertNoMoreExceptions()
     self._child_stop.vehicle_type = None
 
@@ -339,7 +339,7 @@ class AgencyLangTestCase(ExtensionMemoryZipTestCase):
     self.MakeLoaderAndLoad(self.problems,
                            gtfs_factory=self.gtfs_factory)
     e = self.accumulator.PopInvalidValue("agency_lang")
-    e_msg = e.FormatProblem()
+    e_msg = e.format_problem()
     self.assertTrue(e_msg.find('not well-formed') != -1,
                     '%s should not be well-formed, is: %s' % (e.value, e_msg))
     self.accumulator.AssertNoMoreExceptions()
@@ -353,7 +353,7 @@ class AgencyLangTestCase(ExtensionMemoryZipTestCase):
     self.MakeLoaderAndLoad(self.problems,
                            gtfs_factory=self.gtfs_factory)
     e = self.accumulator.PopInvalidValue("agency_lang")
-    e_msg = e.FormatProblem()
+    e_msg = e.format_problem()
     self.assertTrue(e_msg.find('not valid') != -1,
                     '%s should not be valid, is: %s' % (e.value, e_msg))
     self.accumulator.AssertNoMoreExceptions()

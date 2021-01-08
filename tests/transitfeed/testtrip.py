@@ -233,8 +233,8 @@ class TripSequenceValidationTestCase(util.ValidationTestCase):
     trip._AddStopTimeObjectUnordered(stoptime3, schedule)
     trip.Validate(self.problems)
     e = self.accumulator.PopException('OtherProblem')
-    self.assertTrue(e.FormatProblem().find('Timetravel detected') != -1)
-    self.assertTrue(e.FormatProblem().find('number 2 in trip 054C-00') != -1)
+    self.assertTrue(e.format_problem().find('Timetravel detected') != -1)
+    self.assertTrue(e.format_problem().find('number 2 in trip 054C-00') != -1)
     self.accumulator.AssertNoMoreExceptions()
 
 
@@ -296,8 +296,8 @@ class TripHasStopTimeValidationTestCase(util.ValidationTestCase):
     schedule.Validate(self.problems)
     self.accumulator.PopException('OtherProblem')  # pop first warning
     e = self.accumulator.PopException('OtherProblem')  # pop frequency error
-    self.assertTrue(e.FormatProblem().find('Frequencies defined, but') != -1)
-    self.assertTrue(e.FormatProblem().find('given in trip 054C-00') != -1)
+    self.assertTrue(e.format_problem().find('Frequencies defined, but') != -1)
+    self.assertTrue(e.format_problem().find('given in trip 054C-00') != -1)
     self.assertEquals(transitfeed.TYPE_ERROR, e.type)
     self.accumulator.AssertNoMoreExceptions()
     trip.ClearFrequencies()
@@ -351,7 +351,7 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     self.accumulator.AssertNoMoreExceptions()
     schedule.Validate(self.problems)
     e = self.accumulator.PopException('OtherProblem')
-    self.assertMatchesRegex('shape_dist_traveled=2', e.FormatProblem())
+    self.assertMatchesRegex('shape_dist_traveled=2', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
     # Error if the distance decreases.
@@ -366,9 +366,9 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     self.accumulator.AssertNoMoreExceptions()
     schedule.Validate(self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('stop STOP4 has', e.FormatProblem())
-    self.assertMatchesRegex('shape_dist_traveled=1.7', e.FormatProblem())
-    self.assertMatchesRegex('distance was 2.0.', e.FormatProblem())
+    self.assertMatchesRegex('stop STOP4 has', e.format_problem())
+    self.assertMatchesRegex('shape_dist_traveled=1.7', e.format_problem())
+    self.assertMatchesRegex('distance was 2.0.', e.format_problem())
     self.assertEqual(e.type, transitfeed.TYPE_ERROR)
     self.accumulator.AssertNoMoreExceptions()
 
@@ -377,9 +377,9 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     trip.ReplaceStopTimeObject(stoptime, schedule=schedule)
     schedule.Validate(self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('stop STOP4 has', e.FormatProblem())
-    self.assertMatchesRegex('shape_dist_traveled=2.0', e.FormatProblem())
-    self.assertMatchesRegex('distance was 2.0.', e.FormatProblem())
+    self.assertMatchesRegex('stop STOP4 has', e.format_problem())
+    self.assertMatchesRegex('shape_dist_traveled=2.0', e.format_problem())
+    self.assertMatchesRegex('distance was 2.0.', e.format_problem())
     self.assertEqual(e.type, transitfeed.TYPE_WARNING)
     self.accumulator.AssertNoMoreExceptions()
 
@@ -409,8 +409,8 @@ class StopMatchWithShapeTestCase(util.ValidationTestCase):
 
     schedule.Validate(self.problems)
     e = self.accumulator.PopException('StopTooFarFromShapeWithDistTraveled')
-    self.assertTrue(e.FormatProblem().find('Demo Stop 2') != -1)
-    self.assertTrue(e.FormatProblem().find('1344 meters away') != -1)
+    self.assertTrue(e.format_problem().find('Demo Stop 2') != -1)
+    self.assertTrue(e.format_problem().find('1344 meters away') != -1)
     self.accumulator.AssertNoMoreExceptions()
 
 
@@ -516,19 +516,19 @@ class TripStopTimeAccessorsTestCase(SingleTripTestCase):
         self.stop2, arrival_time="5:15:00", departure_time="5:16:00")
 
     # Add some more stop times and test GetEndTime does the correct thing
-    self.assertEqual(transitfeed.FormatSecondsSinceMidnight(
+    self.assertEqual(transitfeed.format_seconds_since_midnight(
         self.trip.GetStartTime()), "05:11:00")
-    self.assertEqual(transitfeed.FormatSecondsSinceMidnight(
+    self.assertEqual(transitfeed.format_seconds_since_midnight(
         self.trip.GetEndTime()), "05:16:00")
 
     self.trip.AddStopTime(self.stop1, stop_time="05:20:00")
     self.assertEqual(
-        transitfeed.FormatSecondsSinceMidnight(self.trip.GetEndTime()),
+        transitfeed.format_seconds_since_midnight(self.trip.GetEndTime()),
         "05:20:00")
 
     self.trip.AddStopTime(self.stop2, stop_time="05:22:00")
     self.assertEqual(
-        transitfeed.FormatSecondsSinceMidnight(self.trip.GetEndTime()),
+        transitfeed.format_seconds_since_midnight(self.trip.GetEndTime()),
         "05:22:00")
 
 
@@ -847,7 +847,7 @@ class GetFrequencyTimesTestCase(util.TestCase):
     self.assertEqual(
         ["16:00:00", "16:30:00", "17:00:00", "17:30:00",
          "18:00:00", "18:45:00", "19:30:00"],
-        [transitfeed.FormatSecondsSinceMidnight(secs) for secs in start_times])
+        [transitfeed.format_seconds_since_midnight(secs) for secs in start_times])
     # GetHeadwayStartTimes is deprecated, but should still return the same
     # result as GetFrequencyStartTimes
     self.assertEqual(start_times,

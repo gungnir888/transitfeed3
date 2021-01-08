@@ -25,7 +25,7 @@ class ProblemReporterTestCase(util.RedirectStdOutTestCaseBase):
   def testContextWithBadUnicodeProblem(self):
     pr = transitfeed.ProblemReporter()
     # Context has valid unicode values
-    pr.SetFileContext('filename.foo', 23,
+    pr.set_file_context('filename.foo', 23,
                       [u'Andr\202', u'Person \uc720 foo', None],
                       [u'1\202', u'2\202', u'3\202'])
     pr.OtherProblem('test string')
@@ -47,7 +47,7 @@ class ProblemReporterTestCase(util.RedirectStdOutTestCaseBase):
 
   def testBadUnicodeContext(self):
     pr = transitfeed.ProblemReporter()
-    pr.SetFileContext('filename.foo', 23,
+    pr.set_file_context('filename.foo', 23,
                       [u'Andr\202', 'Person \xff\xfe\x80\x88 foo', None],
                       [u'1\202', u'2\202', u'3\202'])
     pr.OtherProblem("help, my context isn't utf-8!")

@@ -31,7 +31,7 @@ class UnrecognizedColumnRecorder(transitfeed.ProblemReporter):
         ignore_types=("ExpirationDate",))
     self.column_errors = []
 
-  def UnrecognizedColumn(self, file_name, column_name, context=None):
+  def unrecognized_column(self, file_name, column_name, context=None):
     self.column_errors.append((file_name, column_name))
 
 
@@ -93,7 +93,7 @@ class EndOfLineCheckerTestCase(util.TestCase):
     e = self.accumulator.PopException("OtherProblem")
     self.assertEqual(e.file_name, "<StringIO>")
     self.assertEqual(e.row_num, 1)
-    self.assertEqual(e.FormatProblem(),
+    self.assertEqual(e.format_problem(),
                      "Line contains ASCII Carriage Return 0x0D, \\r")
     self.accumulator.AssertNoMoreExceptions()
 
@@ -105,7 +105,7 @@ class EndOfLineCheckerTestCase(util.TestCase):
     e = self.accumulator.PopException("OtherProblem")
     self.assertEqual(e.file_name, "<StringIO>")
     self.assertEqual(e.row_num, 1)
-    self.assertEqual(e.FormatProblem(),
+    self.assertEqual(e.format_problem(),
                      "Line contains Unicode NEXT LINE SEPARATOR U+0085")
     self.accumulator.AssertNoMoreExceptions()
 
@@ -116,7 +116,7 @@ class EndOfLineCheckerTestCase(util.TestCase):
     self.RunEndOfLineChecker(f)
     e = self.accumulator.PopException("OtherProblem")
     self.assertEqual(e.file_name, "<StringIO>")
-    self.assertEqual(e.FormatProblem(),
+    self.assertEqual(e.format_problem(),
                      "Found 1 CR LF \"\\r\\n\" line end (line 2) and "
                      "2 LF \"\\n\" line ends (lines 1, 3). A file must use a "
                      "consistent line end.")
@@ -129,7 +129,7 @@ class EndOfLineCheckerTestCase(util.TestCase):
     self.RunEndOfLineChecker(f)
     e = self.accumulator.PopException("OtherProblem")
     self.assertEqual(e.file_name, "<StringIO>")
-    self.assertEqual(e.FormatProblem(),
+    self.assertEqual(e.format_problem(),
                      "Found 5 CR LF \"\\r\\n\" line ends (lines 7, 8, 9, 10, "
                      "11) and 6 LF \"\\n\" line ends (lines 1, 2, 3, 4, 5, "
                      "...). A file must use a consistent line end.")
@@ -146,25 +146,25 @@ class EndOfLineCheckerTestCase(util.TestCase):
     self.assertEqual(e.file_name, "calendar.txt")
     self.assertTrue(re.search(
       r"Found 1 CR LF.* \(line 2\) and 2 LF .*\(lines 1, 3\)",
-      e.FormatProblem()))
+      e.format_problem()))
 
     e = self.accumulator.PopException("InvalidLineEnd")
     self.assertEqual(e.file_name, "routes.txt")
     self.assertEqual(e.row_num, 5)
-    self.assertTrue(e.FormatProblem().find(r"\r\r\n") != -1)
+    self.assertTrue(e.format_problem().find(r"\r\r\n") != -1)
 
     e = self.accumulator.PopException("OtherProblem")
     self.assertEqual(e.file_name, "trips.txt")
     self.assertEqual(e.row_num, 1)
     self.assertTrue(re.search(
       r"contains ASCII Form Feed",
-      e.FormatProblem()))
+      e.format_problem()))
     # TODO(Tom): avoid this duplicate error for the same issue
     e = self.accumulator.PopException("CsvSyntax")
     self.assertEqual(e.row_num, 1)
     self.assertTrue(re.search(
       r"header row should not contain any space char",
-      e.FormatProblem()))
+      e.format_problem()))
 
     self.accumulator.AssertNoMoreExceptions()
 
@@ -424,8 +424,8 @@ class LoadUTF16TestCase(util.TestCase):
       self.fail('FileFormat exception expected')
     except transitfeed.FileFormat as e:
       # make sure these don't raise an exception
-      self.assertTrue(re.search(r'encoded in utf-16', e.FormatProblem()))
-      e.FormatContext()
+      self.assertTrue(re.search(r'encoded in utf-16', e.format_problem()))
+      e.format_context()
 
 
 class BadUtf8TestCase(util.LoadTestCase):
@@ -453,9 +453,9 @@ class LoadNullTestCase(util.TestCase):
       loader.Load()
       self.fail('FileFormat exception expected')
     except transitfeed.FileFormat as e:
-      self.assertTrue(re.search(r'contains a null', e.FormatProblem()))
+      self.assertTrue(re.search(r'contains a null', e.format_problem()))
       # make sure these don't raise an exception
-      e.FormatContext()
+      e.format_context()
 
 
 class CsvDictTestCase(util.TestCase):
@@ -551,7 +551,7 @@ class CsvDictTestCase(util.TestCase):
                                             ["test_id", "test_name"], [], []))
     self.assertEquals([], results)
     e = self.accumulator.PopException("CsvSyntax")
-    self.assertTrue(e.FormatProblem().find("missing the header") != -1)
+    self.assertTrue(e.format_problem().find("missing the header") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testFieldWithSpaces(self):
@@ -692,7 +692,7 @@ class CsvDictTestCase(util.TestCase):
                         ["test_id", "test_name"], ["id1", "my name"])],
                       results)
     e = self.accumulator.PopException("OtherProblem")
-    self.assertTrue(e.FormatProblem().find("too many cells") != -1)
+    self.assertTrue(e.format_problem().find("too many cells") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testMissingComma(self):
@@ -704,7 +704,7 @@ class CsvDictTestCase(util.TestCase):
     self.assertEquals([({"test_id": "id1 my name"}, 2,
                         ["test_id", "test_name"], ["id1 my name"])], results)
     e = self.accumulator.PopException("OtherProblem")
-    self.assertTrue(e.FormatProblem().find("missing cells") != -1)
+    self.assertTrue(e.format_problem().find("missing cells") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testDetectsDuplicateHeaders(self):

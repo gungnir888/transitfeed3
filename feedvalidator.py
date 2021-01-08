@@ -71,8 +71,8 @@ def calendar_summary(schedule):
     if not start_date or not end_date:
         return {}
 
-    start_date_object = transitfeed.DateStringToDateObject(start_date)
-    end_date_object = transitfeed.DateStringToDateObject(end_date)
+    start_date_object = transitfeed.date_string_to_date_object(start_date)
+    end_date_object = transitfeed.date_string_to_date_object(end_date)
     if not start_date_object or not end_date_object:
         return {}
 
@@ -139,15 +139,15 @@ class CountingConsoleProblemAccumulator(transitfeed.SimpleProblemAccumulator):
         self._notice_count = 0
         self._ignore_types = ignore_types or set()
 
-    def _report(self, e):
+    def report(self, e):
         if e.__class__.__name__ in self._ignore_types:
             return
-        transitfeed.SimpleProblemAccumulator._report(self, e)
-        if e.IsError():
+        transitfeed.SimpleProblemAccumulator.report(self, e)
+        if e.is_error():
             self._error_count += 1
-        elif e.IsWarning():
+        elif e.is_warning():
             self._warning_count += 1
-        elif e.IsNotice():
+        elif e.is_notice():
             self._notice_count += 1
 
     def error_count(self):
@@ -236,10 +236,10 @@ class LimitPerTypeProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     def has_notices(self):
         return self._type_to_name_to_problist[TYPE_NOTICE]
 
-    def _report(self, e):
+    def report(self, e):
         if e.__class__.__name__ in self._ignore_types:
             return
-        self._type_to_name_to_problist[e.GetType()][e.__class__.__name__].add(e)
+        self._type_to_name_to_problist[e.get_type()][e.__class__.__name__].add(e)
 
     def error_count(self):
         error_sets = self._type_to_name_to_problist[TYPE_ERROR].values()
@@ -307,16 +307,16 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
     @staticmethod
     def format_exception(e, output):
         """Append HTML version of e to list output."""
-        d = e.GetDictToFormat()
+        d = e.get_dict_to_format()
         for k in ('file_name', 'feedname', 'column_name'):
             if k in d.keys():
                 d[k] = '<code>%s</code>' % d[k]
         if 'url' in d.keys():
             d['url'] = '<a href="%(url)s">%(url)s</a>' % d
 
-        problem_text = e.FormatProblem(d).replace('\n', '<br>')
+        problem_text = e.format_problem(d).replace('\n', '<br>')
         problem_class = 'problem'
-        if e.IsNotice():
+        if e.is_notice():
             problem_class += ' notice'
         output.append('<li>')
         output.append('<div class="%s">%s</div>' % (problem_class, problem_text))
@@ -570,7 +570,7 @@ def run_validation(feed, options, problems):
       problems are found and 0 if the Schedule is problem free.
       plain text string is '' if no other problems are found.
     """
-    util.CheckVersion(problems, options.latest_version)
+    util.check_version(problems, options.latest_version)
 
     # TODO: Add tests for this flag in testfeedvalidator.py
     extension_module = transitfeed
@@ -604,7 +604,7 @@ def run_validation(feed, options, problems):
         # See tests/testfeedvalidator.py
         raise Exception('For testing the feed validator crash handler.')
 
-    accumulator = problems.GetAccumulator()
+    accumulator = problems.get_accumulator()
     if accumulator.has_issues():
         print('ERROR: %s found' % accumulator.format_count())
         return schedule, 1
@@ -771,4 +771,4 @@ def profilerun_validation_output_from_options(feed, options):
 
 
 if __name__ == '__main__':
-    util.RunWithCrashHandler(main)
+    util.run_with_crash_handler(main)

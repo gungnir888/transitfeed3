@@ -200,7 +200,7 @@ class Schedule(object):
     """Create a new Agency object and make it the default agency for this Schedule"""
     agency = self._gtfs_factory.Agency(**kwargs)
     if not agency.agency_id:
-      agency.agency_id = util.FindUniqueId(self._agencies)
+      agency.agency_id = util.find_unique_id(self._agencies)
     self._default_agency = agency
     self.SetDefaultAgency(agency, validate=False)  # Blank agency won't validate
     return agency
@@ -238,7 +238,7 @@ class Schedule(object):
     return it. The default service period is used when you create a trip without
     providing an explict service period. """
     service_period = self._gtfs_factory.ServicePeriod()
-    service_period.service_id = util.FindUniqueId(self.service_periods)
+    service_period.service_id = util.find_unique_id(self.service_periods)
     # blank service won't validate in AddServicePeriodObject
     self.SetDefaultServicePeriod(service_period, validate=False)
     return service_period
@@ -352,7 +352,7 @@ class Schedule(object):
       A new Stop object
     """
     if stop_id is None:
-      stop_id = util.FindUniqueId(self.stops)
+      stop_id = util.find_unique_id(self.stops)
     stop = self._gtfs_factory.Stop(stop_id=stop_id, lat=lat, lng=lng, name=name)
     self.AddStopObject(stop)
     return stop
@@ -391,7 +391,7 @@ class Schedule(object):
       A new Route object
     """
     if route_id is None:
-      route_id = util.FindUniqueId(self.routes)
+      route_id = util.find_unique_id(self.routes)
     route = self._gtfs_factory.Route(short_name=short_name, long_name=long_name,
                         route_type=route_type, route_id=route_id)
     route.agency_id = self.GetDefaultAgency().agency_id
@@ -516,7 +516,7 @@ class Schedule(object):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
 
-    if util.IsEmpty(rule.fare_id):
+    if util.is_empty(rule.fare_id):
       problem_reporter.MissingValue('fare_id')
       return
 
@@ -587,7 +587,7 @@ class Schedule(object):
     """Return the n nearest stops to lat,lon"""
     dist_stop_list = []
     for s in self.stops.values():
-      # TODO: Use util.ApproximateDistanceBetweenStops?
+      # TODO: Use util.approximate_distance_between_stops?
       dist = (s.stop_lat - lat)**2 + (s.stop_lon - lon)**2
       if len(dist_stop_list) < n:
         bisect.insort(dist_stop_list, (dist, s))
@@ -810,7 +810,7 @@ class Schedule(object):
                             self.GetAgencyList()))
     if len(timezones_set) > 1:
       timezones_str = '"%s"' % ('", "'.join(timezones_set))
-      problems.InvalidValue('agency_timezone', timezones_str,
+      problems.invalid_value('agency_timezone', timezones_str,
                             'All agencies should have the same time zone. ' \
                             'Please review agency.txt.')
 
@@ -821,9 +821,9 @@ class Schedule(object):
       return
     agencies = self.GetAgencyList()
     for agency in agencies:
-      if not util.IsEmpty(agency.agency_lang) and (
+      if not util.is_empty(agency.agency_lang) and (
           not self.feed_info.feed_lang == agency.agency_lang):
-        problems.InvalidValue("feed_lang",
+        problems.invalid_value("feed_lang",
                               "The languages specified in feedinfo.txt and in "
                               "agency.txt for agency with ID %s differ." %
                               agency.agency_id)
@@ -846,11 +846,11 @@ class Schedule(object):
     """
     warning_cutoff = today + datetime.timedelta(days=60)
     if last_date < warning_cutoff:
-        problems.ExpirationDate(time.mktime(last_date.timetuple()),
+        problems.expiration_date(time.mktime(last_date.timetuple()),
                                 last_date_origin)
 
     if first_date > today:
-      problems.FutureService(time.mktime(first_date.timetuple()),
+      problems.future_service(time.mktime(first_date.timetuple()),
                              first_date_origin)
 
   def ValidateServiceGaps(self,
@@ -896,7 +896,7 @@ class Schedule(object):
         last_day_without_service = day_date
       else:
         if consecutive_days_without_service >= service_gap_interval:
-            problems.TooManyDaysWithoutService(first_day_without_service,
+            problems.too_many_days_without_service(first_day_without_service,
                                                last_day_without_service,
                                                consecutive_days_without_service)
 
@@ -904,7 +904,7 @@ class Schedule(object):
 
     # We have to check if there is a gap at the end of the specified date range
     if consecutive_days_without_service >= service_gap_interval:
-      problems.TooManyDaysWithoutService(first_day_without_service,
+      problems.too_many_days_without_service(first_day_without_service,
                                          last_day_without_service,
                                          consecutive_days_without_service)
 
@@ -925,7 +925,7 @@ class Schedule(object):
       # warning, so we can stop looking at the list of ServicePeriods.
       if period.HasExceptions():
         return
-    problems.NoServiceExceptions(start=first_service_day,
+    problems.no_service_exceptions(start=first_service_day,
                                  end=last_service_day)
 
   def ValidateServiceRangeAndExceptions(self, problems, today,
@@ -935,7 +935,7 @@ class Schedule(object):
     (start_date, end_date,
      start_date_origin, end_date_origin) = self.GetDateRangeWithOrigins()
     if not end_date or not start_date:
-      problems.OtherProblem('This feed has no effective service dates!',
+      problems.other_problem('This feed has no effective service dates!',
                             type=problems_module.TYPE_WARNING)
     else:
         try:
@@ -991,34 +991,34 @@ class Schedule(object):
                      (stop.stop_id,))
       count = cursor.fetchone()[0]
       if stop.location_type == 0 and count == 0:
-          problems.UnusedStop(stop.stop_id, stop.stop_name)
+          problems.unused_stop(stop.stop_id, stop.stop_name)
       elif stop.location_type == 1 and count != 0:
-          problems.UsedStation(stop.stop_id, stop.stop_name)
+          problems.unused_station(stop.stop_id, stop.stop_name)
 
       if stop.location_type != 1 and stop.parent_station:
         if stop.parent_station not in self.stops:
-          problems.InvalidValue("parent_station",
+          problems.invalid_value("parent_station",
                                 stop.parent_station,
                                 "parent_station '%s' not found for stop_id "
                                 "'%s' in stops.txt" %
                                 (stop.parent_station,
                                  stop.stop_id))
         elif self.stops[stop.parent_station].location_type != 1:
-          problems.InvalidValue("parent_station",
+          problems.invalid_value("parent_station",
                                 stop.parent_station,
                                 "parent_station '%s' of stop_id '%s' must "
                                 "have location_type=1 in stops.txt" %
                                 (stop.parent_station, stop.stop_id))
         else:
           parent_station = self.stops[stop.parent_station]
-          distance = util.ApproximateDistanceBetweenStops(stop, parent_station)
+          distance = util.approximate_distance_between_stops(stop, parent_station)
           if distance is not None:
             if distance > problems_module.MAX_DISTANCE_BETWEEN_STOP_AND_PARENT_STATION_ERROR:
-              problems.StopTooFarFromParentStation(
+              problems.stop_too_far_from_parent_station(
                   stop.stop_id, stop.stop_name, parent_station.stop_id,
                   parent_station.stop_name, distance, problems_module.TYPE_ERROR)
             elif distance > problems_module.MAX_DISTANCE_BETWEEN_STOP_AND_PARENT_STATION_WARNING:
-              problems.StopTooFarFromParentStation(
+              problems.stop_too_far_from_parent_station(
                   stop.stop_id, stop.stop_name, parent_station.stop_id,
                   parent_station.stop_name, distance,
                   problems_module.TYPE_WARNING)
@@ -1039,18 +1039,18 @@ class Schedule(object):
       index += 1
       while ((index < len(sorted_stops)) and
              ((sorted_stops[index].stop_lat - stop.stop_lat) < TWO_METERS_LAT)):
-        distance  = util.ApproximateDistanceBetweenStops(stop,
+        distance  = util.approximate_distance_between_stops(stop,
                                                          sorted_stops[index])
         if distance is not None and distance < 2:
           other_stop = sorted_stops[index]
           if stop.location_type == 0 and other_stop.location_type == 0:
-            problems.StopsTooClose(
+            problems.stops_too_close(
                 stop.stop_name,
                 stop.stop_id,
                 other_stop.stop_name,
                 other_stop.stop_id, distance)
           elif stop.location_type == 1 and other_stop.location_type == 1:
-            problems.StationsTooClose(
+            problems.stations_too_close(
                 stop.stop_name,
                 stop.stop_id,
                 other_stop.stop_name,
@@ -1064,7 +1064,7 @@ class Schedule(object):
               this_stop = other_stop
               this_station = stop
             if this_stop.parent_station != this_station.stop_id:
-              problems.DifferentStationTooClose(
+              problems.different_station_too_close(
                   this_stop.stop_name,
                   this_stop.stop_id,
                   this_station.stop_name,
@@ -1078,14 +1078,14 @@ class Schedule(object):
       if validate_children:
         route.Validate(problems)
       short_name = ''
-      if not util.IsEmpty(route.route_short_name):
+      if not util.is_empty(route.route_short_name):
         short_name = route.route_short_name.lower().strip()
       long_name = ''
-      if not util.IsEmpty(route.route_long_name):
+      if not util.is_empty(route.route_long_name):
         long_name = route.route_long_name.lower().strip()
       name = (short_name, long_name)
       if name in route_names:
-        problems.InvalidValue('route_long_name',
+        problems.invalid_value('route_long_name',
                               long_name,
                               'The same combination of '
                               'route_short_name and route_long_name '
@@ -1130,11 +1130,11 @@ class Schedule(object):
             else:
               subway_route_id = trip.route_id
               bus_route_id = stop_types[stop_id][0]
-            problems.StopWithMultipleRouteTypes(st.stop.stop_name, stop_id,
+            problems.stop_with_multiple_route_types(st.stop.stop_name, stop_id,
                                                 subway_route_id, bus_route_id)
 
       # We only care about trips with a block id
-      if not util.IsEmpty(trip.block_id) and stop_times:
+      if not util.is_empty(trip.block_id) and stop_times:
 
         first_arrival_secs = stop_times[0].arrival_secs
         last_departure_secs = stop_times[-1].departure_secs
@@ -1160,7 +1160,7 @@ class Schedule(object):
         if key not in trips:
           trips[key] = (trip.route_id, trip.trip_id)
         else:
-          problems.DuplicateTrip(trips[key][1], trips[key][0], trip.trip_id,
+          problems.duplicate_trip(trips[key][1], trips[key][0], trip.trip_id,
                                  trip.route_id)
 
     # Now that we've generated our block trip intervls, we can check for
@@ -1182,7 +1182,7 @@ class Schedule(object):
       # affects about 0.5% of current GTFS trips.
       if (prev_departure_secs != -1 and
           consecutive_stop_times_with_fully_specified_same_time > 5):
-        problems.TooManyConsecutiveStopTimesWithSameTime(trip.trip_id,
+        problems.too_many_consecutive_stop_times_with_same_time(trip.trip_id,
             consecutive_stop_times_with_fully_specified_same_time,
             prev_departure_secs)
     for index, st in enumerate(stop_times):
@@ -1235,7 +1235,7 @@ class Schedule(object):
           # If they have the same service id, the trips run on the same
           # day, yet have overlapping stop times.  Definitely a problem.
           if trip_a.service_id == trip_b.service_id:
-            problems.OverlappingTripsInSameBlock(trip_a.trip_id,
+            problems.overlapping_trips_in_same_block(trip_a.trip_id,
                                                  trip_b.trip_id, block_id)
           else:
             # Even if the the trips don't have the same service_id, their
@@ -1275,7 +1275,7 @@ class Schedule(object):
               service_period_overlap_cache[service_id_pair_key] = overlap
 
             if service_period_overlap_cache[service_id_pair_key]:
-              problems.OverlappingTripsInSameBlock(trip_a.trip_id,
+              problems.overlapping_trips_in_same_block(trip_a.trip_id,
                                                    trip_b.trip_id,
                                                    block_id)
 
@@ -1283,17 +1283,17 @@ class Schedule(object):
     # Check that only one agency is IDless
     if len(self._agencies) > 1:
       for agency in self._agencies.values():
-        if util.IsEmpty(agency.agency_id):
-          problems.OtherProblem('Agency "%s" does not have an ID. '
+        if util.is_empty(agency.agency_id):
+          problems.other_problem('Agency "%s" does not have an ID. '
                                 'This is only allowed if a single agency is defined, '
                                 'whereas there are %d in total.' % (agency.agency_name, len(self._agencies)))
 
   def ValidateRouteAgencyId(self, problems):
     # Check that routes' agency IDs are valid, if set
     for route in self.routes.values():
-      if (not util.IsEmpty(route.agency_id) and
+      if (not util.is_empty(route.agency_id) and
           not route.agency_id in self._agencies):
-        problems.InvalidAgencyID('agency_id', route.agency_id,
+        problems.invalid_agency_id('agency_id', route.agency_id,
                                  'route', route.route_id)
 
   def ValidateTripStopTimes(self, problems):
@@ -1304,15 +1304,15 @@ class Schedule(object):
       trip.ValidateChildren(problems)
       count_stop_times = trip.GetCountStopTimes()
       if not count_stop_times:
-        problems.OtherProblem('The trip with the trip_id "%s" doesn\'t have '
+        problems.other_problem('The trip with the trip_id "%s" doesn\'t have '
                               'any stop times defined.' % trip.trip_id,
                               type=problems_module.TYPE_WARNING)
         if len(trip._headways) > 0:  # no stoptimes, but there are headways
-          problems.OtherProblem('Frequencies defined, but no stop times given '
+          problems.other_problem('Frequencies defined, but no stop times given '
                                 'in trip %s' % trip.trip_id,
                                 type=problems_module.TYPE_ERROR)
       elif count_stop_times == 1:
-        problems.OtherProblem('The trip with the trip_id "%s" only has one '
+        problems.other_problem('The trip with the trip_id "%s" only has one '
                               'stop on it; it should have at least one more '
                               'stop so that the riders can leave!' %
                               trip.trip_id, type=problems_module.TYPE_WARNING)
@@ -1329,7 +1329,7 @@ class Schedule(object):
       used_shape_ids.add(trip.shape_id)
     unused_shape_ids = known_shape_ids - used_shape_ids
     if unused_shape_ids:
-      problems.OtherProblem('The shapes with the following shape_ids aren\'t '
+      problems.other_problem('The shapes with the following shape_ids aren\'t '
                             'used by any trips: %s' %
                             ', '.join(unused_shape_ids),
                             type=problems_module.TYPE_WARNING)

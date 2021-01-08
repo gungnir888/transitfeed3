@@ -165,4 +165,4 @@ placemarks in the KML represented as stops.
 
 
 if __name__ == '__main__':
-  util.RunWithCrashHandler(main)
+  util.run_with_crash_handler(main)

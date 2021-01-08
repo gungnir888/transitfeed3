@@ -157,26 +157,26 @@ class TooFastTravelTestCase(util.ValidationTestCase):
 
     self.trip.Validate(self.problems)
     e = self.accumulator.PopException('TooFastTravel')
-    self.assertMatchesRegex(r'High speed travel detected', e.FormatProblem())
-    self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.FormatProblem())
-    self.assertMatchesRegex(r'1691 meters in 60 seconds', e.FormatProblem())
-    self.assertMatchesRegex(r'\(101 km/h\)', e.FormatProblem())
+    self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
+    self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.format_problem())
+    self.assertMatchesRegex(r'1691 meters in 60 seconds', e.format_problem())
+    self.assertMatchesRegex(r'\(101 km/h\)', e.format_problem())
     self.assertEqual(e.type, transitfeed.TYPE_WARNING)
     self.accumulator.AssertNoMoreExceptions()
 
     self.route.route_type = 4  # Ferry with max_speed 80
     self.trip.Validate(self.problems)
     e = self.accumulator.PopException('TooFastTravel')
-    self.assertMatchesRegex(r'High speed travel detected', e.FormatProblem())
-    self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.FormatProblem())
-    self.assertMatchesRegex(r'1691 meters in 60 seconds', e.FormatProblem())
-    self.assertMatchesRegex(r'\(101 km/h\)', e.FormatProblem())
+    self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
+    self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.format_problem())
+    self.assertMatchesRegex(r'1691 meters in 60 seconds', e.format_problem())
+    self.assertMatchesRegex(r'\(101 km/h\)', e.format_problem())
     self.assertEqual(e.type, transitfeed.TYPE_WARNING)
     e = self.accumulator.PopException('TooFastTravel')
-    self.assertMatchesRegex(r'High speed travel detected', e.FormatProblem())
-    self.assertMatchesRegex(r'Stop 1 to Demo Stop 2', e.FormatProblem())
-    self.assertMatchesRegex(r'1616 meters in 60 seconds', e.FormatProblem())
-    self.assertMatchesRegex(r'97 km/h', e.FormatProblem())
+    self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
+    self.assertMatchesRegex(r'Stop 1 to Demo Stop 2', e.format_problem())
+    self.assertMatchesRegex(r'1616 meters in 60 seconds', e.format_problem())
+    self.assertMatchesRegex(r'97 km/h', e.format_problem())
     self.assertEqual(e.type, transitfeed.TYPE_WARNING)
     self.accumulator.AssertNoMoreExceptions()
 
@@ -184,9 +184,9 @@ class TooFastTravelTestCase(util.ValidationTestCase):
     self.route.route_type = None
     self.trip.Validate(self.problems)
     e = self.accumulator.PopException('TooFastTravel')
-    self.assertMatchesRegex(r'High speed travel detected', e.FormatProblem())
-    self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.FormatProblem())
-    self.assertMatchesRegex(r'1691 meters in 60 seconds', e.FormatProblem())
+    self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
+    self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.format_problem())
+    self.assertMatchesRegex(r'1691 meters in 60 seconds', e.format_problem())
     self.assertMatchesRegex(r'101 km/h', e.FormatProblem())
     self.assertEqual(e.type, transitfeed.TYPE_WARNING)
     self.accumulator.AssertNoMoreExceptions()
@@ -277,7 +277,7 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
     self.trip = route.AddTrip(self.schedule, trip_id="CITY1")
 
-  def testTooManyConsecutiveStopTimesWithSameTime(self):
+  def testtoo_many_consecutive_stop_times_with_same_time(self):
     trip = self.trip
     trip.AddStopTime(self.stop1, stop_time="6:00:00")
     for _ in range(6):

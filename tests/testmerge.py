@@ -76,7 +76,7 @@ class TestingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self.problems = []
     self._expect_classes = []
 
-  def _report(self, problem):
+  def report(self, problem):
     problem.FormatProblem()  # Shouldn't crash
     self.problems.append(problem)
     for problem_class in self._expect_classes:
@@ -840,7 +840,7 @@ class TestStopMerger(util.TestCase):
     self.s2.stop_lat += 1.0e-3
     self.fm.a_schedule.AddStopObject(self.s1)
     self.fm.b_schedule.AddStopObject(self.s2)
-    return transitfeed.ApproximateDistanceBetweenStops(self.s1, self.s2)
+    return transitfeed.approximate_distance_between_stops(self.s1, self.s2)
 
   def testSetLargestStopDistanceSmall(self):
     largest_stop_distance = self._AddStopsApart() * 0.5

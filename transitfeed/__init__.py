@@ -53,8 +53,8 @@ Stop object which has attributes such as stop_lat and stop_name.
   ServicePeriod: Represents a single service, a set of dates
   Agency: Represents the agency in this feed
   Transfer: Represents a single transfer rule
-  TimeToSecondsSinceMidnight(): Convert HH:MM:SS into seconds since midnight.
-  FormatSecondsSinceMidnight(s): Formats number of seconds past midnight into a string
+  time_to_seconds_since_midnight(): Convert HH:MM:SS into seconds since midnight.
+  format_seconds_since_midnight(s): Formats number of seconds past midnight into a string
 """
 from __future__ import absolute_import
 

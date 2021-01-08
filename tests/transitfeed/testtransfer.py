@@ -336,7 +336,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     e = self.accumulator.PopException('DuplicateID')
     self.assertEquals('(from_stop_id, to_stop_id)', e.column_name)
     self.assertEquals('(stop1, stop2)', e.value)
-    self.assertTrue(e.IsWarning())
+    self.assertTrue(e.is_warning())
     self.accumulator.AssertNoMoreExceptions()
     # Check that both transfers were kept
     self.assertEquals(transfer1, schedule.GetTransferList()[0])
@@ -409,7 +409,7 @@ class TransferValidationTestCase(util.MemoryZipTestCase):
     e = self.accumulator.PopException('DuplicateID')
     self.assertEquals('(from_stop_id, to_stop_id)', e.column_name)
     self.assertEquals('(BEATTY_AIRPORT, BEATTY_AIRPORT_HANGER)', e.value)
-    self.assertTrue(e.IsWarning())
+    self.assertTrue(e.is_warning())
     self.assertEquals('transfers.txt', e.file_name)
     self.assertEquals(3, e.row_num)
     self.accumulator.AssertNoMoreExceptions()

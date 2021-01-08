@@ -56,7 +56,7 @@ def AddRouteToSchedule(schedule, table):
       trip_stops = []  # Build a list of (time, stopname) tuples
       for i in range(0, len(trip)):
         if re.search(r'\S', trip[i]):
-          trip_stops.append( (transitfeed.TimeToSecondsSinceMidnight(trip[i]), table[1][i]) )
+          trip_stops.append( (transitfeed.time_to_seconds_since_midnight(trip[i]), table[1][i]) )
       trip_stops.sort()  # Sort by time
       for (time, stopname) in trip_stops:
         t.AddStopTime(stop=stops[stopname.lower()], arrival_secs=time,

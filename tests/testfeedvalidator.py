@@ -318,7 +318,7 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
                               expected):
     """Join the value of each exception's attribute_name in order."""
     problem_attribute_list = []
-    for e in self.problems.GetAccumulator().problem_list(
+    for e in self.problems.get_accumulator().problem_list(
         problem_type, class_name).problems:
       problem_attribute_list.append(getattr(e, attribute_name))
     self.assertEquals(expected, " ".join(problem_attribute_list))
@@ -326,12 +326,12 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
   def testLimitOtherProblems(self):
     """The first N of each type should be kept."""
     self.problems = self.CreateLimitPerTypeProblemReporter(2)
-    self.accumulator = self.problems.GetAccumulator()
+    self.accumulator = self.problems.get_accumulator()
 
-    self.problems.OtherProblem("e1", type=transitfeed.TYPE_ERROR)
-    self.problems.OtherProblem("w1", type=transitfeed.TYPE_WARNING)
-    self.problems.OtherProblem("e2", type=transitfeed.TYPE_ERROR)
-    self.problems.OtherProblem("e3", type=transitfeed.TYPE_ERROR)
+    self.problems.other_problem("e1", type=transitfeed.TYPE_ERROR)
+    self.problems.other_problem("w1", type=transitfeed.TYPE_WARNING)
+    self.problems.other_problem("e2", type=transitfeed.TYPE_ERROR)
+    self.problems.other_problem("e3", type=transitfeed.TYPE_ERROR)
     self.problems.OtherProblem("w2", type=transitfeed.TYPE_WARNING)
     self.assertEquals(2, self.accumulator.warning_count())
     self.assertEquals(3, self.accumulator.error_count())
@@ -366,9 +366,9 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
       exceptions.append(transitfeed.OtherProblem(description="e%i" % i))
     exceptions = exceptions[10:] + exceptions[:10]
     self.problems = self.CreateLimitPerTypeProblemReporter(3)
-    self.accumulator = self.problems.GetAccumulator()
+    self.accumulator = self.problems.get_accumulator()
     for e in exceptions:
-      self.problems.AddToAccumulator(e)
+      self.problems.add_to_accumulator(e)
 
     self.assertEquals(0, self.accumulator.warning_count())
     self.assertEquals(20, self.accumulator.error_count())
@@ -383,12 +383,12 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
   def testLimitSortedTooFastTravel(self):
     """Sort by decreasing distance, keeping the N greatest."""
     self.problems = self.CreateLimitPerTypeProblemReporter(3)
-    self.accumulator = self.problems.GetAccumulator()
-    self.problems.TooFastTravel("t1", "prev stop", "next stop", 11230.4, 5,
+    self.accumulator = self.problems.get_accumulator()
+    self.problems.too_fast_travel("t1", "prev stop", "next stop", 11230.4, 5,
         None)
-    self.problems.TooFastTravel("t2", "prev stop", "next stop", 1120.4, 5, None)
-    self.problems.TooFastTravel("t3", "prev stop", "next stop", 1130.4, 5, None)
-    self.problems.TooFastTravel("t4", "prev stop", "next stop", 1230.4, 5, None)
+    self.problems.too_fast_travel("t2", "prev stop", "next stop", 1120.4, 5, None)
+    self.problems.too_fast_travel("t3", "prev stop", "next stop", 1130.4, 5, None)
+    self.problems.too_fast_travel("t4", "prev stop", "next stop", 1230.4, 5, None)
     self.assertEquals(0, self.accumulator.warning_count())
     self.assertEquals(4, self.accumulator.error_count())
     self.assertProblemsAttribute(transitfeed.TYPE_ERROR, "TooFastTravel",
@@ -397,9 +397,9 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
   def testLimitSortedStopTooFarFromParentStation(self):
     """Sort by decreasing distance, keeping the N greatest."""
     self.problems = self.CreateLimitPerTypeProblemReporter(3)
-    self.accumulator = self.problems.GetAccumulator()
+    self.accumulator = self.problems.get_accumulator()
     for i, distance in enumerate((1000, 3002.0, 1500, 2434.1, 5023.21)):
-      self.problems.StopTooFarFromParentStation(
+      self.problems.stop_too_far_from_parent_station(
           "s%d" % i, "S %d" % i, "p%d" % i, "P %d" % i, distance)
     self.assertEquals(5, self.accumulator.warning_count())
     self.assertEquals(0, self.accumulator.error_count())
@@ -409,9 +409,9 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
   def testLimitSortedStopsTooClose(self):
     """Sort by increasing distance, keeping the N closest."""
     self.problems = self.CreateLimitPerTypeProblemReporter(3)
-    self.accumulator = self.problems.GetAccumulator()
+    self.accumulator = self.problems.get_accumulator()
     for i, distance in enumerate((4.0, 3.0, 2.5, 2.2, 1.0, 0.0)):
-      self.problems.StopsTooClose(
+      self.problems.stops_too_close(
           "Sa %d" % i, "sa%d" % i, "Sb %d" % i, "sb%d" % i, distance)
     self.assertEquals(6, self.accumulator.warning_count())
     self.assertEquals(0, self.accumulator.error_count())

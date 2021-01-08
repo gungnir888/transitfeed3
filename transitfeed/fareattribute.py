@@ -101,22 +101,22 @@ class FareAttribute(GtfsObjectBase):
     return not self.__eq__(other)
 
   def ValidateFareId(self, problems):
-    if util.IsEmpty(self.fare_id):
+    if util.is_empty(self.fare_id):
       problems.MissingValue("fare_id")
 
   def ValidatePrice(self, problems):
     if self.price == None:
       problems.MissingValue("price")
     elif not isinstance(self.price, float) and not isinstance(self.price, int):
-      problems.InvalidValue("price", self.price)
+      problems.invalid_value("price", self.price)
     elif self.price < 0:
-      problems.InvalidValue("price", self.price)
+      problems.invalid_value("price", self.price)
 
   def ValidateCurrencyType(self, problems):
-    if util.IsEmpty(self.currency_type):
+    if util.is_empty(self.currency_type):
       problems.MissingValue("currency_type")
     elif self.currency_type not in util.ISO4217.codes:
-      problems.InvalidValue("currency_type", self.currency_type)
+      problems.invalid_value("currency_type", self.currency_type)
 
   def ValidatePaymentMethod(self, problems):
     if self.payment_method == "" or self.payment_method == None:

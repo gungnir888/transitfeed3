@@ -32,17 +32,17 @@ class Stop(transitfeed.Stop):
 
   # New validation function for field 'vehicle_type'.
   def ValidateVehicleType(self, problems):
-    self.vehicle_type = util.ValidateAndReturnIntValue(
+    self.vehicle_type = util.validate_and_return_int_value(
         self.vehicle_type, self._gtfs_factory.Route._ROUTE_TYPE_IDS, None, True,
         'vehicle_type', problems)
     # Entrances must not have a vehicle type, in general google transit does not
     # read vehicle types from stops with a parent station.
     if self.vehicle_type:
       if self.location_type == 2:
-        problems.InvalidValue('vehicle_type', self.location_type,
+        problems.invalid_value('vehicle_type', self.location_type,
               reason='an entrance must not have a vehicle type')
-      elif not util.IsEmpty(self.parent_station):
-        problems.InvalidValue('vehicle_type', self.location_type,
+      elif not util.is_empty(self.parent_station):
+        problems.invalid_value('vehicle_type', self.location_type,
               reason='Google Transit does not read vehicle types for stops '
               'having a parent station', type=problems_module.TYPE_WARNING)
 
@@ -55,11 +55,11 @@ class Stop(transitfeed.Stop):
   # Overriding transitfeed.Stop.ValidateStopLocationType().
   # Adding location_type 2 (entrance).
   def ValidateStopLocationType(self, problems):
-    self.location_type = util.ValidateAndReturnIntValue(
+    self.location_type = util.validate_and_return_int_value(
         self.location_type, [0, 1, 2], 0, True, 'location_type', problems)
     # Entrances must have a parent_station.
-    if self.location_type == 2 and util.IsEmpty(self.parent_station):
-      problems.InvalidValue('location_type', self.location_type,
+    if self.location_type == 2 and util.is_empty(self.parent_station):
+      problems.invalid_value('location_type', self.location_type,
           reason='an entrance must have a parent_station')
 
   # Overriding _ReportMissingRequiredField() in order to allow empty stop_name
@@ -70,5 +70,5 @@ class Stop(transitfeed.Stop):
       self.ValidateStopLocationType(problems)
       if self.location_type == 2:
         return
-    problems.MissingValue(required)
+    problems.missing_value(required)
     setattr(self, required, None)

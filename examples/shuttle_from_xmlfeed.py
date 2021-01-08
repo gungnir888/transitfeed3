@@ -41,7 +41,7 @@ class NoUnusedStopExceptionProblemReporter(transitfeed.ProblemReporter):
     accumulator = transitfeed.ExceptionProblemAccumulator()
     transitfeed.ProblemReporter.__init__(self, accumulator)
 
-  def UnusedStop(self, stop_id, stop_name):
+  def unused_stop(self, stop_id, stop_name):
     pass
 
 def SaveFeed(input, output):

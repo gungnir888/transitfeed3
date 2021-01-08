@@ -221,7 +221,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         "STAGECOACH,Stagecoach Hotel,48.20016,140\n")
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException('StopsTooClose')
-    self.assertTrue(e.FormatProblem().find("1.11m apart") != -1)
+    self.assertTrue(e.format_problem().find("1.11m apart") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testJustFarEnough(self):
@@ -244,7 +244,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         "STAGECOACH,Stagecoach Hotel,48.20016,140\n")
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException('StopsTooClose')
-    self.assertTrue(e.FormatProblem().find("0.00m apart") != -1)
+    self.assertTrue(e.format_problem().find("0.00m apart") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testStationsTooNear(self):
@@ -258,8 +258,8 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         "STAGECOACH,Stagecoach Hotel,48.20016,140,,\n")
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException('StationsTooClose')
-    self.assertTrue(e.FormatProblem().find("1.11m apart") != -1)
-    self.assertTrue(e.FormatProblem().find("BEATTY_AIRPORT_STATION") != -1)
+    self.assertTrue(e.format_problem().find("1.11m apart") != -1)
+    self.assertTrue(e.format_problem().find("BEATTY_AIRPORT_STATION") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testStopNearNonParentStation(self):
@@ -272,7 +272,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         "STAGECOACH,Stagecoach Hotel,48.20016,140,,\n")
     schedule = self.MakeLoaderAndLoad()
     e = self.accumulator.PopException('DifferentStationTooClose')
-    fmt = e.FormatProblem()
+    fmt = e.format_problem()
     self.assertTrue(re.search(
       r"parent_station of.*BULLFROG.*station.*BULLFROG_STATION.* 1.11m apart",
       fmt), fmt)
@@ -448,8 +448,8 @@ class DuplicateTripTestCase(util.ValidationTestCase):
 
     schedule.Validate(self.problems)
     e = self.accumulator.PopException('DuplicateTrip')
-    self.assertTrue(e.FormatProblem().find('t1 of route') != -1)
-    self.assertTrue(e.FormatProblem().find('t2 of route') != -1)
+    self.assertTrue(e.format_problem().find('t1 of route') != -1)
+    self.assertTrue(e.format_problem().find('t2 of route') != -1)
     self.accumulator.AssertNoMoreExceptions()
 
 
@@ -482,9 +482,9 @@ class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
 
     schedule.Validate(self.problems)
     e = self.accumulator.PopException("StopWithMultipleRouteTypes")
-    self.assertTrue(e.FormatProblem().find("Stop stop1") != -1)
-    self.assertTrue(e.FormatProblem().find("subway (ID=1)") != -1)
-    self.assertTrue(e.FormatProblem().find("bus line (ID=0)") != -1)
+    self.assertTrue(e.format_problem().find("Stop stop1") != -1)
+    self.assertTrue(e.format_problem().find("subway (ID=1)") != -1)
+    self.assertTrue(e.format_problem().find("bus line (ID=0)") != -1)
     self.accumulator.AssertNoMoreExceptions()
 
 

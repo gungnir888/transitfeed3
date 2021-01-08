@@ -34,7 +34,7 @@ class FareAttribute(transitfeed.FareAttribute):
     if len(agencies) > 1 or self.agency_id is not None:
       # If there is only one agency and Fare.agencyid is empty or not present
       # then it isn't an error
-      problems.InvalidAgencyID('agency_id', self.agency_id,
+      problems.invalid_agency_id('agency_id', self.agency_id,
                                  'fare', self.fare_id)
 
   def ValidateAfterAdd(self, problems):

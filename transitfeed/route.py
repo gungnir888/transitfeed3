@@ -85,7 +85,7 @@ class Route(GtfsObjectBase):
       assert self._schedule is not None
       schedule = self._schedule
     if trip_id is None:
-      trip_id = util.FindUniqueId(schedule.trips)
+      trip_id = util.find_unique_id(schedule.trips)
     if service_period is None:
       service_period = schedule.GetDefaultServicePeriod()
     trip_class = self.GetGtfsFactory().Trip
@@ -118,24 +118,24 @@ class Route(GtfsObjectBase):
     return d
 
   def ValidateRouteIdIsPresent(self, problems):
-    if util.IsEmpty(self.route_id):
-      problems.MissingValue('route_id')
+    if util.is_empty(self.route_id):
+      problems.missing_value('route_id')
 
   def ValidateRouteTypeIsPresent(self, problems):
-    if util.IsEmpty(self.route_type):
+    if util.is_empty(self.route_type):
       problems.MissingValue('route_type')
 
   def ValidateRouteShortAndLongNamesAreNotBlank(self, problems):
-    if util.IsEmpty(self.route_short_name) and \
-        util.IsEmpty(self.route_long_name):
-      problems.InvalidValue('route_short_name',
+    if util.is_empty(self.route_short_name) and \
+        util.is_empty(self.route_long_name):
+      problems.invalid_value('route_short_name',
                             self.route_short_name,
                             'Both route_short_name and '
                             'route_long name are blank.')
 
   def ValidateRouteShortNameIsNotTooLong(self, problems):
     if self.route_short_name and len(self.route_short_name) > 6:
-      problems.InvalidValue('route_short_name',
+      problems.invalid_value('route_short_name',
                             self.route_short_name,
                             'This route_short_name is relatively long, which '
                             'probably means that it contains a place name.  '
@@ -152,7 +152,7 @@ class Route(GtfsObjectBase):
       if (long_name.startswith(short_name + ' ') or
           long_name.startswith(short_name + '(') or
           long_name.startswith(short_name + '-')):
-        problems.InvalidValue('route_long_name',
+        problems.invalid_value('route_long_name',
                               self.route_long_name,
                               'route_long_name shouldn\'t contain '
                               'the route_short_name value, as both '
@@ -165,7 +165,7 @@ class Route(GtfsObjectBase):
       short_name = self.route_short_name.strip().lower()
       long_name = self.route_long_name.strip().lower()
       if long_name == short_name:
-        problems.InvalidValue('route_long_name',
+        problems.invalid_value('route_long_name',
                               self.route_long_name,
                               'route_long_name shouldn\'t be the same '
                               'the route_short_name value, as both '
@@ -178,7 +178,7 @@ class Route(GtfsObjectBase):
     if (self.route_desc and
         ((self.route_desc == self.route_short_name) or
          (self.route_desc == self.route_long_name))):
-      problems.InvalidValue('route_desc',
+      problems.invalid_value('route_desc',
                             self.route_desc,
                             'route_desc shouldn\'t be the same as '
                             'route_short_name or route_long_name')
@@ -186,23 +186,23 @@ class Route(GtfsObjectBase):
     if self.route_type is not None:
       try:
         if not isinstance(self.route_type, int):
-          self.route_type = util.NonNegIntStringToInt(self.route_type, problems)
+          self.route_type = util.non_neg_int_string_to_int(self.route_type, problems)
       except (TypeError, ValueError):
-        problems.InvalidValue('route_type', self.route_type)
+        problems.invalid_value('route_type', self.route_type)
       else:
         if self.route_type not in self._ROUTE_TYPE_IDS:
-          problems.InvalidValue('route_type',
+          problems.invalid_value('route_type',
                                 self.route_type,
                                 type=problems_module.TYPE_WARNING)
 
   def ValidateRouteUrl(self, problems):
     if self.route_url:
-      util.ValidateURL(self.route_url, 'route_url', problems)
+      util.validate_url(self.route_url, 'route_url', problems)
 
   def ValidateRouteColor(self, problems):
     if self.route_color:
-      if not util.IsValidHexColor(self.route_color):
-        problems.InvalidValue('route_color', self.route_color,
+      if not util.is_valid_hex_color(self.route_color):
+        problems.invalid_value('route_color', self.route_color,
                               'route_color should be a valid color description '
                               'which consists of 6 hexadecimal characters '
                               'representing the RGB values. Example: 44AA06')
@@ -210,8 +210,8 @@ class Route(GtfsObjectBase):
 
   def ValidateRouteTextColor(self, problems):
     if self.route_text_color:
-      if not util.IsValidHexColor(self.route_text_color):
-        problems.InvalidValue('route_text_color', self.route_text_color,
+      if not util.is_valid_hex_color(self.route_text_color):
+        problems.invalid_value('route_text_color', self.route_text_color,
                               'route_text_color should be a valid color '
                               'description, which consists of 6 hexadecimal '
                               'characters representing the RGB values. '
@@ -220,19 +220,19 @@ class Route(GtfsObjectBase):
 
   def ValidateRouteAndTextColors(self, problems):
     if self.route_color:
-      bg_lum  = util.ColorLuminance(self.route_color)
+      bg_lum  = util.color_luminance(self.route_color)
     else:
-      bg_lum = util.ColorLuminance('ffffff')   # white (default)
+      bg_lum = util.color_luminance('ffffff')   # white (default)
     if self.route_text_color:
-      txt_lum = util.ColorLuminance(self.route_text_color)
+      txt_lum = util.color_luminance(self.route_text_color)
     else:
-      txt_lum = util.ColorLuminance('000000')  # black (default)
+      txt_lum = util.color_luminance('000000')  # black (default)
     if abs(txt_lum - bg_lum) < 510/7.:
       # http://www.w3.org/TR/2000/WD-AERT-20000426#color-contrast recommends
       # a threshold of 125, but that is for normal text and too harsh for
       # big colored logos like line names, so we keep the original threshold
       # from r541 (but note that weight has shifted between RGB components).
-      problems.InvalidValue('route_color', self.route_color,
+      problems.invalid_value('route_color', self.route_color,
                             'The route_text_color and route_color should '
                             'be set to contrasting colors, as they are used '
                             'as the text and background color (respectively) '
@@ -248,7 +248,7 @@ class Route(GtfsObjectBase):
 
   def ValidateBikesAllowed(self, problems):
     if self.bikes_allowed:
-      util.ValidateYesNoUnknown(self.bikes_allowed, 'bikes_allowed', problems)
+      util.validate_yes_no_unknown(self.bikes_allowed, 'bikes_allowed', problems)
 
   def ValidateBeforeAdd(self, problems):
     self.ValidateRouteIdIsPresent(problems)

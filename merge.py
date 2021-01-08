@@ -77,7 +77,7 @@ def ApproximateDistanceBetweenPoints(pa, pb):
   blat, blon = pb
   sa = transitfeed.Stop(lat=alat, lng=alon)
   sb = transitfeed.Stop(lat=blat, lng=blon)
-  return transitfeed.ApproximateDistanceBetweenStops(sa, sb)
+  return transitfeed.approximate_distance_between_stops(sa, sb)
 
 
 class Error(Exception):
@@ -113,7 +113,7 @@ class MergeProblemWithContext(transitfeed.ExceptionWithContext):
     transitfeed.ExceptionWithContext.__init__(self, None, None, **kwargs)
     self.dataset_merger = dataset_merger
 
-  def FormatContext(self):
+  def format_context(self):
     return "In files '%s'" % self.dataset_merger.FILE_NAME
 
 
@@ -145,18 +145,18 @@ class MergeProblemReporter(transitfeed.ProblemReporter):
     transitfeed.ProblemReporter.__init__(self, accumulator)
 
   def SameIdButNotMerged(self, dataset, entity_id, reason):
-    self.AddToAccumulator(
+    self.add_to_accumulator(
         SameIdButNotMerged(dataset, id=entity_id, reason=reason))
 
   def CalendarsNotDisjoint(self, dataset):
-    self.AddToAccumulator(
+    self.add_to_accumulator(
         CalendarsNotDisjoint(dataset, problem_type=transitfeed.TYPE_ERROR))
 
   def MergeNotImplemented(self, dataset):
-    self.AddToAccumulator(MergeNotImplemented(dataset))
+    self.add_to_accumulator(MergeNotImplemented(dataset))
 
   def FareRulesBroken(self, dataset):
-    self.AddToAccumulator(FareRulesBroken(dataset))
+    self.add_to_accumulator(FareRulesBroken(dataset))
 
 
 class HTMLProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
@@ -171,14 +171,14 @@ class HTMLProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self._error_count = 0
     self._notice_count = 0
 
-  def _report(self, merge_problem):
+  def report(self, merge_problem):
     # Notices are handled special
-    if merge_problem.IsNotice():
+    if merge_problem.is_notice():
       self._notice_count += 1
       self._notices.append(merge_problem)
       return
 
-    if merge_problem.IsWarning():
+    if merge_problem.is_warning():
       dataset_problems = self._dataset_warnings
       self._warning_count += 1
     else:
@@ -186,7 +186,7 @@ class HTMLProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
       self._error_count += 1
 
     problem_html = '<li>%s</li>' % (
-        merge_problem.FormatProblem().replace('\n', '<br>'))
+        merge_problem.format_problem().replace('\n', '<br>'))
     dataset_problems.setdefault(merge_problem.dataset_merger, []).append(
         problem_html)
 
@@ -270,11 +270,11 @@ class HTMLProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     """
     items = []
     for e in self._notices:
-      d = e.GetDictToFormat()
+      d = e.get_dict_to_format()
       if 'url' in d.keys():
         d['url'] = '<a href="%(url)s">%(url)s</a>' % d
       items.append('<li class="notice">%s</li>' %
-                   e.FormatProblem(d).replace('\n', '<br>'))
+                   e.format_problem(d).replace('\n', '<br>'))
     if items:
       return '<h2>Notices:</h2>\n<ul>%s</ul>\n' % '\n'.join(items)
     else:
@@ -363,7 +363,7 @@ def LoadWithoutErrors(path, memory_db):
     print((
         "\n\nFeeds to merge must load without any errors.\n"
         "While loading %s the following error was found:\n%s\n%s\n" %
-        (path, e.FormatContext(), str(e))), file=sys.stderr)
+        (path, e.format_context(), str(e))), file=sys.stderr)
     sys.exit(1)
   return schedule
 
@@ -946,7 +946,7 @@ class StopMerger(DataSetMerger):
     Raises:
       MergeError: The stops could not be merged.
     """
-    distance = transitfeed.ApproximateDistanceBetweenStops(a, b)
+    distance = transitfeed.approximate_distance_between_stops(a, b)
     if distance > self.largest_stop_distance:
       raise MergeError("Stops are too far apart: %.1fm "
                        "(largest_stop_distance is %.1fm)." %
@@ -1834,7 +1834,7 @@ https://github.com/google/transitfeed/wiki/Merge
   accumulator = HTMLProblemAccumulator()
   problem_reporter = MergeProblemReporter(accumulator)
 
-  util.CheckVersion(problem_reporter, options.latest_version)
+  util.check_version(problem_reporter, options.latest_version)
 
   feed_merger = FeedMerger(a_schedule, b_schedule, merged_schedule,
                            problem_reporter)
@@ -1864,4 +1864,4 @@ https://github.com/google/transitfeed/wiki/Merge
 
 
 if __name__ == '__main__':
-  util.RunWithCrashHandler(main)
+  util.run_with_crash_handler(main)

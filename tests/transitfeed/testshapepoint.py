@@ -53,8 +53,8 @@ class ShapeValidationTestCase(util.ValidationTestCase):
     # distance decreasing is bad, but staying the same is OK
     shape.AddPoint(36.905019, -116.763206, 4, self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('Each subsequent point', e.FormatProblem())
-    self.assertMatchesRegex('distance was 5.000000.', e.FormatProblem())
+    self.assertMatchesRegex('Each subsequent point', e.format_problem())
+    self.assertMatchesRegex('distance was 5.000000.', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
     shape.AddPoint(36.925019, -116.764206, 6, self.problems)
@@ -65,15 +65,15 @@ class ShapeValidationTestCase(util.ValidationTestCase):
     shapepoint = transitfeed.ShapePoint('TEST', 36.915760, -116.7156, 5, 10)
     shape.AddShapePointObjectUnsorted(shapepoint, self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('Each subsequent point', e.FormatProblem())
-    self.assertMatchesRegex('distance was 8.000000.', e.FormatProblem())
+    self.assertMatchesRegex('Each subsequent point', e.format_problem())
+    self.assertMatchesRegex('distance was 8.000000.', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
     shapepoint = transitfeed.ShapePoint('TEST', 36.915760, -116.7156, 6, 11)
     shape.AddShapePointObjectUnsorted(shapepoint, self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('The sequence number 6 occurs ', e.FormatProblem())
-    self.assertMatchesRegex('once in shape TEST.', e.FormatProblem())
+    self.assertMatchesRegex('The sequence number 6 occurs ', e.format_problem())
+    self.assertMatchesRegex('once in shape TEST.', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
 
@@ -86,19 +86,19 @@ class ShapePointValidationTestCase(util.ValidationTestCase):
     shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', '00', '0')
     shapepoint.ParseAttributes(self.problems)
     e = self.accumulator.PopException('InvalidNonNegativeIntegerValue')
-    self.assertMatchesRegex('not have a leading zero', e.FormatProblem())
+    self.assertMatchesRegex('not have a leading zero', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
     shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', -1, '0')
     shapepoint.ParseAttributes(self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('Value should be a number', e.FormatProblem())
+    self.assertMatchesRegex('Value should be a number', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
     shapepoint = transitfeed.ShapePoint('T', '0.1', '0.1', '1', '0')
     shapepoint.ParseAttributes(self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('too close to 0, 0,', e.FormatProblem())
+    self.assertMatchesRegex('too close to 0, 0,', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
     shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', '0', '')
@@ -106,6 +106,6 @@ class ShapePointValidationTestCase(util.ValidationTestCase):
     shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', '0', '-1')
     shapepoint.ParseAttributes(self.problems)
     e = self.accumulator.PopException('InvalidValue')
-    self.assertMatchesRegex('Invalid value -1.0', e.FormatProblem())
-    self.assertMatchesRegex('should be a positive number', e.FormatProblem())
+    self.assertMatchesRegex('Invalid value -1.0', e.format_problem())
+    self.assertMatchesRegex('should be a positive number', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
