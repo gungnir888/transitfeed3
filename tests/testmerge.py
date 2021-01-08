@@ -76,7 +76,7 @@ class TestingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self.problems = []
     self._expect_classes = []
 
-  def _Report(self, problem):
+  def _report(self, problem):
     problem.FormatProblem()  # Shouldn't crash
     self.problems.append(problem)
     for problem_class in self._expect_classes:
@@ -1467,7 +1467,7 @@ class TestHTMLProblemAccumulator(util.TestCase):
     old_feed_path = '/path/to/old/feed'
     new_feed_path = '/path/to/new/feed'
     merged_feed_path = '/path/to/merged/feed'
-    self.accumulator.WriteOutput(output_file, self.feed_merger,
+    self.accumulator.write_output(output_file, self.feed_merger,
                                  old_feed_path, new_feed_path,
                                  merged_feed_path)
 

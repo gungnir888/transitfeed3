@@ -66,7 +66,7 @@ class ProblemReporter(object):
 
   def AddToAccumulator(self, e):
     """Report an exception to the Problem Accumulator"""
-    self.accumulator._Report(e)
+    self.accumulator._report(e)
 
   def NewVersionAvailable(self, version):
     e = NewVersionAvailable(version=version, type=TYPE_NOTICE,
@@ -362,14 +362,14 @@ class ProblemReporter(object):
 class ProblemAccumulatorInterface(object):
   """The base class for Problem Accumulators, which defines their interface."""
 
-  def _Report(self, e):
+  def _report(self, e):
     raise NotImplementedError("Please use a concrete Problem Accumulator that "
                               "implements error and warning handling.")
 
 
 class SimpleProblemAccumulator(ProblemAccumulatorInterface):
   """This is a basic problem accumulator that just prints to console."""
-  def _Report(self, e):
+  def _report(self, e):
     context = e.FormatContext()
     if context:
       print(context)
@@ -788,11 +788,11 @@ class ExceptionProblemAccumulator(ProblemAccumulatorInterface):
     self.raise_warnings = raise_warnings
     self.accumulator = SimpleProblemAccumulator()
 
-  def _Report(self, e):
+  def _report(self, e):
     if self.raise_warnings or e.IsError():
       raise e
     else:
-      self.accumulator._Report(e)
+      self.accumulator._report(e)
 
 
 default_accumulator = ExceptionProblemAccumulator()

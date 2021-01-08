@@ -51,7 +51,7 @@ class TextBigStackTestResult(unittest._TextTestResult):
     return ''.join(FormatException(exctype, value, tb))
 
 
-def FormatException(exctype, value, tb, length=None):
+def format_exception(exctype, value, tb, length=None):
   frame_records = inspect.getinnerframes(tb, 3)
 
   dump = []

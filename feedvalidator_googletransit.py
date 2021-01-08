@@ -23,9 +23,9 @@ from transitfeed import util
 
 
 def main():
-  (feed, options) = feedvalidator.ParseCommandLineArguments()
+  (feed, options) = feedvalidator.parse_command_line_arguments()
   options.extension = 'extensions.googletransit'
-  return feedvalidator.RunValidationFromOptions(feed, options)
+  return feedvalidator.run_validation_from_options(feed, options)
 
 
 if __name__ == '__main__':

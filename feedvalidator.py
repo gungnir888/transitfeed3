@@ -35,32 +35,35 @@ from transitfeed import util
 import webbrowser
 
 
-def MaybePluralizeWord(count, word):
+def maybe_pluralize_word(count, word):
     if count == 1:
         return word
-    else:
-        return word + 's'
+    return f'{word}s'
 
 
-def PrettyNumberWord(count, word):
-    return '%d %s' % (count, MaybePluralizeWord(count, word))
+def pretty_number_word(count, word):
+    return '%d %s' % (count, maybe_pluralize_word(count, word))
 
 
-def UnCamelCase(camel):
+def un_camel_case(camel):
     return re.sub(r'([a-z])([A-Z])', r'\1 \2', camel)
 
 
-def ProblemCountText(error_count, warning_count):
+def camel_to_snake(camel):
+    return un_camel_case(camel).lower().replace(' ', '_')
+
+
+def problem_count_text(error_count, warning_count):
     results = []
     if error_count:
-        results.append(PrettyNumberWord(error_count, 'error'))
+        results.append(pretty_number_word(error_count, 'error'))
     if warning_count:
-        results.append(PrettyNumberWord(warning_count, 'warning'))
+        results.append(pretty_number_word(warning_count, 'warning'))
 
     return ' and '.join(results)
 
 
-def CalendarSummary(schedule):
+def calendar_summary(schedule):
     today = datetime.date.today()
     summary_end_date = today + datetime.timedelta(days=60)
     start_date, end_date = schedule.GetDateRange()
@@ -100,28 +103,25 @@ def CalendarSummary(schedule):
     max_trips = max(trips_dates.keys())
     min_trips = min(trips_dates.keys())
 
-    calendar_summary = {}
-    calendar_summary['mean_trips'] = mean_trips
-    calendar_summary['max_trips'] = max_trips
-    calendar_summary['max_trips_dates'] = FormatDateList(trips_dates[max_trips])
-    calendar_summary['min_trips'] = min_trips
-    calendar_summary['min_trips_dates'] = FormatDateList(trips_dates[min_trips])
-    calendar_summary['date_trips_departures'] = date_trips_departures
-    calendar_summary['date_summary_range'] = "%s to %s" % (
-        date_trips_departures[0][0].strftime("%a %b %d"),
-        date_trips_departures[-1][0].strftime("%a %b %d"))
-
-    return calendar_summary
+    return {
+        'mean_trips': mean_trips, 'max_trips': max_trips,
+        'max_trips_dates': format_date_list(trips_dates[max_trips]), 'min_trips': min_trips,
+        'min_trips_dates': format_date_list(trips_dates[min_trips]),
+        'date_trips_departures': date_trips_departures, 'date_summary_range': "%s to %s" % (
+            date_trips_departures[0][0].strftime("%a %b %d"),
+            date_trips_departures[-1][0].strftime("%a %b %d")
+        )
+    }
 
 
-def FormatDateList(dates):
+def format_date_list(dates):
     if not dates:
         return "0 service dates"
 
     formatted = [d.strftime("%a %b %d") for d in dates[0:3]]
     if len(dates) > 3:
         formatted.append("...")
-    return "%s (%s)" % (PrettyNumberWord(len(dates), "service date"),
+    return "%s (%s)" % (pretty_number_word(len(dates), "service date"),
                         ", ".join(formatted))
 
 
@@ -139,10 +139,10 @@ class CountingConsoleProblemAccumulator(transitfeed.SimpleProblemAccumulator):
         self._notice_count = 0
         self._ignore_types = ignore_types or set()
 
-    def _Report(self, e):
+    def _report(self, e):
         if e.__class__.__name__ in self._ignore_types:
             return
-        transitfeed.SimpleProblemAccumulator._Report(self, e)
+        transitfeed.SimpleProblemAccumulator._report(self, e)
         if e.IsError():
             self._error_count += 1
         elif e.IsWarning():
@@ -150,23 +150,24 @@ class CountingConsoleProblemAccumulator(transitfeed.SimpleProblemAccumulator):
         elif e.IsNotice():
             self._notice_count += 1
 
-    def ErrorCount(self):
+    def error_count(self):
         return self._error_count
 
-    def WarningCount(self):
+    def warning_count(self):
         return self._warning_count
 
-    def NoticeCount(self):
+    def notice_count(self):
         return self._notice_count
 
-    def FormatCount(self):
-        return ProblemCountText(self.ErrorCount(), self.WarningCount())
+    def format_count(self):
+        return problem_count_text(self.error_count(), self.warning_count())
 
-    def HasIssues(self):
-        return self.ErrorCount() or self.WarningCount()
+    def has_issues(self):
+        return self.error_count() or self.warning_count()
 
-    def HasNotices(self):
-        return self.NoticeCount()
+    def has_notices(self):
+        return self.notice_count()
+
 
 class BoundedProblemList(object):
     """A list of one type of ExceptionWithContext objects with bounded size."""
@@ -175,7 +176,7 @@ class BoundedProblemList(object):
         self._exceptions = []
         self._size_bound = size_bound
 
-    def Add(self, e):
+    def add(self, e):
         self._count += 1
         try:
             bisect.insort(self._exceptions, e)
@@ -191,15 +192,23 @@ class BoundedProblemList(object):
             if self._count > self._size_bound:
                 del self._exceptions[-1]
 
-    def _GetDroppedCount(self):
+    def _get_dropped_count(self):
         return self._count - len(self._exceptions)
 
     def __repr__(self):
         return "<BoundedProblemList %s>" % repr(self._exceptions)
 
-    count = property(lambda s: s._count)
-    dropped_count = property(_GetDroppedCount)
-    problems = property(lambda s: s._exceptions)
+    @property
+    def count(self):
+        return self._count
+
+    @property
+    def dropped_count(self):
+        return self._get_dropped_count()
+
+    @property
+    def problems(self):
+        return self._exceptions
 
 
 class LimitPerTypeProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
@@ -220,37 +229,38 @@ class LimitPerTypeProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
         }
         self._ignore_types = ignore_types or set()
 
-    def HasIssues(self):
+    def has_issues(self):
         return (self._type_to_name_to_problist[TYPE_ERROR] or
                 self._type_to_name_to_problist[TYPE_WARNING])
 
-    def HasNotices(self):
+    def has_notices(self):
         return self._type_to_name_to_problist[TYPE_NOTICE]
 
-    def _Report(self, e):
+    def _report(self, e):
         if e.__class__.__name__ in self._ignore_types:
             return
-        self._type_to_name_to_problist[e.GetType()][e.__class__.__name__].Add(e)
+        self._type_to_name_to_problist[e.GetType()][e.__class__.__name__].add(e)
 
-    def ErrorCount(self):
+    def error_count(self):
         error_sets = self._type_to_name_to_problist[TYPE_ERROR].values()
         return sum(map(lambda v: v.count, error_sets))
 
-    def WarningCount(self):
+    def warning_count(self):
         warning_sets = self._type_to_name_to_problist[TYPE_WARNING].values()
         return sum(map(lambda v: v.count, warning_sets))
 
-    def ProblemList(self, problem_type, class_name):
+    def problem_list(self, problem_type, class_name):
         """Return the BoundedProblemList object for given type and class."""
         return self._type_to_name_to_problist[problem_type][class_name]
 
-    def ProblemListMap(self, problem_type):
+    def problem_list_map(self, problem_type):
         """Return the map from class name to BoundedProblemList object."""
         return self._type_to_name_to_problist[problem_type]
 
 
 class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
-    def FormatType(self, level_name, class_problist):
+
+    def format_type(self, level_name, class_problist):
         """Write the HTML dumping all problems of one type.
 
         Args:
@@ -265,16 +275,17 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
         output = []
         for classname, problist in class_problist:
             output.append('<h4 class="issueHeader"><a name="%s%s">%s</a></h4><ul>\n' %
-                          (level_name, classname, UnCamelCase(classname)))
+                          (level_name, classname, un_camel_case(classname)))
             for e in problist.problems:
-                self.FormatException(e, output)
+                self.format_exception(e, output)
             if problist.dropped_count:
                 output.append('<li>and %d more of this type.' %
                               (problist.dropped_count))
             output.append('</ul>\n')
         return ''.join(output)
 
-    def FormatTypeSummaryTable(self, level_name, name_to_problist):
+    @staticmethod
+    def format_type_summary_table(level_name, name_to_problist):
         """Return an HTML table listing the number of problems by class name.
 
         Args:
@@ -284,17 +295,17 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
         Returns:
           HTML in a string
         """
-        output = []
-        output.append('<table>')
+        output = ['<table>']
         for classname in sorted(name_to_problist.keys()):
             problist = name_to_problist[classname]
-            human_name = MaybePluralizeWord(problist.count, UnCamelCase(classname))
+            human_name = maybe_pluralize_word(problist.count, un_camel_case(classname))
             output.append('<tr><td>%d</td><td><a href="#%s%s">%s</a></td></tr>\n' %
                           (problist.count, level_name, classname, human_name))
         output.append('</table>\n')
         return ''.join(output)
 
-    def FormatException(self, e, output):
+    @staticmethod
+    def format_exception(e, output):
         """Append HTML version of e to list output."""
         d = e.GetDictToFormat()
         for k in ('file_name', 'feedname', 'column_name'):
@@ -331,52 +342,48 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
                           table_header)
             output.append('<tr>%s</tr></table>\n' %
                           table_data)
-        except AttributeError as e:
+        except AttributeError:
             pass  # Hope this was getting an attribute from e ;-)
         output.append('<br></li>\n')
 
-    def FormatCount(self):
-        return ProblemCountText(self.ErrorCount(), self.WarningCount())
+    def format_count(self):
+        return problem_count_text(self.error_count(), self.warning_count())
 
-    def CountTable(self):
-        output = []
-        output.append('<table class="count_outside">\n')
-        output.append('<tr>')
-        if self.ProblemListMap(TYPE_ERROR):
+    def count_table(self):
+        output = ['<table class="count_outside">\n', '<tr>']
+        if self.problem_list_map(TYPE_ERROR):
             output.append('<td><span class="fail">%s</span></td>' %
-                          PrettyNumberWord(self.ErrorCount(), "error"))
-        if self.ProblemListMap(TYPE_WARNING):
+                          pretty_number_word(self.error_count(), "error"))
+        if self.problem_list_map(TYPE_WARNING):
             output.append('<td><span class="fail">%s</span></td>' %
-                          PrettyNumberWord(self.WarningCount(), "warning"))
+                          pretty_number_word(self.warning_count(), "warning"))
         output.append('</tr>\n<tr>')
-        if self.ProblemListMap(TYPE_ERROR):
+        if self.problem_list_map(TYPE_ERROR):
             output.append('<td>\n')
-            output.append(self.FormatTypeSummaryTable("Error",
-                                                      self.ProblemListMap(TYPE_ERROR)))
+            output.append(self.format_type_summary_table("Error", self.problem_list_map(TYPE_ERROR)))
             output.append('</td>\n')
-        if self.ProblemListMap(TYPE_WARNING):
+        if self.problem_list_map(TYPE_WARNING):
             output.append('<td>\n')
-            output.append(self.FormatTypeSummaryTable("Warning",
-                                                      self.ProblemListMap(TYPE_WARNING)))
+            output.append(self.format_type_summary_table("Warning", self.problem_list_map(TYPE_WARNING)))
             output.append('</td>\n')
         output.append('</table>')
         return ''.join(output)
 
-    def WriteOutput(self, feed_location, f, schedule, extension):
+    def write_output(self, feed_location, f, schedule, extension):
         """Write the html output to f."""
-        if self.HasIssues():
-            if self.ErrorCount() + self.WarningCount() == 1:
+        if self.has_issues():
+            if self.error_count() + self.warning_count() == 1:
                 summary = ('<span class="fail">Found this problem:</span>\n%s' %
-                           self.CountTable())
+                           self.count_table())
             else:
                 summary = ('<span class="fail">Found these problems:</span>\n%s' %
-                           self.CountTable())
+                           self.count_table())
         else:
             summary = '<span class="pass">feed validated successfully</span>'
 
-        if self.HasNotices():
+        if self.has_notices():
             summary = ('<h3 class="issueHeader">Notices:</h3>' +
-                       self.FormatType("Notice", self.ProblemListMap(TYPE_NOTICE).items()) +
+                       self.format_type("Notice", self.problem_list_map(TYPE_NOTICE).items()) +
                        summary)
 
         basename = os.path.basename(feed_location)
@@ -390,7 +397,7 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
         dates = "No valid service dates found"
         (start, end) = schedule.GetDateRange()
         if start and end:
-            def FormatDate(yyyymmdd):
+            def format_date(yyyymmdd):
                 src_format = "%Y%m%d"
                 dst_format = "%B %d, %Y"
                 try:
@@ -399,75 +406,79 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
                 except ValueError:
                     return yyyymmdd
 
-            formatted_start = FormatDate(start)
-            formatted_end = FormatDate(end)
+            formatted_start = format_date(start)
+            formatted_end = format_date(end)
             dates = "%s to %s" % (formatted_start, formatted_end)
 
-        calendar_summary = CalendarSummary(schedule)
-        if calendar_summary:
-            calendar_summary_html = """<br>
-During the upcoming service dates %(date_summary_range)s:
-<table>
-<tr><th class="header">Average trips per date:</th><td class="header">%(mean_trips)s</td></tr>
-<tr><th class="header">Most trips on a date:</th><td class="header">%(max_trips)s, on %(max_trips_dates)s</td></tr>
-<tr><th class="header">Least trips on a date:</th><td class="header">%(min_trips)s, on %(min_trips_dates)s</td></tr>
-</table>""" % calendar_summary
+        cal_summary = calendar_summary(schedule)
+        if cal_summary:
+            calendar_summary_html = """
+            <br>
+            During the upcoming service dates %(date_summary_range)s:
+            <table>
+            <tr><th class="header">Average trips per date:</th><td class="header">%(mean_trips)s</td></tr>
+            <tr><th class="header">Most trips on a date:</th>
+            <td class="header">%(max_trips)s, on %(max_trips_dates)s</td></tr>
+            <tr><th class="header">Least trips on a date:</th>
+            <td class="header">%(min_trips)s, on %(min_trips_dates)s</td></tr>
+            </table>""" % cal_summary
         else:
             calendar_summary_html = ""
 
         output_prefix = """
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>FeedValidator: %(feed_file)s</title>
-<style>
-body {font-family: Georgia, serif; background-color: white}
-.path {color: gray}
-div.problem {max-width: 500px}
-table.dump td,th {background-color: khaki; padding: 2px; font-family:monospace}
-table.dump td.problem,th.problem {background-color: dc143c; color: white; padding: 2px; font-family:monospace}
-table.count_outside td {vertical-align: top}
-table.count_outside {border-spacing: 0px; }
-table {border-spacing: 5px 0px; margin-top: 3px}
-h3.issueHeader {padding-left: 0.5em}
-h4.issueHeader {padding-left: 1em}
-.pass {background-color: lightgreen}
-.fail {background-color: yellow}
-.notice {background-color: yellow}
-.pass, .fail {font-size: 16pt}
-.header {background-color: white; font-family: Georgia, serif; padding: 0px}
-th.header {text-align: right; font-weight: normal; color: gray}
-.footer {font-size: 10pt}
-</style>
-</head>
-<body>
-GTFS validation results for feed:<br>
-<code><span class="path">%(feed_dir)s</span><b>%(feed_file)s</b></code><br>
-FeedValidator extension used: %(extension)s
-<br><br>
-<table>
-<tr><th class="header">Agencies:</th><td class="header">%(agencies)s</td></tr>
-<tr><th class="header">Routes:</th><td class="header">%(routes)s</td></tr>
-<tr><th class="header">Stops:</th><td class="header">%(stops)s</td></tr>
-<tr><th class="header">Trips:</th><td class="header">%(trips)s</td></tr>
-<tr><th class="header">Shapes:</th><td class="header">%(shapes)s</td></tr>
-<tr><th class="header">Effective:</th><td class="header">%(dates)s</td></tr>
-</table>
-%(calendar_summary)s
-<br>
-%(problem_summary)s
-<br><br>
-""" % { "feed_file": feed_path[1],
-        "feed_dir": feed_path[0],
-        "agencies": agencies,
-        "routes": len(schedule.GetRouteList()),
-        "stops": len(schedule.GetStopList()),
-        "trips": len(schedule.GetTripList()),
-        "shapes": len(schedule.GetShapeList()),
-        "dates": dates,
-        "problem_summary": summary,
-        "calendar_summary": calendar_summary_html,
-        "extension": extension}
+        <html>
+        <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>FeedValidator: %(feed_file)s</title>
+        <style>
+        body {font-family: Georgia, serif; background-color: white}
+        .path {color: gray}
+        div.problem {max-width: 500px}
+        table.dump td,th {background-color: khaki; padding: 2px; font-family:monospace}
+        table.dump td.problem,th.problem {background-color: dc143c; color: white; padding: 2px; font-family:monospace}
+        table.count_outside td {vertical-align: top}
+        table.count_outside {border-spacing: 0px; }
+        table {border-spacing: 5px 0px; margin-top: 3px}
+        h3.issueHeader {padding-left: 0.5em}
+        h4.issueHeader {padding-left: 1em}
+        .pass {background-color: lightgreen}
+        .fail {background-color: yellow}
+        .notice {background-color: yellow}
+        .pass, .fail {font-size: 16pt}
+        .header {background-color: white; font-family: Georgia, serif; padding: 0px}
+        th.header {text-align: right; font-weight: normal; color: gray}
+        .footer {font-size: 10pt}
+        </style>
+        </head>
+        <body>
+        GTFS validation results for feed:<br>
+        <code><span class="path">%(feed_dir)s</span><b>%(feed_file)s</b></code><br>
+        FeedValidator extension used: %(extension)s
+        <br><br>
+        <table>
+        <tr><th class="header">Agencies:</th><td class="header">%(agencies)s</td></tr>
+        <tr><th class="header">Routes:</th><td class="header">%(routes)s</td></tr>
+        <tr><th class="header">Stops:</th><td class="header">%(stops)s</td></tr>
+        <tr><th class="header">Trips:</th><td class="header">%(trips)s</td></tr>
+        <tr><th class="header">Shapes:</th><td class="header">%(shapes)s</td></tr>
+        <tr><th class="header">Effective:</th><td class="header">%(dates)s</td></tr>
+        </table>
+        %(calendar_summary)s
+        <br>
+        %(problem_summary)s
+        <br><br>""" % {
+            "feed_file": feed_path[1],
+            "feed_dir": feed_path[0],
+            "agencies": agencies,
+            "routes": len(schedule.GetRouteList()),
+            "stops": len(schedule.GetStopList()),
+            "trips": len(schedule.GetTripList()),
+            "shapes": len(schedule.GetShapeList()),
+            "dates": dates,
+            "problem_summary": summary,
+            "calendar_summary": calendar_summary_html,
+            "extension": extension
+        }
 
         # In output_suffix string
         # time.strftime() returns a regular local time string (not a Unicode one) with
@@ -487,28 +498,28 @@ FeedValidator</a> version %s on %s.
 </html>""" % (transitfeed.__version__, time_unicode)
 
         f.write(output_prefix)
-        if self.ProblemListMap(TYPE_ERROR):
+        if self.problem_list_map(TYPE_ERROR):
             f.write('<h3 class="issueHeader">Errors:</h3>')
-            f.write(self.FormatType("Error", self.ProblemListMap(TYPE_ERROR).items()))
-        if self.ProblemListMap(TYPE_WARNING):
+            f.write(self.format_type("Error", self.problem_list_map(TYPE_ERROR).items()))
+        if self.problem_list_map(TYPE_WARNING):
             f.write('<h3 class="issueHeader">Warnings:</h3>')
-            f.write(self.FormatType("Warning", self.ProblemListMap(TYPE_WARNING).items()))
+            f.write(self.format_type("Warning", self.problem_list_map(TYPE_WARNING).items()))
         f.write(output_suffix)
 
 
-def RunValidationOutputFromOptions(feed, options):
+def run_validation_output_from_options(feed, options):
     """Validate feed, output results per options and return an exit code."""
     if options.output.upper() == "CONSOLE":
-        return RunValidationOutputToConsole(feed, options)
+        return run_validation_output_to_console(feed, options)
     else:
-        return RunValidationOutputToFilename(feed, options, options.output)
+        return run_validation_output_to_filename(feed, options, options.output)
 
 
-def RunValidationOutputToFilename(feed, options, output_filename):
+def run_validation_output_to_filename(feed, options, output_filename):
     """Validate feed, save HTML at output_filename and return an exit code."""
     try:
         output_file = open(output_filename, 'w')
-        exit_code = RunValidationOutputToFile(feed, options, output_file)
+        exit_code = run_validation_output_to_file(feed, options, output_file)
         output_file.close()
     except IOError as e:
         print('Error while writing %s: %s' % (output_filename, e))
@@ -521,30 +532,30 @@ def RunValidationOutputToFilename(feed, options, output_filename):
     return exit_code
 
 
-def RunValidationOutputToFile(feed, options, output_file):
+def run_validation_output_to_file(feed, options, output_file):
     """Validate feed, write HTML to output_file and return an exit code."""
     accumulator = HTMLCountingProblemAccumulator(options.limit_per_type,
                                                  options.error_types_ignore_list)
     problems = transitfeed.ProblemReporter(accumulator)
-    schedule, exit_code = RunValidation(feed, options, problems)
+    schedule, exit_code = run_validation(feed, options, problems)
     if isinstance(feed, str):
         feed_location = feed
     else:
         feed_location = getattr(feed, 'name', repr(feed))
-    accumulator.WriteOutput(feed_location, output_file, schedule, options.extension)
+    accumulator.write_output(feed_location, output_file, schedule, options.extension)
     return exit_code
 
 
-def RunValidationOutputToConsole(feed, options):
+def run_validation_output_to_console(feed, options):
     """Validate feed, print reports and return an exit code."""
     accumulator = CountingConsoleProblemAccumulator(
         options.error_types_ignore_list)
     problems = transitfeed.ProblemReporter(accumulator)
-    _, exit_code = RunValidation(feed, options, problems)
+    _, exit_code = run_validation(feed, options, problems)
     return exit_code
 
 
-def RunValidation(feed, options, problems):
+def run_validation(feed, options, problems):
     """Validate feed, returning the loaded Schedule and exit code.
 
     Args:
@@ -562,6 +573,8 @@ def RunValidation(feed, options, problems):
     util.CheckVersion(problems, options.latest_version)
 
     # TODO: Add tests for this flag in testfeedvalidator.py
+    extension_module = transitfeed
+
     if options.extension:
         try:
             __import__(options.extension)
@@ -571,18 +584,17 @@ def RunValidation(feed, options, problems):
             print("Could not import extension %s! Please ensure it is a proper "
                   "Python module." % options.extension)
             exit(2)
-    else:
-        extension_module = transitfeed
 
     gtfs_factory = extension_module.GetGtfsFactory()
 
     print('validating %s' % feed)
     print('FeedValidator extension used: %s' % options.extension)
-    loader = gtfs_factory.Loader(feed, problems=problems, extra_validation=False,
-                                 memory_db=options.memory_db,
-                                 check_duplicate_trips= \
-                                     options.check_duplicate_trips,
-                                 gtfs_factory=gtfs_factory)
+    loader = gtfs_factory.Loader(
+        feed, problems=problems, extra_validation=False,
+        memory_db=options.memory_db,
+        check_duplicate_trips=options.check_duplicate_trips,
+        gtfs_factory=gtfs_factory
+    )
     schedule = loader.Load()
     # Start validation: children are already validated by the loader.
     schedule.Validate(service_gap_interval=options.service_gap_interval,
@@ -593,8 +605,8 @@ def RunValidation(feed, options, problems):
         raise Exception('For testing the feed validator crash handler.')
 
     accumulator = problems.GetAccumulator()
-    if accumulator.HasIssues():
-        print('ERROR: %s found' % accumulator.FormatCount())
+    if accumulator.has_issues():
+        print('ERROR: %s found' % accumulator.format_count())
         return schedule, 1
     else:
         print('feed validated successfully')
@@ -602,11 +614,11 @@ def RunValidation(feed, options, problems):
 
 
 def main():
-    (feed, options) = ParseCommandLineArguments()
-    return RunValidationFromOptions(feed, options)
+    (feed, options) = parse_command_line_arguments()
+    return run_validation_from_options(feed, options)
 
 
-def ParseCommandLineArguments():
+def parse_command_line_arguments():
     usage = \
         '''%prog [options] [<input GTFS.zip>]
         
@@ -693,21 +705,21 @@ def ParseCommandLineArguments():
     return (feed, options)
 
 
-def RunValidationFromOptions(feed, options):
+def run_validation_from_options(feed, options):
     """Validate feed, run in profiler if in options, and return an exit code."""
     if options.performance:
-        return ProfileRunValidationOutputFromOptions(feed, options)
+        return profilerun_validation_output_from_options(feed, options)
     else:
-        return RunValidationOutputFromOptions(feed, options)
+        return run_validation_output_from_options(feed, options)
 
 
-def ProfileRunValidationOutputFromOptions(feed, options):
+def profilerun_validation_output_from_options(feed, options):
     """Run RunValidationOutputFromOptions, print profile and return exit code."""
     import cProfile
     import pstats
     # runctx will modify a dict, but not locals(). We need a way to get rv back.
     locals_for_exec = locals()
-    cProfile.runctx('rv = RunValidationOutputFromOptions(feed, options)',
+    cProfile.runctx('rv = run_validation_output_from_options(feed, options)',
                     globals(), locals_for_exec, 'validate-stats')
 
     # Only available on Unix, http://docs.python.org/lib/module-resource.html
@@ -719,7 +731,7 @@ def ProfileRunValidationOutputFromOptions(feed, options):
     # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/286222
     # http://aspn.activestate.com/ASPN/Cookbook/ "The recipes are freely
     # available for review and use."
-    def _VmB(VmKey):
+    def _v_mb(VmKey):
         """Return size from proc status in bytes."""
         _proc_status = '/proc/%d/status' % os.getpid()
         _scale = {'kB': 1024.0, 'mB': 1024.0*1024.0,
@@ -730,25 +742,25 @@ def ProfileRunValidationOutputFromOptions(feed, options):
             t = open(_proc_status)
             v = t.read()
             t.close()
-        except:
+        except Exception as e:
+            print(e)
             raise Exception("no proc file %s" % _proc_status)
-            return 0  # non-Linux?
         # get VmKey line e.g. 'VmRSS:  9999  kB\n ...'
         try:
             i = v.index(VmKey)
             v = v[i:].split(None, 3)  # whitespace
-        except:
-            return 0 # v is empty
+        except Exception as e:
+            print(e)
+            return 0  # v is empty
 
         if len(v) < 3:
             raise Exception("%s" % v)
-            return 0  # invalid format?
         # convert Vm value to bytes
         return int(float(v[1]) * _scale[v[2]])
 
     # I ran this on over a hundred GTFS files, comparing VmSize to VmRSS
     # (resident set size). The difference was always under 2% or 3MB.
-    print("Virtual Memory Size: %d bytes" % _VmB('VmSize:'))
+    print("Virtual Memory Size: %d bytes" % _v_mb('VmSize:'))
 
     # Output report of where CPU time was spent.
     p = pstats.Stats('validate-stats')

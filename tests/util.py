@@ -474,7 +474,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self._ignore_types = ignore_types or set()
     self._sorted = False
 
-  def _Report(self, e):
+  def _report(self, e):
     # Ensure that these don't crash
     e.FormatProblem()
     e.FormatContext()
@@ -495,10 +495,10 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     e_name = e[0].__class__.__name__
     self._test_case.assertEqual(e_name, type_name,
                                 "%s != %s\n%s" %
-                                (e_name, type_name, self.FormatException(*e)))
+                                (e_name, type_name, self.format_exception(*e)))
     return e[0]
 
-  def FormatException(self, exce, tb):
+  def format_exception(self, exce, tb):
     return ("%s\nwith gtfs file context %s\nand traceback\n%s" %
             (exce.FormatProblem(), exce.FormatContext(), tb))
 
@@ -519,7 +519,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     """
     exceptions_as_text = []
     for e, tb in self.exceptions:
-      exceptions_as_text.append(self.FormatException(e, tb))
+      exceptions_as_text.append(self.format_exception(e, tb))
     # If the assertFalse below fails the test will abort and tearDown is
     # called. Some tearDown methods assert that self.exceptions is empty as
     # protection against a test that doesn't end with AssertNoMoreExceptions
@@ -607,7 +607,7 @@ class TestFailureProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self.test_case = test_case
     self._ignore_types = ignore_types or set()
 
-  def _Report(self, e):
+  def _report(self, e):
     # These should never crash
     formatted_problem = e.FormatProblem()
     formatted_context = e.FormatContext()

@@ -119,7 +119,7 @@ def LatLngsToGoogleLink(source, destination):
       dt.ctime())
 
 
-def WriteOutput(title, locations, limit, f):
+def write_output(title, locations, limit, f):
   """Write html to f for up to limit trips between locations.
 
   Args:
@@ -223,7 +223,7 @@ https://github.com/google/transitfeed/wiki/GoogleRandomQueries
   agencies = ", ".join([a.agency_name for a in schedule.GetAgencyList()])
   title = "%s (%s)" % (agencies, ParentAndBaseName(feed_path))
 
-  WriteOutput(title,
+  write_output(title,
               locations,
               options.limit,
               open(options.output, "w"))

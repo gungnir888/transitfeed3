@@ -171,7 +171,7 @@ class HTMLProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     self._error_count = 0
     self._notice_count = 0
 
-  def _Report(self, merge_problem):
+  def _report(self, merge_problem):
     # Notices are handled special
     if merge_problem.IsNotice():
       self._notice_count += 1
@@ -280,7 +280,7 @@ class HTMLProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
     else:
       return ''
 
-  def WriteOutput(self, output_file, feed_merger,
+  def write_output(self, output_file, feed_merger,
                   old_feed_path, new_feed_path, merged_feed_path):
     """Write the HTML output to a file.
 
@@ -544,7 +544,7 @@ class DataSetMerger(object):
         a_not_merged.append(a)
         continue
       try:
-        self._Add(a, b, self._MergeEntities(a, b))
+        self._add(a, b, self._MergeEntities(a, b))
         self._num_merged += 1
       except MergeError as merge_error:
         a_not_merged.append(a)
@@ -561,10 +561,10 @@ class DataSetMerger(object):
     # migrate the remaining entities
     for a in a_not_merged:
       newid = self._HasId(self.feed_merger.b_schedule, self._GetId(a))
-      self._Add(a, None, self._Migrate(a, self.feed_merger.a_schedule, newid))
+      self._add(a, None, self._Migrate(a, self.feed_merger.a_schedule, newid))
     for b in b_not_merged:
       newid = self._HasId(self.feed_merger.a_schedule, self._GetId(b))
-      self._Add(None, b, self._Migrate(b, self.feed_merger.b_schedule, newid))
+      self._add(None, b, self._Migrate(b, self.feed_merger.b_schedule, newid))
 
     self._num_not_merged_a = len(a_not_merged)
     self._num_not_merged_b = len(b_not_merged)
@@ -602,12 +602,12 @@ class DataSetMerger(object):
       b_orig_migrated[self._GetId(migrated)] = (orig, migrated)
 
     for migrated_id, (orig, migrated) in b_orig_migrated.items():
-      self._Add(None, orig, migrated)
+      self._add(None, orig, migrated)
       self._num_not_merged_b += 1
 
     for migrated_id, (orig, migrated) in a_orig_migrated.items():
       if migrated_id not in b_orig_migrated:
-        self._Add(orig, None, migrated)
+        self._add(orig, None, migrated)
         self._num_not_merged_a += 1
     return self._num_merged
 
@@ -632,7 +632,7 @@ class DataSetMerger(object):
     for a in self._GetIter(self.feed_merger.a_schedule):
       for b in self._GetIter(self.feed_merger.b_schedule):
         try:
-          self._Add(a, b, self._MergeEntities(a, b))
+          self._add(a, b, self._MergeEntities(a, b))
           self._num_merged += 1
         except MergeError:
           continue
@@ -641,13 +641,13 @@ class DataSetMerger(object):
       if a not in self.feed_merger.a_merge_map:
         self._num_not_merged_a += 1
         newid = self._HasId(self.feed_merger.b_schedule, self._GetId(a))
-        self._Add(a, None,
+        self._add(a, None,
                   self._Migrate(a, self.feed_merger.a_schedule, newid))
     for b in self._GetIter(self.feed_merger.b_schedule):
       if b not in self.feed_merger.b_merge_map:
         self._num_not_merged_b += 1
         newid = self._HasId(self.feed_merger.a_schedule, self._GetId(b))
-        self._Add(None, b,
+        self._add(None, b,
                   self._Migrate(b, self.feed_merger.b_schedule, newid))
 
     return self._num_merged
@@ -757,7 +757,7 @@ class DataSetMerger(object):
     """
     raise NotImplementedError()
 
-  def _Add(self, a, b, migrated):
+  def _add(self, a, b, migrated):
     """Adds the migrated entity to the merged schedule.
 
     If a and b are both not None, it means that a and b were merged to create
@@ -883,7 +883,7 @@ class AgencyMerger(DataSetMerger):
       a.agency_id = self.feed_merger.GenerateId(entity.agency_id)
     return a
 
-  def _Add(self, a, b, migrated):
+  def _add(self, a, b, migrated):
     self.feed_merger.Register(a, b, migrated)
     self.feed_merger.merged_schedule.AddAgencyObject(migrated)
 
@@ -963,7 +963,7 @@ class StopMerger(DataSetMerger):
       migrated_stop.stop_id = self.feed_merger.GenerateId(entity.stop_id)
     return migrated_stop
 
-  def _Add(self, a, b, migrated_stop):
+  def _add(self, a, b, migrated_stop):
     self.feed_merger.Register(a, b, migrated_stop)
 
     # The migrated_stop will be added to feed_merger.merged_schedule later
@@ -1073,7 +1073,7 @@ class RouteMerger(DataSetMerger):
     migrated_route.agency_id = original_agency._migrated_entity.agency_id
     return migrated_route
 
-  def _Add(self, a, b, migrated_route):
+  def _add(self, a, b, migrated_route):
     self.feed_merger.Register(a, b, migrated_route)
     self.feed_merger.merged_schedule.AddRouteObject(migrated_route)
 
@@ -1143,7 +1143,7 @@ class ServicePeriodMerger(DataSetMerger):
       migrated_service_period.service_id = original_service_period.service_id
     return migrated_service_period
 
-  def _Add(self, a, b, migrated_service_period):
+  def _add(self, a, b, migrated_service_period):
     self.feed_merger.Register(a, b, migrated_service_period)
     self.feed_merger.merged_schedule.AddServicePeriodObject(
         migrated_service_period)
@@ -1259,7 +1259,7 @@ class FareMerger(DataSetMerger):
           original_fare.fare_id)
     return migrated_fare
 
-  def _Add(self, a, b, migrated_fare):
+  def _add(self, a, b, migrated_fare):
     self.feed_merger.Register(a, b, migrated_fare)
     self.feed_merger.merged_schedule.AddFareAttributeObject(migrated_fare)
 
@@ -1307,7 +1307,7 @@ class TransferMerger(DataSetMerger):
           original_transfer.to_stop_id)._migrated_entity.stop_id
     return migrated_transfer
 
-  def _Add(self, a, b, migrated_transfer):
+  def _add(self, a, b, migrated_transfer):
     self.feed_merger.Register(a, b, migrated_transfer)
     self.feed_merger.merged_schedule.AddTransferObject(migrated_transfer)
 
@@ -1391,7 +1391,7 @@ class ShapeMerger(DataSetMerger):
       migrated_shape.AddPoint(lat=lat, lon=lon, distance=dist)
     return migrated_shape
 
-  def _Add(self, a, b, migrated_shape):
+  def _add(self, a, b, migrated_shape):
     self.feed_merger.Register(a, b, migrated_shape)
     self.feed_merger.merged_schedule.AddShapeObject(migrated_shape)
 
@@ -1479,7 +1479,7 @@ class TripMerger(DataSetMerger):
 
     return migrated_trip
 
-  def _Add(self, a, b, migrated_trip):
+  def _add(self, a, b, migrated_trip):
     # Validate now, since it wasn't done in _Migrate
     migrated_trip.Validate(self.feed_merger.merged_schedule.problem_reporter)
     self.feed_merger.Register(a, b, migrated_trip)
@@ -1855,7 +1855,7 @@ https://github.com/google/transitfeed/wiki/Merge
     merged_feed_path = None
 
   output_file = file(options.html_output_path, 'w')
-  accumulator.WriteOutput(output_file, feed_merger,
+  accumulator.write_output(output_file, feed_merger,
                           old_feed_path, new_feed_path, merged_feed_path)
   output_file.close()
 

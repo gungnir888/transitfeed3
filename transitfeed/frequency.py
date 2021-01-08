@@ -78,7 +78,7 @@ class Frequency(GtfsObjectBase):
       return
 
     def Validate(self, problems=None):
-      returns
+      return
 
     def AddToSchedule(self, schedule=None, problems=None):
       if schedule is None:
