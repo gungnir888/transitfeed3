@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2007 Google Inc.
 #
@@ -86,7 +86,7 @@ class Shape(GtfsFactoryUser):
                               'the previous ones. In this case, the previous '
                               'distance was %f.' % self.distance[index - 1])
 
-    if shapepoint.shape_dist_traveled > self.max_distance:
+    if shapepoint.shape_dist_traveled and shapepoint.shape_dist_traveled > self.max_distance:
       self.max_distance = shapepoint.shape_dist_traveled
 
     self.sequence.insert(index, shapepoint.shape_pt_sequence)

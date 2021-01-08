@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2009 Google Inc.
 #
@@ -26,7 +26,7 @@ import re
 import socket
 import sys
 import time
-import urllib2
+import urllib3
 
 from . import errors
 from .version import __version__
@@ -110,7 +110,7 @@ or an email to the public group transitfeed@googlegroups.com. Sorry!
     print(apology)
 
     try:
-      raw_input('Press enter to continue...')
+      input('Press enter to continue...')
     except EOFError:
       # Ignore stdin being closed. This happens during some tests.
       pass
@@ -190,25 +190,19 @@ def CheckVersion(problems, latest_version=None):
   if not latest_version:
     timeout = 20
     socket.setdefaulttimeout(timeout)
-    request = urllib2.Request(LATEST_RELEASE_VERSION_URL)
+    http = urllib3.PoolManager()
+    r = http.request('GET', LATEST_RELEASE_VERSION_URL)
 
     try:
-      response = urllib2.urlopen(request)
-      content = response.read()
-      m = re.search(r'version=(\d+\.\d+\.\d+)', content)
+      content = r.data
+      m = re.search(r'version=(\d+\.\d+\.\d+)', content.decode())
       if m:
         latest_version = m.group(1)
 
-    except urllib2.HTTPError as e:
+    except urllib3.exceptions.HTTPError as e:
       description = ('During the new-version check, we failed to reach '
                      'transitfeed server: Reason: %s [%s].' %
                      (e.reason, e.code))
-      problems.OtherProblem(
-        description=description, type=errors.TYPE_NOTICE)
-      return
-    except urllib2.URLError as e:
-      description = ('During the new-version check, we failed to reach '
-                     'transitfeed server. Reason: %s.' % e.reason)
       problems.OtherProblem(
         description=description, type=errors.TYPE_NOTICE)
       return
@@ -444,7 +438,7 @@ def ValidateYesNoUnknown(value, column_name=None, problems=None):
     return False
 
 def IsEmpty(value):
-  return value is None or (isinstance(value, basestring) and not value.strip())
+  return value is None or (isinstance(value, str) and not value.strip())
 
 def FindUniqueId(dic):
   """Return a string not used as a key in the dictionary dic"""
@@ -551,7 +545,7 @@ class CsvUnicodeWriter:
     utf-8."""
     encoded_row = []
     for s in row:
-      if isinstance(s, unicode):
+      if isinstance(s, str):
         encoded_row.append(s.encode("utf-8"))
       else:
         encoded_row.append(s)
@@ -607,7 +601,7 @@ class EndOfLineChecker:
   def __iter__(self):
     return self
 
-  def next(self):
+  def __next__(self):
     """Return next line without end of line marker or raise StopIteration."""
     try:
       next_line = next(self._f)

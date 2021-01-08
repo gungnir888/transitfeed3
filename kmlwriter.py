@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 #
 # Copyright 2008 Google Inc. All Rights Reserved.
 #
@@ -401,7 +401,7 @@ class KMLWriter(object):
     """
 
     def CreateElements(current_element, current_dict):
-      for (key, value) in current_dict.iteritems():
+      for (key, value) in current_dict.items():
         element = ET.SubElement(current_element, key)
         if isinstance(value,dict):
           CreateElements(element, value)
@@ -797,7 +797,7 @@ https://github.com/google/transitfeed/wiki/KMLWriter
         "While loading %s the following error was found:\n%s\n%s\n" %
         (input_path,
          e.FormatContext(),
-         transitfeed.EncodeUnicode(e.FormatProblem()))), file=sys.stderr)
+         e.FormatProblem())), file=sys.stderr)
     sys.exit(1)
                          
   print("Writing %s" % output_path)

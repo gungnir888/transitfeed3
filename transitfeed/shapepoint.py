@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 
 # Copyright (C) 2007 Google Inc.
@@ -45,7 +45,7 @@ class ShapePoint(GtfsObjectBase):
     self._schedule = None
     if field_dict:
       if isinstance(field_dict, self.__class__):
-        for k, v in field_dict.iteritems():
+        for k, v in field_dict.items():
           self.__dict__[k] = v
       else:
         self.__dict__.update(field_dict)

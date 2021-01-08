@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2011 Google Inc.
 #
@@ -49,7 +49,8 @@ class FeedInfo(transitfeed.GtfsObjectBase):
 
     end_date_valid = transitfeed.ValidateDate(self.feed_end_date,
                                                 'feed_end_date', problems)
-
+    if not self.feed_end_date or not self.feed_start_date:
+        return
     if (start_date_valid and end_date_valid and
         self.feed_end_date < self.feed_start_date):
         problems.InvalidValue('feed_end_date', self.feed_end_date,

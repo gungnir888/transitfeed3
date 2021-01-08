@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2007 Google Inc.
 #
@@ -19,6 +19,8 @@ import bisect
 import datetime
 import itertools
 import os
+from operator import itemgetter, attrgetter
+
 try:
   import sqlite3 as sqlite
   native_sqlite = True
@@ -261,7 +263,7 @@ class Schedule(object):
     self.service_periods[service_period.service_id] = service_period
 
   def GetServicePeriodList(self):
-    return self.service_periods.values()
+    return list(self.service_periods.values())
 
   def GetDateRange(self):
     """Returns a tuple of (earliest, latest) dates on which the service periods
@@ -281,14 +283,14 @@ class Schedule(object):
     """
     period_list = self.GetServicePeriodList()
     ranges = [period.GetDateRange() for period in period_list]
-    starts = filter(lambda x: x, [item[0] for item in ranges])
-    ends = filter(lambda x: x, [item[1] for item in ranges])
+    starts = list(filter(lambda x: x, [item[0] for item in ranges]))
+    ends = list(filter(lambda x: x, [item[1] for item in ranges]))
 
     if not starts or not ends:
       return (None, None, None, None)
 
-    minvalue, minindex = min(itertools.izip(starts, itertools.count()))
-    maxvalue, maxindex = max(itertools.izip(ends, itertools.count()))
+    minvalue, minindex = min(zip(starts, itertools.count()))
+    maxvalue, maxindex = max(zip(ends, itertools.count()))
 
     minreason = (period_list[minindex].HasDateExceptionOn(minvalue) and
                  "earliest service exception date in calendar_dates.txt" or
@@ -638,7 +640,7 @@ class Schedule(object):
       columns = self.GetTableColumns('agency')
       writer.writerow(columns)
       for a in self._agencies.values():
-        writer.writerow([util.EncodeUnicode(a[c]) for c in columns])
+        writer.writerow([a[c] for c in columns])
       self._WriteArchiveString(archive, 'agency.txt', agency_string)
 
 
@@ -647,7 +649,7 @@ class Schedule(object):
       writer = util.CsvUnicodeWriter(feed_info_string)
       columns = self.GetTableColumns('feed_info')
       writer.writerow(columns)
-      writer.writerow([util.EncodeUnicode(self.feed_info[c]) for c in columns])
+      writer.writerow([self.feed_info[c] for c in columns])
       self._WriteArchiveString(archive, 'feed_info.txt', feed_info_string)
 
     calendar_dates_string = StringIO()
@@ -683,7 +685,7 @@ class Schedule(object):
       columns = self.GetTableColumns('stops')
       writer.writerow(columns)
       for s in self.stops.values():
-        writer.writerow([util.EncodeUnicode(s[c]) for c in columns])
+        writer.writerow([s[c] for c in columns])
       self._WriteArchiveString(archive, 'stops.txt', stop_string)
 
     if 'routes' in self._table_columns:
@@ -692,7 +694,7 @@ class Schedule(object):
       columns = self.GetTableColumns('routes')
       writer.writerow(columns)
       for r in self.routes.values():
-        writer.writerow([util.EncodeUnicode(r[c]) for c in columns])
+        writer.writerow([r[c]for c in columns])
       self._WriteArchiveString(archive, 'routes.txt', route_string)
 
     if 'trips' in self._table_columns:
@@ -701,7 +703,7 @@ class Schedule(object):
       columns = self.GetTableColumns('trips')
       writer.writerow(columns)
       for t in self.trips.values():
-        writer.writerow([util.EncodeUnicode(t[c]) for c in columns])
+        writer.writerow([t[c] for c in columns])
       self._WriteArchiveString(archive, 'trips.txt', trips_string)
 
     # write frequencies.txt (if applicable)
@@ -762,7 +764,7 @@ class Schedule(object):
       columns = self.GetTableColumns('transfers')
       writer.writerow(columns)
       for t in self.GetTransferIter():
-        writer.writerow([util.EncodeUnicode(t[c]) for c in columns])
+        writer.writerow([t[c] for c in columns])
       self._WriteArchiveString(archive, 'transfers.txt', transfer_string)
 
     archive.close()
@@ -996,18 +998,17 @@ class Schedule(object):
       if stop.location_type != 1 and stop.parent_station:
         if stop.parent_station not in self.stops:
           problems.InvalidValue("parent_station",
-                                util.EncodeUnicode(stop.parent_station),
+                                stop.parent_station,
                                 "parent_station '%s' not found for stop_id "
                                 "'%s' in stops.txt" %
-                                (util.EncodeUnicode(stop.parent_station),
-                                 util.EncodeUnicode(stop.stop_id)))
+                                (stop.parent_station,
+                                 stop.stop_id))
         elif self.stops[stop.parent_station].location_type != 1:
           problems.InvalidValue("parent_station",
-                                util.EncodeUnicode(stop.parent_station),
+                                stop.parent_station,
                                 "parent_station '%s' of stop_id '%s' must "
                                 "have location_type=1 in stops.txt" %
-                                (util.EncodeUnicode(stop.parent_station),
-                                 util.EncodeUnicode(stop.stop_id)))
+                                (stop.parent_station, stop.stop_id))
         else:
           parent_station = self.stops[stop.parent_station]
           distance = util.ApproximateDistanceBetweenStops(stop, parent_station)
@@ -1029,8 +1030,8 @@ class Schedule(object):
     # each pair of stations within 2 meters latitude of each other. This avoids
     # doing n^2 comparisons in the average case and doesn't need a spatial
     # index.
-    sorted_stops = filter(lambda s: s.stop_lat and s.stop_lon,
-                          self.GetStopList())
+    sorted_stops = list(filter(lambda s: s.stop_lat and s.stop_lon,
+                          self.GetStopList()))
     sorted_stops.sort(
         key=(lambda x: [x.stop_lat, x.stop_lon, getattr(x, 'stop_id', None)]))
     TWO_METERS_LAT = 0.000018
@@ -1044,16 +1045,16 @@ class Schedule(object):
           other_stop = sorted_stops[index]
           if stop.location_type == 0 and other_stop.location_type == 0:
             problems.StopsTooClose(
-                util.EncodeUnicode(stop.stop_name),
-                util.EncodeUnicode(stop.stop_id),
-                util.EncodeUnicode(other_stop.stop_name),
-                util.EncodeUnicode(other_stop.stop_id), distance)
+                stop.stop_name,
+                stop.stop_id,
+                other_stop.stop_name,
+                other_stop.stop_id, distance)
           elif stop.location_type == 1 and other_stop.location_type == 1:
             problems.StationsTooClose(
-                util.EncodeUnicode(stop.stop_name),
-                util.EncodeUnicode(stop.stop_id),
-                util.EncodeUnicode(other_stop.stop_name),
-                util.EncodeUnicode(other_stop.stop_id), distance)
+                stop.stop_name,
+                stop.stop_id,
+                other_stop.stop_name,
+                other_stop.stop_id, distance)
           elif (stop.location_type in (0, 1) and
                 other_stop.location_type  in (0, 1)):
             if stop.location_type == 0 and other_stop.location_type == 1:
@@ -1064,10 +1065,10 @@ class Schedule(object):
               this_station = stop
             if this_stop.parent_station != this_station.stop_id:
               problems.DifferentStationTooClose(
-                  util.EncodeUnicode(this_stop.stop_name),
-                  util.EncodeUnicode(this_stop.stop_id),
-                  util.EncodeUnicode(this_station.stop_name),
-                  util.EncodeUnicode(this_station.stop_id), distance)
+                  this_stop.stop_name,
+                  this_stop.stop_id,
+                  this_station.stop_name,
+                  this_station.stop_id, distance)
         index += 1
 
   def ValidateRouteNames(self, problems, validate_children):
@@ -1104,7 +1105,7 @@ class Schedule(object):
     # (trip_id, first_arrival_secs, last_arrival_secs)
     trip_intervals_by_block_id = defaultdict(lambda: [])
 
-    for trip in sorted(self.trips.values()):
+    for trip in sorted(self.trips.values(), key=attrgetter('route_id', 'trip_id')):
       if trip.route_id not in self.routes:
         continue
       route_type = self.GetRoute(trip.route_id).route_type

@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2007 Google Inc.
 #
@@ -146,8 +146,8 @@ class Trip(GtfsObjectBase):
       if new_secs != None and new_secs < prev_secs:
         problems.OtherProblem(
             'out of order stop time for stop_id=%s trip_id=%s %s < %s' %
-            (util.EncodeUnicode(stoptime.stop_id),
-             util.EncodeUnicode(self.trip_id),
+            (stoptime.stop_id,
+             self.trip_id,
              util.FormatSecondsSinceMidnight(new_secs),
              util.FormatSecondsSinceMidnight(prev_secs)))
     self._AddStopTimeObjectUnordered(stoptime, schedule)

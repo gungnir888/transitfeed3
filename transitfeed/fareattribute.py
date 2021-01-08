@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2007 Google Inc.
 #
@@ -40,7 +40,7 @@ class FareAttribute(GtfsObjectBase):
       if isinstance(field_dict, FareAttribute):
         # Special case so that we don't need to re-parse the attributes to
         # native types iteritems returns all attributes that don't start with _
-        for k, v in field_dict.iteritems():
+        for k, v in field_dict.items():
           self.__dict__[k] = v
       else:
         self.__dict__.update(field_dict)

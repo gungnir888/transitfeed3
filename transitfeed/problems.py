@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2007 Google Inc.
 #
@@ -373,7 +373,7 @@ class SimpleProblemAccumulator(ProblemAccumulatorInterface):
     context = e.FormatContext()
     if context:
       print(context)
-    print(util.EncodeUnicode(self._LineWrap(e.FormatProblem(), 78)))
+    print(self._LineWrap(e.FormatProblem(), 78))
 
   @staticmethod
   def _LineWrap(text, width):
@@ -453,7 +453,7 @@ class ExceptionWithContext(Exception):
       # the problem reporter convert all unicode attributes to utf-8.
       # Currently valid utf-8 fields are converted to unicode in _ReadCsvDict.
       # Perhaps all fields should be left as utf-8.
-      d[k] = util.EncodeUnicode(v)
+      d[k] = v
     return d
 
   def FormatProblem(self, d=None):

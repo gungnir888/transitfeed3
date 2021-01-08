@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 
 # Copyright (C) 2007 Google Inc.
 #
@@ -171,11 +171,10 @@ If you find a problem be sure to save the URL. This file is generated randomly.
 </html>
 """ % locals()
 
-  f.write(transitfeed.EncodeUnicode(output_prefix))
+  f.write(output_prefix)
   for source, destination in zip(locations[0:limit], locations[1:limit + 1]):
-    f.write(transitfeed.EncodeUnicode("<li>%s\n" %
-                                      LatLngsToGoogleLink(source, destination)))
-  f.write(transitfeed.EncodeUnicode(output_suffix))
+    f.write("<li>%s\n" % LatLngsToGoogleLink(source, destination)
+  f.write(output_suffix)
 
 
 def ParentAndBaseName(path):

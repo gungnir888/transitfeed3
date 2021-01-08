@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python3
 #
 # Copyright 2007 Google Inc. All Rights Reserved.
 #
@@ -341,13 +341,13 @@ Generated using transitfeed version %s on %s.
 </html>""" % (transitfeed.__version__,
               time.strftime('%B %d, %Y at %I:%M %p %Z'))
 
-    output_file.write(transitfeed.EncodeUnicode(html_header))
-    output_file.write(transitfeed.EncodeUnicode(html_stats))
-    output_file.write(transitfeed.EncodeUnicode(html_summary))
-    output_file.write(transitfeed.EncodeUnicode(html_notices))
-    output_file.write(transitfeed.EncodeUnicode(html_errors))
-    output_file.write(transitfeed.EncodeUnicode(html_warnings))
-    output_file.write(transitfeed.EncodeUnicode(html_footer))
+    output_file.write(html_header)
+    output_file.write(html_stats)
+    output_file.write(html_summary)
+    output_file.write(html_notices)
+    output_file.write(html_errors)
+    output_file.write(html_warnings)
+    output_file.write(html_footer)
 
 
 def LoadWithoutErrors(path, memory_db):
@@ -363,7 +363,7 @@ def LoadWithoutErrors(path, memory_db):
     print((
         "\n\nFeeds to merge must load without any errors.\n"
         "While loading %s the following error was found:\n%s\n%s\n" %
-        (path, e.FormatContext(), transitfeed.EncodeUnicode(e.FormatProblem()))), file=sys.stderr)
+        (path, e.FormatContext(), str(e))), file=sys.stderr)
     sys.exit(1)
   return schedule
 
@@ -405,9 +405,7 @@ class DataSetMerger(object):
       MergeError: The values were not identical.
     """
     if a != b:
-      raise MergeError("values must be identical ('%s' vs '%s')" %
-                       (transitfeed.EncodeUnicode(a),
-                        transitfeed.EncodeUnicode(b)))
+      raise MergeError("values must be identical ('%s' vs '%s')" % (a, b))
     return b
 
   def _MergeIdenticalCaseInsensitive(self, a, b):
@@ -428,8 +426,7 @@ class DataSetMerger(object):
     """
     if a.lower() != b.lower():
       raise MergeError("values must be the same (case insensitive) "
-                       "('%s' vs '%s')" % (transitfeed.EncodeUnicode(a),
-                                           transitfeed.EncodeUnicode(b)))
+                       "('%s' vs '%s')" % (a, b))
     return b
 
   def _MergeOptional(self, a, b):
@@ -453,8 +450,7 @@ class DataSetMerger(object):
     if a and b:
       if a != b:
         raise MergeError("values must be identical if both specified "
-                         "('%s' vs '%s')" % (transitfeed.EncodeUnicode(a),
-                                             transitfeed.EncodeUnicode(b)))
+                         "('%s' vs '%s')" % (a, b))
     return a or b
 
   def _MergeSameAgency(self, a_agency_id, b_agency_id):
