@@ -200,7 +200,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     patterns = []
 
     for pattern_id, trips in pattern_id_trip_dict.items():
-      time_stops = trips[0].GetTimeStops()
+      time_stops = trips[0].get_time_stops()
       if not time_stops:
         continue
       has_non_zero_trip_type = False;
@@ -211,7 +211,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         service_id = trip.service_id
         service_period = schedule.get_service_period(service_id)
 
-        if date and not service_period.IsActiveOn(date):
+        if date and not service_period.is_active_on(date):
           continue
         trips_with_service.append(trip)
 
@@ -222,7 +222,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       trips = trips_with_service
 
       name = u'%s to %s, %d stops' % (time_stops[0][2].stop_name, time_stops[-1][2].stop_name, len(time_stops))
-      transitfeed.SortListOfTripByTime(trips)
+      transitfeed.sort_list_of_trip_by_time(trips)
 
       num_trips = len(trips)
       if num_trips <= sample_size:
@@ -235,7 +235,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # search with a custom key.
         start_sample_index = len(trips)
         for i, trip in enumerate(trips):
-          if trip.GetStartTime() >= time:
+          if trip.get_start_time() >= time:
             start_sample_index = i
             break
 
@@ -248,7 +248,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
       sample = []
       for t in trips[start_sample_index:start_sample_index + sample_size]:
-        sample.append( (t.GetStartTime(), t.trip_id) )
+        sample.append( (t.get_start_time(), t.trip_id) )
 
       patterns.append((name, pattern_id, start_sample_index, sample,
                        num_after_sample, (0,1)[has_non_zero_trip_type]))
@@ -302,7 +302,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     except KeyError:
        # if a non-existent trip is searched for, the return nothing
       return
-    time_stops = trip.GetTimeStops()
+    time_stops = trip.get_time_stops()
     stops = []
     arrival_times = []
     departure_times = []
@@ -325,7 +325,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       for (lat, lon, dist) in shape.points:
         points.append((lat, lon))
     else:
-      time_stops = trip.GetTimeStops()
+      time_stops = trip.get_time_stops()
       for arr,dep,stop in time_stops:
         points.append((stop.stop_lat, stop.stop_lon))
     route = schedule.get_route(trip.route_id)
@@ -373,7 +373,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     time = int(params.get('time', 0))
     date = params.get('date', "")
 
-    time_trips = stop.GetStopTimeTrips(schedule)
+    time_trips = stop.get_stop_time_trips(schedule)
     time_trips.sort()  # OPT: use bisect.insort to make this O(N*ln(N)) -> O(N)
     # Keep the first 5 after param 'time'.
     # Need make a tuple to find correct bisect point
@@ -384,11 +384,11 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     for time, (trip, index), tp in time_trips:
       service_id = trip.service_id
       service_period = schedule.get_service_period(service_id)
-      if date and not service_period.IsActiveOn(date):
+      if date and not service_period.is_active_on(date):
         continue
       headsign = None
       # Find the most recent headsign from the StopTime objects
-      for stoptime in trip.GetStopTimes()[index::-1]:
+      for stoptime in trip.get_stop_times()[index::-1]:
         if stoptime.stop_headsign:
           headsign = stoptime.stop_headsign
           break
@@ -431,11 +431,11 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       return
     triplist = pattern_id_trip_dict[pattern_id]
 
-    pattern_start_time = min((t.GetStartTime() for t in triplist))
-    pattern_end_time = max((t.GetEndTime() for t in triplist))
+    pattern_start_time = min((t.get_start_time() for t in triplist))
+    pattern_end_time = max((t.get_end_time() for t in triplist))
 
     marey.SetSpan(pattern_start_time,pattern_end_time)
-    marey.Draw(triplist[0].GetPattern(), triplist, height)
+    marey.Draw(triplist[0].get_pattern(), triplist, height)
 
     content = marey.Draw()
 

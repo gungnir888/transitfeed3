@@ -143,13 +143,13 @@ class TooFastTravelTestCase(util.ValidationTestCase):
     magic_lat = 26.062468289
     stop = self.schedule.add_stop(magic_lat, 0, "Demo Stop 0")
     time = 0
-    self.trip.AddStopTime(stop, arrival_secs=time, departure_secs=time)
+    self.trip.add_stop_time(stop, arrival_secs=time, departure_secs=time)
     for i, (dist_delta, time_delta) in enumerate(dist_time_list):
       stop = self.schedule.add_stop(
           magic_lat, stop.stop_lon + dist_delta * 0.00001,
           "Demo Stop %d" % (i + 1))
       time += time_delta
-      self.trip.AddStopTime(stop, arrival_secs=time, departure_secs=time)
+      self.trip.add_stop_time(stop, arrival_secs=time, departure_secs=time)
 
   def testMovingTooFast(self):
     self.AddStopDistanceTime([(1691, 60),
@@ -279,10 +279,10 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
   def testtoo_many_consecutive_stop_times_with_same_time(self):
     trip = self.trip
-    trip.AddStopTime(self.stop1, stop_time="6:00:00")
+    trip.add_stop_time(self.stop1, stop_time="6:00:00")
     for _ in range(6):
-      trip.AddStopTime(self.stop2, stop_time="6:05:00")
-    trip.AddStopTime(self.stop1, stop_time="6:10:00")
+      trip.add_stop_time(self.stop2, stop_time="6:05:00")
+    trip.add_stop_time(self.stop1, stop_time="6:10:00")
 
     self.schedule.validate(self.problems)
 
@@ -299,10 +299,10 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
   def testNotTooManyConsecutiveStopTimesWithSameTime(self):
     trip = self.trip
-    trip.AddStopTime(self.stop1, stop_time="6:00:00")
+    trip.add_stop_time(self.stop1, stop_time="6:00:00")
     for _ in range(5):
-      trip.AddStopTime(self.stop2, stop_time="6:05:00")
-    trip.AddStopTime(self.stop1, stop_time="6:10:00")
+      trip.add_stop_time(self.stop2, stop_time="6:05:00")
+    trip.add_stop_time(self.stop1, stop_time="6:10:00")
 
     self.schedule.validate(self.problems)
 
@@ -311,8 +311,8 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
   def testTooManyConsecutiveStopTimesWithSameTimeAtStart(self):
     trip = self.trip
     for _ in range(6):
-      trip.AddStopTime(self.stop2, stop_time="6:05:00")
-    trip.AddStopTime(self.stop1, stop_time="6:10:00")
+      trip.add_stop_time(self.stop2, stop_time="6:05:00")
+    trip.add_stop_time(self.stop1, stop_time="6:10:00")
 
     self.schedule.validate(self.problems)
 
@@ -325,9 +325,9 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
   def testTooManyConsecutiveStopTimesWithSameTimeAtEnd(self):
     trip = self.trip
-    trip.AddStopTime(self.stop1, stop_time="6:00:00")
+    trip.add_stop_time(self.stop1, stop_time="6:00:00")
     for _ in range(6):
-      trip.AddStopTime(self.stop2, stop_time="6:05:00")
+      trip.add_stop_time(self.stop2, stop_time="6:05:00")
 
     self.schedule.validate(self.problems)
 
@@ -340,10 +340,10 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
   def testTooManyConsecutiveStopTimesWithUnspecifiedTimes(self):
     trip = self.trip
-    trip.AddStopTime(self.stop1, stop_time="6:05:00")
+    trip.add_stop_time(self.stop1, stop_time="6:05:00")
     for _ in range(4):
-      trip.AddStopTime(self.stop2)
-    trip.AddStopTime(self.stop1, stop_time="6:05:00")
+      trip.add_stop_time(self.stop2)
+    trip.add_stop_time(self.stop1, stop_time="6:05:00")
 
     self.schedule.validate(self.problems)
 
@@ -356,9 +356,9 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
   def testNotTooManyConsecutiveStopTimesWithUnspecifiedTimes(self):
     trip = self.trip
-    trip.AddStopTime(self.stop1, stop_time="6:00:00")
+    trip.add_stop_time(self.stop1, stop_time="6:00:00")
     for _ in range(4):
-      trip.AddStopTime(self.stop2)
+      trip.add_stop_time(self.stop2)
     trip.AddStopTime(self.stop1, stop_time="6:05:00")
 
     self.schedule.validate(self.problems)

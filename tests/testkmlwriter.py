@@ -75,7 +75,7 @@ class TestKMLStopsRoundtrip(util.TestCase):
     feed1 = transitfeed.Loader(gtfs_input).load()
     kmlwriter.KMLWriter().Write(feed1, self.kml_output)
     feed2 = transitfeed.Schedule()
-    kmlparser.KmlParser().Parse(self.kml_output, feed2)
+    kmlparser.KMLParser().parse(self.kml_output, feed2)
 
     stop_name_mapper = lambda x: x.stop_name
 
@@ -157,9 +157,9 @@ class TestKMLGeneratorMethods(util.TestCase):
 
   def testCreateLineStringForShape(self):
     shape = transitfeed.Shape('shape')
-    shape.AddPoint(1.0, 1.0)
-    shape.AddPoint(2.0, 4.0)
-    shape.AddPoint(3.0, 9.0)
+    shape.add_point(1.0, 1.0)
+    shape.add_point(2.0, 4.0)
+    shape.add_point(3.0, 9.0)
     element = self.kmlwriter._CreateLineStringForShape(self.parent, shape)
     self.assertEqual(_ElementToString(element),
                      '<LineString><tessellate>1</tessellate>'

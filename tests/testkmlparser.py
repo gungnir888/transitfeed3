@@ -30,7 +30,7 @@ class TestStopsParsing(util.GetPathTestCase):
   def testSingleStop(self):
     feed = transitfeed.Schedule()
     kmlFile = self.GetTestDataPath('one_stop.kml')
-    kmlparser.KmlParser().Parse(kmlFile, feed)
+    kmlparser.KMLParser().parse(kmlFile, feed)
     stops = feed.get_stop_list()
     self.assertEqual(1, len(stops))
     stop = stops[0]
@@ -43,7 +43,7 @@ class TestStopsParsing(util.GetPathTestCase):
   def testSingleShape(self):
     feed = transitfeed.Schedule()
     kmlFile = self.GetTestDataPath('one_line.kml')
-    kmlparser.KmlParser().Parse(kmlFile, feed)
+    kmlparser.KMLParser().parse(kmlFile, feed)
     shapes = feed.get_shape_list()
     self.assertEqual(1, len(shapes))
     shape = shapes[0]

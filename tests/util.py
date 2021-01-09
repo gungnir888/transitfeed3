@@ -444,19 +444,19 @@ class ValidationTestCase(TestCase):
     schedule.add_agency("Fly Agency", "http://iflyagency.com",
                        "America/Los_Angeles")
     service_period = transitfeed.ServicePeriod("WEEK")
-    service_period.SetWeekdayService(True)
-    service_period.SetStartDate("20091203")
-    service_period.SetEndDate("20111203")
-    service_period.SetDateHasService("20091203")
+    service_period.set_weekday_service(True)
+    service_period.set_start_date("20091203")
+    service_period.set_end_date("20111203")
+    service_period.set_date_has_service("20091203")
     schedule.add_service_period_object(service_period)
     stop1 = schedule.add_stop(lng=1.00, lat=48.2, name="Stop 1", stop_id="stop1")
     stop2 = schedule.add_stop(lng=1.01, lat=48.2, name="Stop 2", stop_id="stop2")
     stop3 = schedule.add_stop(lng=1.03, lat=48.2, name="Stop 3", stop_id="stop3")
     route = schedule.add_route("54C", "", "Bus", route_id="054C")
     trip = route.add_trip(schedule, "bus trip", trip_id="CITY1")
-    trip.AddStopTime(stop1, stop_time="12:00:00")
-    trip.AddStopTime(stop2, stop_time="12:00:45")
-    trip.AddStopTime(stop3, stop_time="12:02:30")
+    trip.add_stop_time(stop1, stop_time="12:00:00")
+    trip.add_stop_time(stop2, stop_time="12:00:45")
+    trip.add_stop_time(stop3, stop_time="12:02:30")
     return schedule
 
 

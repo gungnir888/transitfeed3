@@ -27,4 +27,4 @@ List of changes to the default behavior:
     https://sites.google.com/site/gtfschanges/spec-changes-summary#stops
   - adding and validating fields 'stop_timezone', 'vehicle_type' and
     'wheelchair_boarding'
-  - overriding ValidateStopLocationType(), adding location_type 2 (entrance)
+  - overriding validate_stop_location_type(), adding location_type 2 (entrance)

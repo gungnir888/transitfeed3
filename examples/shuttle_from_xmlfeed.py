@@ -49,19 +49,19 @@ def SaveFeed(input, output):
 
   schedule = transitfeed.Schedule()
   service_period = schedule.get_default_service_period()
-  service_period.SetWeekdayService()
-  service_period.SetStartDate('20070314')
-  service_period.SetEndDate('20071231')
+  service_period.set_weekday_service()
+  service_period.set_start_date('20070314')
+  service_period.set_end_date('20071231')
   # Holidays for 2007
-  service_period.SetDateHasService('20070528', has_service=False)
-  service_period.SetDateHasService('20070704', has_service=False)
-  service_period.SetDateHasService('20070903', has_service=False)
-  service_period.SetDateHasService('20071122', has_service=False)
-  service_period.SetDateHasService('20071123', has_service=False)
-  service_period.SetDateHasService('20071224', has_service=False)
-  service_period.SetDateHasService('20071225', has_service=False)
-  service_period.SetDateHasService('20071226', has_service=False)
-  service_period.SetDateHasService('20071231', has_service=False)
+  service_period.set_date_has_service('20070528', has_service=False)
+  service_period.set_date_has_service('20070704', has_service=False)
+  service_period.set_date_has_service('20070903', has_service=False)
+  service_period.set_date_has_service('20071122', has_service=False)
+  service_period.set_date_has_service('20071123', has_service=False)
+  service_period.set_date_has_service('20071224', has_service=False)
+  service_period.set_date_has_service('20071225', has_service=False)
+  service_period.set_date_has_service('20071226', has_service=False)
+  service_period.set_date_has_service('20071231', has_service=False)
 
   stops = {}  # Map from xml stop id to python Stop object
   agency = schedule.new_default_agency(name='GBus', url='http://shuttle/',
@@ -87,7 +87,7 @@ def SaveFeed(input, output):
                             stops[xml_schedule.attrib['stopId']]) )
       trip_stops.sort()  # Sort by time
       for (time, stop) in trip_stops:
-        t.AddStopTime(stop=stop, arrival_secs=time, departure_secs=time)
+        t.add_stop_time(stop=stop, arrival_secs=time, departure_secs=time)
 
   schedule.validate(problems=NoUnusedStopExceptionProblemReporter())
   schedule.write_google_transit_feed(output)

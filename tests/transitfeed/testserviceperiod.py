@@ -73,9 +73,9 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
     period.day_of_week[0] = True
 
     # invalid exception date
-    period.SetDateHasService('2007', False)
+    period.set_date_has_service('2007', False)
     self.ValidateAndExpectInvalidValue(period, 'date', '2007')
-    period.ResetDateToNormalService('2007')
+    period.reset_date_to_normal_service('2007')
 
     period2 = transitfeed.ServicePeriod(
         field_list=['serviceid1', '20060101', '20071231', '1', '0', 'h', '1',
@@ -86,32 +86,32 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
   def testHasExceptions(self):
     # A new ServicePeriod object has no exceptions
     period = transitfeed.ServicePeriod()
-    self.assertFalse(period.HasExceptions())
+    self.assertFalse(period.has_exceptions())
 
     # Only regular service, no exceptions
     period.service_id = 'WEEKDAY'
     period.start_date = '20070101'
     period.end_date = '20071231'
     period.day_of_week[0] = True
-    self.assertFalse(period.HasExceptions())
+    self.assertFalse(period.has_exceptions())
 
     # Regular service + removed service exception
-    period.SetDateHasService('20070101', False)
-    self.assertTrue(period.HasExceptions())
+    period.set_date_has_service('20070101', False)
+    self.assertTrue(period.has_exceptions())
 
     # Regular service + added service exception
-    period.SetDateHasService('20070101', True)
-    self.assertTrue(period.HasExceptions())
+    period.set_date_has_service('20070101', True)
+    self.assertTrue(period.has_exceptions())
 
     # Only added service exception
     period = transitfeed.ServicePeriod()
-    period.SetDateHasService('20070101', True)
-    self.assertTrue(period.HasExceptions())
+    period.set_date_has_service('20070101', True)
+    self.assertTrue(period.has_exceptions())
 
     # Only removed service exception
     period = transitfeed.ServicePeriod()
-    period.SetDateHasService('20070101', False)
-    self.assertTrue(period.HasExceptions())
+    period.set_date_has_service('20070101', False)
+    self.assertTrue(period.has_exceptions())
 
   def testServicePeriodDateOutsideValidRange(self):
     # regular service, no exceptions, start_date invalid
@@ -156,9 +156,9 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
     period.start_date = '20070101'
     period.end_date = '20071231'
     period.day_of_week[0] = True
-    period.SetDateHasService('21070101', False) #removed service exception
-    period.SetDateHasService('20070205', False) #removed service exception
-    period.SetDateHasService('10070102', True) #added service exception
+    period.set_date_has_service('21070101', False) #removed service exception
+    period.set_date_has_service('20070205', False) #removed service exception
+    period.set_date_has_service('10070102', True) #added service exception
     period.validate(self.problems)
 
     # check for error from first date exception
@@ -181,16 +181,16 @@ class ServicePeriodDateRangeTestCase(util.ValidationTestCase):
     period.service_id = 'WEEKDAY'
     period.start_date = '20070101'
     period.end_date = '20071231'
-    period.SetWeekdayService(True)
-    period.SetDateHasService('20071231', False)
+    period.set_weekday_service(True)
+    period.set_date_has_service('20071231', False)
     period.validate(self.problems)
     self.assertEqual(('20070101', '20071231'), period.get_date_range())
 
     period2 = transitfeed.ServicePeriod()
     period2.service_id = 'HOLIDAY'
-    period2.SetDateHasService('20071225', True)
-    period2.SetDateHasService('20080101', True)
-    period2.SetDateHasService('20080102', False)
+    period2.set_date_has_service('20071225', True)
+    period2.set_date_has_service('20080101', True)
+    period2.set_date_has_service('20080102', False)
     period2.validate(self.problems)
     self.assertEqual(('20071225', '20080101'), period2.get_date_range())
 
@@ -204,7 +204,7 @@ class ServicePeriodDateRangeTestCase(util.ValidationTestCase):
 
     period4 = transitfeed.ServicePeriod()
     period4.service_id = 'halloween'
-    period4.SetDateHasService('20051031', True)
+    period4.set_date_has_service('20051031', True)
     self.assertEqual(('20051031', '20051031'), period4.get_date_range())
     period4.validate(self.problems)
 
@@ -226,10 +226,10 @@ class ServicePeriodTestCase(util.TestCase):
     period.service_id = 'WEEKDAY'
     period.start_date = '20071226'
     period.end_date = '20071231'
-    period.SetWeekdayService(True)
-    period.SetDateHasService('20071230', True)
-    period.SetDateHasService('20071231', False)
-    period.SetDateHasService('20080102', True)
+    period.set_weekday_service(True)
+    period.set_date_has_service('20071230', True)
+    period.set_date_has_service('20071231', False)
+    period.set_date_has_service('20080102', True)
     #      December  2007
     #  Su Mo Tu We Th Fr Sa
     #  23 24 25 26 27 28 29
@@ -239,61 +239,61 @@ class ServicePeriodTestCase(util.TestCase):
     # (possibly unwanted) changes to the API get caught
 
     # calendar_date exceptions near start date
-    self.assertFalse(period.IsActiveOn(date='20071225'))
-    self.assertFalse(period.IsActiveOn(date='20071225',
+    self.assertFalse(period.is_active_on(date='20071225'))
+    self.assertFalse(period.is_active_on(date='20071225',
                                        date_object=date(2007, 12, 25)))
-    self.assertTrue(period.IsActiveOn(date='20071226'))
-    self.assertTrue(period.IsActiveOn(date='20071226',
+    self.assertTrue(period.is_active_on(date='20071226'))
+    self.assertTrue(period.is_active_on(date='20071226',
                                       date_object=date(2007, 12, 26)))
 
     # calendar_date exceptions near end date
-    self.assertTrue(period.IsActiveOn('20071230'))
-    self.assertTrue(period.IsActiveOn('20071230', date(2007, 12, 30)))
-    self.assertFalse(period.IsActiveOn('20071231'))
-    self.assertFalse(period.IsActiveOn('20071231', date(2007, 12, 31)))
+    self.assertTrue(period.is_active_on('20071230'))
+    self.assertTrue(period.is_active_on('20071230', date(2007, 12, 30)))
+    self.assertFalse(period.is_active_on('20071231'))
+    self.assertFalse(period.is_active_on('20071231', date(2007, 12, 31)))
 
     # date just outside range, both weekday and an exception
-    self.assertFalse(period.IsActiveOn('20080101'))
-    self.assertFalse(period.IsActiveOn('20080101', date(2008, 1, 1)))
-    self.assertTrue(period.IsActiveOn('20080102'))
-    self.assertTrue(period.IsActiveOn('20080102', date(2008, 1, 2)))
+    self.assertFalse(period.is_active_on('20080101'))
+    self.assertFalse(period.is_active_on('20080101', date(2008, 1, 1)))
+    self.assertTrue(period.is_active_on('20080102'))
+    self.assertTrue(period.is_active_on('20080102', date(2008, 1, 2)))
 
-    self.assertEquals(period.ActiveDates(),
+    self.assertEquals(period.active_dates(),
                       ['20071226', '20071227', '20071228', '20071230',
                        '20080102'])
 
 
     # Test of period without start_date, end_date
     period_dates = transitfeed.ServicePeriod()
-    period_dates.SetDateHasService('20071230', True)
-    period_dates.SetDateHasService('20071231', False)
+    period_dates.set_date_has_service('20071230', True)
+    period_dates.set_date_has_service('20071231', False)
 
-    self.assertFalse(period_dates.IsActiveOn(date='20071229'))
-    self.assertFalse(period_dates.IsActiveOn(date='20071229',
+    self.assertFalse(period_dates.is_active_on(date='20071229'))
+    self.assertFalse(period_dates.is_active_on(date='20071229',
                                              date_object=date(2007, 12, 29)))
-    self.assertTrue(period_dates.IsActiveOn('20071230'))
-    self.assertTrue(period_dates.IsActiveOn('20071230', date(2007, 12, 30)))
-    self.assertFalse(period_dates.IsActiveOn('20071231'))
-    self.assertFalse(period_dates.IsActiveOn('20071231', date(2007, 12, 31)))
-    self.assertEquals(period_dates.ActiveDates(), ['20071230'])
+    self.assertTrue(period_dates.is_active_on('20071230'))
+    self.assertTrue(period_dates.is_active_on('20071230', date(2007, 12, 30)))
+    self.assertFalse(period_dates.is_active_on('20071231'))
+    self.assertFalse(period_dates.is_active_on('20071231', date(2007, 12, 31)))
+    self.assertEquals(period_dates.active_dates(), ['20071230'])
 
     # Test with an invalid ServicePeriod; one of start_date, end_date is set
     period_no_end = transitfeed.ServicePeriod()
     period_no_end.start_date = '20071226'
-    self.assertFalse(period_no_end.IsActiveOn(date='20071231'))
-    self.assertFalse(period_no_end.IsActiveOn(date='20071231',
+    self.assertFalse(period_no_end.is_active_on(date='20071231'))
+    self.assertFalse(period_no_end.is_active_on(date='20071231',
                                               date_object=date(2007, 12, 31)))
-    self.assertEquals(period_no_end.ActiveDates(), [])
+    self.assertEquals(period_no_end.active_dates(), [])
     period_no_start = transitfeed.ServicePeriod()
     period_no_start.end_date = '20071230'
-    self.assertFalse(period_no_start.IsActiveOn('20071229'))
-    self.assertFalse(period_no_start.IsActiveOn('20071229', date(2007, 12, 29)))
-    self.assertEquals(period_no_start.ActiveDates(), [])
+    self.assertFalse(period_no_start.is_active_on('20071229'))
+    self.assertFalse(period_no_start.is_active_on('20071229', date(2007, 12, 29)))
+    self.assertEquals(period_no_start.active_dates(), [])
 
     period_empty = transitfeed.ServicePeriod()
-    self.assertFalse(period_empty.IsActiveOn('20071231'))
-    self.assertFalse(period_empty.IsActiveOn('20071231', date(2007, 12, 31)))
-    self.assertEquals(period_empty.ActiveDates(), [])
+    self.assertFalse(period_empty.is_active_on('20071231'))
+    self.assertFalse(period_empty.is_active_on('20071231', date(2007, 12, 31)))
+    self.assertEquals(period_empty.active_dates(), [])
 
 
 class OnlyCalendarDatesTestCase(util.LoadTestCase):
@@ -332,20 +332,20 @@ class ExpirationDateTestCase(util.TestCase):
     date_format = "%Y%m%d"
 
     service_period = schedule.get_default_service_period()
-    service_period.SetWeekdayService(True)
-    service_period.SetStartDate("20070101")
+    service_period.set_weekday_service(True)
+    service_period.set_start_date("20070101")
 
-    service_period.SetEndDate(time.strftime(date_format, two_months_from_now))
+    service_period.set_end_date(time.strftime(date_format, two_months_from_now))
     schedule.validate()  # should have no problems
     accumulator.AssertNoMoreExceptions()
 
-    service_period.SetEndDate(time.strftime(date_format, two_weeks_from_now))
+    service_period.set_end_date(time.strftime(date_format, two_weeks_from_now))
     schedule.validate()
     e = accumulator.PopException('ExpirationDate')
     self.assertTrue(e.format_problem().index('will soon expire'))
     accumulator.AssertNoMoreExceptions()
 
-    service_period.SetEndDate(time.strftime(date_format, two_weeks_ago))
+    service_period.set_end_date(time.strftime(date_format, two_weeks_ago))
     schedule.validate()
     e = accumulator.PopException('ExpirationDate')
     self.assertTrue(e.format_problem().index('expired'))
@@ -364,19 +364,19 @@ class FutureServiceStartDateTestCase(util.TestCase):
     two_months_from_today = today + datetime.timedelta(days=60)
 
     service_period = schedule.get_default_service_period()
-    service_period.SetWeekdayService(True)
-    service_period.SetWeekendService(True)
-    service_period.SetEndDate(two_months_from_today.strftime("%Y%m%d"))
+    service_period.set_weekday_service(True)
+    service_period.set_weekend_service(True)
+    service_period.set_end_date(two_months_from_today.strftime("%Y%m%d"))
 
-    service_period.SetStartDate(yesterday.strftime("%Y%m%d"))
+    service_period.set_start_date(yesterday.strftime("%Y%m%d"))
     schedule.validate()
     accumulator.AssertNoMoreExceptions()
 
-    service_period.SetStartDate(today.strftime("%Y%m%d"))
+    service_period.set_start_date(today.strftime("%Y%m%d"))
     schedule.validate()
     accumulator.AssertNoMoreExceptions()
 
-    service_period.SetStartDate(tomorrow.strftime("%Y%m%d"))
+    service_period.set_start_date(tomorrow.strftime("%Y%m%d"))
     schedule.validate()
     accumulator.PopException('FutureService')
     accumulator.AssertNoMoreExceptions()
@@ -486,7 +486,7 @@ class DefaultServicePeriodTestCase(util.TestCase):
   def test_SetDefault(self):
     schedule = transitfeed.Schedule()
     service1 = transitfeed.ServicePeriod()
-    service1.SetDateHasService('20070101', True)
+    service1.set_date_has_service('20070101', True)
     service1.service_id = 'SERVICE1'
     schedule.set_default_service_period(service1)
     self.assertEqual(service1, schedule.get_default_service_period())
@@ -497,7 +497,7 @@ class DefaultServicePeriodTestCase(util.TestCase):
     service1 = schedule.new_default_service_period()
     self.assertTrue(service1.service_id)
     schedule.get_service_period(service1.service_id)
-    service1.SetDateHasService('20070101', True)  # Make service1 different
+    service1.set_date_has_service('20070101', True)  # Make service1 different
     service2 = schedule.new_default_service_period()
     schedule.get_service_period(service2.service_id)
     self.assertTrue(service1.service_id)
@@ -513,7 +513,7 @@ class DefaultServicePeriodTestCase(util.TestCase):
   def test_AssumeSingleServiceIsDefault(self):
     schedule = transitfeed.Schedule()
     service1 = transitfeed.ServicePeriod()
-    service1.SetDateHasService('20070101', True)
+    service1.set_date_has_service('20070101', True)
     service1.service_id = 'SERVICE1'
     schedule.add_service_period_object(service1)
     self.assertEqual(service1, schedule.get_default_service_period())
@@ -523,11 +523,11 @@ class DefaultServicePeriodTestCase(util.TestCase):
     schedule = transitfeed.Schedule()
     service1 = transitfeed.ServicePeriod()
     service1.service_id = 'SERVICE1'
-    service1.SetDateHasService('20070101', True)
+    service1.set_date_has_service('20070101', True)
     schedule.add_service_period_object(service1)
     service2 = transitfeed.ServicePeriod()
     service2.service_id = 'SERVICE2'
-    service2.SetDateHasService('20070201', True)
+    service2.set_date_has_service('20070201', True)
     schedule.add_service_period_object(service2)
     service_d = schedule.get_default_service_period()
     self.assertEqual(service_d, None)

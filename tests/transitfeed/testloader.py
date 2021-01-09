@@ -798,10 +798,10 @@ class BasicParsingTestCase(util.TestCase):
     self.assertEqual(0, len(schedule.fare_zones))
 
   def assertLoadedStopTimesCorrectly(self, schedule):
-    self.assertEqual(5, len(schedule.get_trip('CITY1').GetStopTimes()))
-    self.assertEqual('to airport', schedule.get_trip('STBA').GetStopTimes()[0].stop_headsign)
-    self.assertEqual(2, schedule.get_trip('CITY1').GetStopTimes()[1].pickup_type)
-    self.assertEqual(3, schedule.get_trip('CITY1').GetStopTimes()[1].drop_off_type)
+    self.assertEqual(5, len(schedule.get_trip('CITY1').get_stop_times()))
+    self.assertEqual('to airport', schedule.get_trip('STBA').get_stop_times()[0].stop_headsign)
+    self.assertEqual(2, schedule.get_trip('CITY1').get_stop_times()[1].pickup_type)
+    self.assertEqual(3, schedule.get_trip('CITY1').get_stop_times()[1].drop_off_type)
 
   def test_MemoryDb(self):
     loader = transitfeed.Loader(
@@ -833,7 +833,7 @@ class BasicParsingTestCase(util.TestCase):
       load_stop_times=False)
     schedule = loader.load()
     self.assertLoadedCorrectly(schedule)
-    self.assertEqual(0, len(schedule.get_trip('CITY1').GetStopTimes()))
+    self.assertEqual(0, len(schedule.get_trip('CITY1').get_stop_times()))
 
 
 class UndefinedStopAgencyTestCase(util.LoadTestCase):

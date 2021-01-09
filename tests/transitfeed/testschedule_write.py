@@ -39,9 +39,9 @@ class MinimalWriteTestCase(util.TempFileTestCaseBase):
     schedule.add_route_object(route)
 
     service_period = transitfeed.ServicePeriod("WEEK")
-    service_period.SetStartDate("20070101")
-    service_period.SetEndDate("20071231")
-    service_period.SetWeekdayService(True)
+    service_period.set_start_date("20070101")
+    service_period.set_end_date("20071231")
+    service_period.set_weekday_service(True)
     schedule.add_service_period_object(service_period)
 
     trip = transitfeed.Trip()
@@ -56,7 +56,7 @@ class MinimalWriteTestCase(util.TempFileTestCaseBase):
     stop1.stop_lat = 78.243587
     stop1.stop_lon = 32.258937
     schedule.add_stop_object(stop1)
-    trip.AddStopTime(stop1, arrival_time="12:00:00", departure_time="12:00:00")
+    trip.add_stop_time(stop1, arrival_time="12:00:00", departure_time="12:00:00")
 
     stop2 = transitfeed.Stop()
     stop2.stop_id = "STOP2"
@@ -64,7 +64,7 @@ class MinimalWriteTestCase(util.TempFileTestCaseBase):
     stop2.stop_lat = 78.253587
     stop2.stop_lon = 32.258937
     schedule.add_stop_object(stop2)
-    trip.AddStopTime(stop2, arrival_time="12:05:00", departure_time="12:05:00")
+    trip.add_stop_time(stop2, arrival_time="12:05:00", departure_time="12:05:00")
 
     schedule.validate()
     schedule.write_google_transit_feed(self.tempfilepath)
@@ -79,7 +79,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     schedule.add_agency("\xc8\x8b Fly Agency", "http://iflyagency.com",
                        "America/Los_Angeles")
     service_period = schedule.get_default_service_period()
-    service_period.SetDateHasService('20070101')
+    service_period.set_date_has_service('20070101')
     # "u020b i with inverted accent breve" encoded in utf-8
     stop1 = schedule.add_stop(lng=140, lat=48.2, name="\xc8\x8b hub")
     # "u020b i with inverted accent breve" as unicode string
@@ -91,8 +91,8 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     repr(stop2)
     repr(route)
     repr(trip)
-    trip.AddStopTime(stop1, schedule=schedule, stop_time='10:00:00')
-    trip.AddStopTime(stop2, stop_time='10:10:00')
+    trip.add_stop_time(stop1, schedule=schedule, stop_time='10:00:00')
+    trip.add_stop_time(stop2, stop_time='10:10:00')
 
     schedule.validate(problems)
     schedule.write_google_transit_feed(self.tempfilepath)
@@ -117,9 +117,9 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
 
     service_period = schedule.get_default_service_period()
     self.assertTrue(service_period.service_id)
-    service_period.SetWeekdayService(has_service=True)
-    service_period.SetStartDate("20070320")
-    service_period.SetEndDate("20071231")
+    service_period.set_weekday_service(has_service=True)
+    service_period.set_start_date("20070320")
+    service_period.set_end_date("20071231")
 
     stop1 = schedule.add_stop(lng=-140.12, lat=48.921,
                              name="one forty at forty eight")
@@ -141,11 +141,11 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     self.assertEqual("To The End", trip.trip_headsign)
     self.assertEqual(service_period, trip.service_period)
 
-    trip.AddStopTime(stop=stop1, arrival_secs=3600*8, departure_secs=3600*8)
-    trip.AddStopTime(stop=stop2)
-    trip.AddStopTime(stop=stop3, arrival_secs=3600*8 + 60*60,
+    trip.add_stop_time(stop=stop1, arrival_secs=3600*8, departure_secs=3600*8)
+    trip.add_stop_time(stop=stop2)
+    trip.add_stop_time(stop=stop3, arrival_secs=3600*8 + 60*60,
                      departure_secs=3600*8 + 60*60)
-    trip.AddStopTime(stop=stop4, arrival_time="9:13:00",
+    trip.add_stop_time(stop=stop4, arrival_time="9:13:00",
                      departure_secs=3600*8 + 60*103, stop_headsign="Last stop",
                      pickup_type=1, drop_off_type=3)
 
@@ -154,7 +154,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     read_schedule = \
         transitfeed.Loader(self.tempfilepath, problems=problems,
                            extra_validation=True).load()
-    self.assertEqual(4, len(read_schedule.get_trip(trip_id).GetTimeStops()))
+    self.assertEqual(4, len(read_schedule.get_trip(trip_id).get_time_stops()))
     self.assertEqual(1, len(read_schedule.get_route_list()))
     self.assertEqual(4, len(read_schedule.get_stop_list()))
 
@@ -194,7 +194,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     problems = util.GetTestFailureProblemReporter(self)
     schedule = transitfeed.Schedule(problem_reporter=problems)
     service_period = schedule.get_default_service_period()
-    service_period.SetDateHasService("20070101")
+    service_period.set_date_has_service("20070101")
     route = schedule.add_route("0", "Long Name", "Bus")
     route.add_trip()
     route.add_trip(schedule=schedule, headsign="hs1",
@@ -275,23 +275,23 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
 
     shape = transitfeed.Shape("BFC1S")
     for (lat, lon) in shape_data:
-      shape.AddPoint(lat, lon)
+      shape.add_point(lat, lon)
     schedule.add_shape_object(shape)
 
     week_period = transitfeed.ServicePeriod()
     week_period.service_id = "FULLW"
     week_period.start_date = "20070101"
     week_period.end_date = "20071231"
-    week_period.SetWeekdayService()
-    week_period.SetWeekendService()
-    week_period.SetDateHasService("20070604", False)
+    week_period.set_weekday_service()
+    week_period.set_weekend_service()
+    week_period.set_date_has_service("20070604", False)
     schedule.add_service_period_object(week_period)
 
     weekend_period = transitfeed.ServicePeriod()
     weekend_period.service_id = "WE"
     weekend_period.start_date = "20070101"
     weekend_period.end_date = "20071231"
-    weekend_period.SetWeekendService()
+    weekend_period.set_weekend_service()
     schedule.add_service_period_object(weekend_period)
 
     stops = []
@@ -378,14 +378,14 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
             pickup_type, drop_off_type, stop_headsign) = stop_time_entry
         trip = schedule.get_trip(trip_id)
         stop = schedule.get_stop(stop_id)
-        trip.AddStopTime(stop, arrival_time=arrival_time,
+        trip.add_stop_time(stop, arrival_time=arrival_time,
                          departure_time=departure_time,
                          shape_dist_traveled=shape_dist_traveled,
                          pickup_type=pickup_type, drop_off_type=drop_off_type,
                          stop_headsign=stop_headsign)
 
-    self.assertEqual(0, schedule.get_trip("CITY1").GetStopTimes()[0].pickup_type)
-    self.assertEqual(1, schedule.get_trip("CITY1").GetStopTimes()[1].pickup_type)
+    self.assertEqual(0, schedule.get_trip("CITY1").get_stop_times()[0].pickup_type)
+    self.assertEqual(1, schedule.get_trip("CITY1").get_stop_times()[1].pickup_type)
 
     headway_data = [
         ("STBA", "6:00:00", "22:00:00", 1800),
@@ -406,10 +406,10 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
       (trip_id, start_time, end_time, headway) = headway_entry
       headway_trips[trip_id] = []  # adding to set to check later
       trip = schedule.get_trip(trip_id)
-      trip.AddFrequency(start_time, end_time, headway, 0, problems)
+      trip.add_frequency(start_time, end_time, headway, 0, problems)
     for trip_id in headway_trips:
       headway_trips[trip_id] = \
-          schedule.get_trip(trip_id).GetFrequencyTuples()
+          schedule.get_trip(trip_id).get_frequency_tuples()
 
     fare_data = [
         ("p", 1.25, "USD", 0, 0),
@@ -485,11 +485,11 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
 
     for trip_id in headway_trips:
       self.assertEqual(headway_trips[trip_id],
-                       read_schedule.get_trip(trip_id).GetFrequencyTuples())
+                       read_schedule.get_trip(trip_id).get_frequency_tuples())
 
     for trip_id, stop_time_list in stop_time_data.items():
       trip = read_schedule.get_trip(trip_id)
-      read_stoptimes = trip.GetStopTimes()
+      read_stoptimes = trip.get_stop_times()
       self.assertEqual(len(read_stoptimes), len(stop_time_list))
       for stop_time_entry, read_stoptime in zip(stop_time_list, read_stoptimes):
         (arrival_time, departure_time, stop_id, shape_dist_traveled,

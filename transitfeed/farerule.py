@@ -20,65 +20,65 @@ from .gtfsobjectbase import GtfsObjectBase
 
 
 class FareRule(GtfsObjectBase):
-  """This class represents a rule that determines which itineraries a
-  fare rule applies to."""
-  _REQUIRED_FIELD_NAMES = ['fare_id']
-  _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ['route_id',
-                                         'origin_id',
-                                         'destination_id',
-                                         'contains_id']
-  _TABLE_NAME = "fare_rules"
+    """This class represents a rule that determines which itineraries a
+    fare rule applies to."""
+    _REQUIRED_FIELD_NAMES = ['fare_id']
+    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ['route_id',
+                                            'origin_id',
+                                            'destination_id',
+                                            'contains_id']
+    _TABLE_NAME = "fare_rules"
 
-  def __init__(self, fare_id=None, route_id=None,
-               origin_id=None, destination_id=None, contains_id=None,
-               field_dict=None):
-    self._schedule = None
-    (self.fare_id, self.route_id, self.origin_id, self.destination_id,
-     self.contains_id) = \
-     (fare_id, route_id, origin_id, destination_id, contains_id)
-    if field_dict:
-      if isinstance(field_dict, self.get_gtfs_factory().FareRule):
-        # Special case so that we don't need to re-parse the attributes to
-        # native types items returns all attributes that don't start with _
-        for k, v in field_dict.items():
-          self.__dict__[k] = v
-      else:
-        self.__dict__.update(field_dict)
+    def __init__(self, fare_id=None, route_id=None,
+                 origin_id=None, destination_id=None, contains_id=None,
+                 field_dict=None):
+        self._schedule = None
+        (self.fare_id, self.route_id, self.origin_id, self.destination_id,
+         self.contains_id) = \
+            (fare_id, route_id, origin_id, destination_id, contains_id)
+        if field_dict:
+            if isinstance(field_dict, self.get_gtfs_factory().FareRule):
+                # Special case so that we don't need to re-parse the attributes to
+                # native types items returns all attributes that don't start with _
+                for k, v in field_dict.items():
+                    self.__dict__[k] = v
+            else:
+                self.__dict__.update(field_dict)
 
-    # canonicalize non-content values as None
-    if not self.route_id:
-      self.route_id = None
-    if not self.origin_id:
-      self.origin_id = None
-    if not self.destination_id:
-      self.destination_id = None
-    if not self.contains_id:
-      self.contains_id = None
+        # canonicalize non-content values as None
+        if not self.route_id:
+            self.route_id = None
+        if not self.origin_id:
+            self.origin_id = None
+        if not self.destination_id:
+            self.destination_id = None
+        if not self.contains_id:
+            self.contains_id = None
 
-  def get_field_values_tuple(self):
-    return [getattr(self, fn) for fn in self._FIELD_NAMES]
+    def get_field_values_tuple(self):
+        return [getattr(self, fn) for fn in self._FIELD_NAMES]
 
-  def __getitem__(self, name):
-    return getattr(self, name)
+    def __getitem__(self, name):
+        return getattr(self, name)
 
-  def __eq__(self, other):
-    if not other:
-      return False
+    def __eq__(self, other):
+        if not other:
+            return False
 
-    if id(self) == id(other):
-      return True
+        if id(self) == id(other):
+            return True
 
-    return self.get_field_values_tuple() == other.get_field_values_tuple()
+        return self.get_field_values_tuple() == other.get_field_values_tuple()
 
-  def __ne__(self, other):
-    return not self.__eq__(other)
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
-  def add_to_schedule(self, schedule, problems):
-    self._schedule = schedule
-    schedule.add_fare_rule_object(self, problems)
+    def add_to_schedule(self, schedule, problems):
+        self._schedule = schedule
+        schedule.add_fare_rule_object(self, problems)
 
-  def validate_before_add(self, problems):
-    return True
+    def validate_before_add(self, problems):
+        return True
 
-  def validate_after_add(self, problems):
-    return
+    def validate_after_add(self, problems):
+        return

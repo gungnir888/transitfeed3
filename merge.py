@@ -1294,7 +1294,7 @@ class TransferMerger(DataSetMerger):
     return schedule.get_transfer_iter()
 
   def _GetId(self, transfer):
-    return transfer._ID()
+    return transfer._id()
 
   def _Migrate(self, original_transfer, schedule):
     # Make a copy of the original and then fix the stop_id references.
@@ -1388,7 +1388,7 @@ class ShapeMerger(DataSetMerger):
       migrated_shape.shape_id = self.feed_merger.GenerateId(
           original_shape.shape_id)
     for (lat, lon, dist) in original_shape.points:
-      migrated_shape.AddPoint(lat=lat, lon=lon, distance=dist)
+      migrated_shape.add_point(lat=lat, lon=lon, distance=dist)
     return migrated_shape
 
   def _add(self, a, b, migrated_shape):
@@ -1460,7 +1460,7 @@ class TripMerger(DataSetMerger):
       original_shape = schedule.get_shape(original_trip.shape_id)
       migrated_trip.shape_id = merge_map[original_shape].shape_id
 
-    for original_stop_time in original_trip.GetStopTimes():
+    for original_stop_time in original_trip.get_stop_times():
       migrated_stop_time = transitfeed.StopTime(
           None,
           merge_map[original_stop_time.stop],
@@ -1472,10 +1472,10 @@ class TripMerger(DataSetMerger):
           original_stop_time.shape_dist_traveled,
           original_stop_time.arrival_secs,
           original_stop_time.departure_secs)
-      migrated_trip.AddStopTimeObject(migrated_stop_time)
+      migrated_trip.add_stop_time_object(migrated_stop_time)
 
-    for headway_period in original_trip.GetFrequencyTuples():
-      migrated_trip.AddFrequency(*headway_period)
+    for headway_period in original_trip.get_frequency_tuples():
+      migrated_trip.add_frequency(*headway_period)
 
     return migrated_trip
 

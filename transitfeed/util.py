@@ -282,11 +282,11 @@ def is_valid_timezone(timezone):
     """
     try:
         import pytz
-        return timezone in pytz.common_timezones
     except ImportError:  # no pytz
         print("Timezone not checked "
               "(install pytz package for timezone validation)")
         return True
+    return timezone in pytz.common_timezones
 
 
 def validate_timezone(timezone, column_name=None, problems=None):

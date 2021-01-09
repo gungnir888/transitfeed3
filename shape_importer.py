@@ -51,7 +51,7 @@ def PrintColumns(shapefile):
   feature = layer.GetFeature(0)
   print("%d features" % feature.GetFieldCount())
   for j in range(0, feature.GetFieldCount()):
-    print('--' + feature.GetFieldDefnRef(j).GetName() + \
+    print('--' + feature.GetFieldDefnRef(j).get_name() + \
           ': ' + feature.GetFieldAsString(j))
 
 
@@ -79,8 +79,8 @@ def AddShapefile(shapefile, graph, key_cols):
     poly = shapelib.Poly(name=shape_id)
     for j in range(0, geometry.GetPointCount()):
       (lat, lng) = (round(geometry.GetY(j), 15), round(geometry.GetX(j), 15))
-      poly.AddPoint(shapelib.Point.FromLatLng(lat, lng))
-    graph.AddPoly(poly)
+      poly.add_point(shapelib.Point.from_lat_lng(lat, lng))
+    graph.add_poly(poly)
 
   return graph
 
@@ -97,8 +97,8 @@ def GetMatchingShape(pattern_poly, trip, matches, max_distance, verbosity=0):
 
   if verbosity >= 1:
     for match in matches:
-      print("match: size %d" % match.GetNumPoints())
-  scores = [(pattern_poly.GreedyPolyMatchDist(match), match)
+      print("match: size %d" % match.get_num_points())
+  scores = [(pattern_poly.greedy_poly_match_dist(match), match)
             for match in matches]
 
   scores.sort()
@@ -126,7 +126,7 @@ def AddExtraShapes(extra_shapes_txt, graph):
     schedule = loader.load()
     for shape in schedule.get_shape_list():
       print("Adding extra shape: %s" % shape.shape_id)
-      graph.AddPoly(ShapeToPoly(shape))
+      graph.add_poly(ShapeToPoly(shape))
   finally:
     if tmpdir:
       shutil.rmtree(tmpdir)
@@ -137,8 +137,8 @@ def AddExtraShapes(extra_shapes_txt, graph):
 def ShapeToPoly(shape):
   poly = shapelib.Poly(name=shape.shape_id)
   for lat, lng, distance in shape.points:
-    point = shapelib.Point.FromLatLng(round(lat, 15), round(lng, 15))
-    poly.AddPoint(point)
+    point = shapelib.Point.from_lat_lng(round(lat, 15), round(lng, 15))
+    poly.add_point(point)
   return poly
 
 
@@ -217,18 +217,18 @@ def main(key_cols):
     patterns = route.get_pattern_id_trip_dict()
     for pattern_id, trips in patterns.items():
       pattern_count += 1
-      pattern = trips[0].GetPattern()
+      pattern = trips[0].get_pattern()
 
-      poly_points = [shapelib.Point.FromLatLng(p.stop_lat, p.stop_lon)
+      poly_points = [shapelib.Point.from_lat_lng(p.stop_lat, p.stop_lon)
                      for p in pattern]
       if verbosity >= 2:
         print("\npattern %d, %d points:" % (pattern_id, len(poly_points)))
         for i, (stop, point) in enumerate(zip(pattern, poly_points)):
-          print("Stop %d '%s': %s" % (i + 1, stop.stop_name, point.ToLatLng()))
+          print("Stop %d '%s': %s" % (i + 1, stop.stop_name, point.to_lat_lng()))
 
       # First, try to find polys that run all the way from
       # the start of the trip to the end.
-      matches = graph.FindMatchingPolys(poly_points[0], poly_points[-1],
+      matches = graph.find_matching_polys(poly_points[0], poly_points[-1],
                                         options.max_distance)
       if not matches:
         # Try to find a path through the graph, joining
@@ -236,7 +236,7 @@ def main(key_cols):
         # points in the trip.  Some shape files are structured
         # this way, with a polyline for each segment between
         # stations instead of a polyline covering an entire line.
-        shortest_path = graph.FindShortestMultiPointPath(poly_points,
+        shortest_path = graph.find_shortest_multi_point_path(poly_points,
                                                          options.max_distance,
                                                          verbosity=verbosity)
         if shortest_path:
@@ -251,16 +251,16 @@ def main(key_cols):
       if shape_match:
         shape_count += 1
         # Rename shape for readability.
-        shape_match = shapelib.Poly(points=shape_match.GetPoints(),
+        shape_match = shapelib.Poly(points=shape_match.get_points(),
                                            name="shape_%d" % shape_count)
         for trip in trips:
           try:
-            shape = schedule.get_shape(shape_match.GetName())
+            shape = schedule.get_shape(shape_match.get_name())
           except KeyError:
-            shape = transitfeed.Shape(shape_match.GetName())
-            for point in shape_match.GetPoints():
-              (lat, lng) = point.ToLatLng()
-              shape.AddPoint(lat, lng)
+            shape = transitfeed.Shape(shape_match.get_name())
+            for point in shape_match.get_points():
+              (lat, lng) = point.to_lat_lng()
+              shape.add_point(lat, lng)
             schedule.add_shape_object(shape)
           trip.shape_id = shape.shape_id
 

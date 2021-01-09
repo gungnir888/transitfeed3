@@ -460,10 +460,10 @@ class TestServicePeriodMerger(util.TestCase):
   def testDisjoinCalendars_Dates(self):
     self._AddTwoPeriods('20071213', '20080201',
                         '20080101', '20080301')
-    self.sp1.SetDateHasService('20071201')
-    self.sp1.SetDateHasService('20081231')
-    self.sp2.SetDateHasService('20071201')
-    self.sp2.SetDateHasService('20081231')
+    self.sp1.set_date_has_service('20071201')
+    self.sp1.set_date_has_service('20081231')
+    self.sp2.set_date_has_service('20071201')
+    self.sp2.set_date_has_service('20081231')
 
     self.spm.DisjoinCalendars('20080101')
 
@@ -993,10 +993,10 @@ class TestTripMerger(util.TestCase):
     self.s1 = transitfeed.ServicePeriod('s1')
     self.s1.start_date = '20071201'
     self.s1.end_date = '20071231'
-    self.s1.SetWeekdayService()
+    self.s1.set_weekday_service()
 
     self.shape = transitfeed.Shape('shape1')
-    self.shape.AddPoint(30.0, 30.0)
+    self.shape.add_point(30.0, 30.0)
 
     self.t1 = transitfeed.Trip(service_period=self.s1,
                                route=self.r1, trip_id='t1')
@@ -1010,7 +1010,7 @@ class TestTripMerger(util.TestCase):
     self.t1.shape_id = 'shape1'
 
     self.stop = transitfeed.Stop(30.0, 30.0, stop_id='stop1')
-    self.t1.AddStopTime(self.stop, arrival_secs=0, departure_secs=0)
+    self.t1.add_stop_time(self.stop, arrival_secs=0, departure_secs=0)
 
     a_schedule.add_agency_object(self.a1)
     a_schedule.add_stop_object(self.stop)
@@ -1034,8 +1034,8 @@ class TestTripMerger(util.TestCase):
     self.assertEquals(t1.shape_id, shape.shape_id)
     self.assertEquals(t1.block_id, t2.block_id)
 
-    self.assertEquals(len(t1.GetStopTimes()), 1)
-    st = t1.GetStopTimes()[0]
+    self.assertEquals(len(t1.get_stop_times()), 1)
+    st = t1.get_stop_times()[0]
     self.assertEquals(st.stop, self.fm.a_merge_map[self.stop])
 
   def testReportsNotImplementedProblem(self):
@@ -1052,11 +1052,11 @@ class TestTripMerger(util.TestCase):
     t1_in_b = transitfeed.Trip(field_dict=self.t1)
     t1_in_b.trip_short_name = 't1-b'
     shape_in_b = transitfeed.Shape('shape1')
-    shape_in_b.AddPoint(30.0, 30.0)
+    shape_in_b.add_point(30.0, 30.0)
     s_in_b = transitfeed.ServicePeriod('s1')
     s_in_b.start_date = '20080101'
     s_in_b.end_date = '20080131'
-    s_in_b.SetWeekdayService()
+    s_in_b.set_weekday_service()
 
     self.fm.b_schedule.add_agency_object(a1_in_b)
     self.fm.b_schedule.add_route_object(r1_in_b)
@@ -1147,19 +1147,19 @@ class TestShapeMerger(util.TestCase):
     # s3 has different endpoints to s1 and s2
 
     self.s1 = transitfeed.Shape('s1')
-    self.s1.AddPoint(30.0, 30.0)
-    self.s1.AddPoint(40.0, 30.0)
-    self.s1.AddPoint(50.0, 50.0)
+    self.s1.add_point(30.0, 30.0)
+    self.s1.add_point(40.0, 30.0)
+    self.s1.add_point(50.0, 50.0)
 
     self.s2 = transitfeed.Shape('s2')
-    self.s2.AddPoint(30.0, 30.0)
-    self.s2.AddPoint(40.0, 35.0)
-    self.s2.AddPoint(50.0, 50.0)
+    self.s2.add_point(30.0, 30.0)
+    self.s2.add_point(40.0, 35.0)
+    self.s2.add_point(50.0, 50.0)
 
     self.s3 = transitfeed.Shape('s3')
-    self.s3.AddPoint(31.0, 31.0)
-    self.s3.AddPoint(45.0, 35.0)
-    self.s3.AddPoint(51.0, 51.0)
+    self.s3.add_point(31.0, 31.0)
+    self.s3.add_point(45.0, 35.0)
+    self.s3.add_point(51.0, 51.0)
 
   def testMerge(self):
     self.s2.shape_id = self.s1.shape_id

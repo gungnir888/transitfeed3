@@ -63,7 +63,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
     headway_period4.add_to_schedule(self.schedule, self.problems)
     self.trip.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
-    self.trip.ClearFrequencies()
+    self.trip.clear_frequencies()
 
   def testOverlappingPeriods(self):
     # overlapping headway periods
@@ -80,7 +80,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
     headway_period1.add_to_schedule(self.schedule, self.problems)
     headway_period2.add_to_schedule(self.schedule, self.problems)
     self.ValidateAndExpectOtherProblem(self.trip)
-    self.trip.ClearFrequencies()
+    self.trip.clear_frequencies()
     self.accumulator.AssertNoMoreExceptions()
 
   def testPeriodWithInvalidTripId(self):
@@ -92,7 +92,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
     headway_period1.add_to_schedule(self.schedule, self.problems)
     e = self.accumulator.PopException('InvalidValue')
     self.assertEqual('trip_id', e.column_name)
-    self.trip.ClearFrequencies()
+    self.trip.clear_frequencies()
 
   def testExactTimesStringValueConversion(self):
     # Test that no exact_times converts to 0

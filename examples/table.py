@@ -59,7 +59,7 @@ def AddRouteToSchedule(schedule, table):
           trip_stops.append( (transitfeed.time_to_seconds_since_midnight(trip[i]), table[1][i]) )
       trip_stops.sort()  # Sort by time
       for (time, stopname) in trip_stops:
-        t.AddStopTime(stop=stops[stopname.lower()], arrival_secs=time,
+        t.add_stop_time(stop=stops[stopname.lower()], arrival_secs=time,
                       departure_secs=time)
 
 def TransposeTable(table):
@@ -96,15 +96,15 @@ def ProcessOptions(schedule, table):
   for row in table[1:]:
     command = row[0].lower()
     if command == 'weekday':
-      service_period.SetWeekdayService()
+      service_period.set_weekday_service()
     elif command == 'start_date':
-      service_period.SetStartDate(row[1])
+      service_period.set_start_date(row[1])
     elif command == 'end_date':
-      service_period.SetEndDate(row[1])
+      service_period.set_end_date(row[1])
     elif command == 'add_date':
-      service_period.SetDateHasService(date=row[1])
+      service_period.set_date_has_service(date=row[1])
     elif command == 'remove_date':
-      service_period.SetDateHasService(date=row[1], has_service=False)
+      service_period.set_date_has_service(date=row[1], has_service=False)
     elif command == 'agency_name':
       agency_name = row[1]
     elif command == 'agency_url':

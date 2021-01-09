@@ -217,9 +217,9 @@ class CalendarSummaryTestCase(util.TestCase):
       schedule = transitfeed.Schedule()
       service_period = schedule.get_default_service_period()
 
-      service_period.SetStartDate(start_date.strftime("%Y%m%d"))
-      service_period.SetEndDate(end_date.strftime("%Y%m%d"))
-      service_period.SetWeekdayService(True)
+      service_period.set_start_date(start_date.strftime("%Y%m%d"))
+      service_period.set_end_date(end_date.strftime("%Y%m%d"))
+      service_period.set_weekday_service(True)
 
       result = feedvalidator.calendar_summary(schedule)
 
@@ -235,9 +235,9 @@ class CalendarSummaryTestCase(util.TestCase):
       schedule = transitfeed.Schedule()
       service_period = schedule.get_default_service_period()
 
-      service_period.SetStartDate(start_date.strftime("%Y%m%d"))
-      service_period.SetEndDate(end_date.strftime("%Y%m%d"))
-      service_period.SetWeekdayService(True)
+      service_period.set_start_date(start_date.strftime("%Y%m%d"))
+      service_period.set_end_date(end_date.strftime("%Y%m%d"))
+      service_period.set_weekday_service(True)
 
       result = feedvalidator.calendar_summary(schedule)
 
@@ -254,9 +254,9 @@ class CalendarSummaryTestCase(util.TestCase):
       schedule = transitfeed.Schedule()
       service_period = schedule.get_default_service_period()
 
-      service_period.SetStartDate(start_date.strftime("%Y%m%d"))
-      service_period.SetEndDate(end_date.strftime("%Y%m%d"))
-      service_period.SetWeekdayService(True)
+      service_period.set_start_date(start_date.strftime("%Y%m%d"))
+      service_period.set_end_date(end_date.strftime("%Y%m%d"))
+      service_period.set_weekday_service(True)
 
       result = feedvalidator.calendar_summary(schedule)
 

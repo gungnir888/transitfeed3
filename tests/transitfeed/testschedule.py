@@ -72,23 +72,23 @@ class OverlappingBlockTripsTestCase(util.TestCase):
                        "America/Los_Angeles")
 
     sp1 = transitfeed.ServicePeriod("SID1")
-    sp1.SetWeekdayService(True)
-    sp1.SetStartDate("20070605")
-    sp1.SetEndDate("20080605")
+    sp1.set_weekday_service(True)
+    sp1.set_start_date("20070605")
+    sp1.set_end_date("20080605")
     schedule.add_service_period_object(sp1)
 
     sp2 = transitfeed.ServicePeriod("SID2")
-    sp2.SetDayOfWeekHasService(0)
-    sp2.SetDayOfWeekHasService(2)
-    sp2.SetDayOfWeekHasService(4)
-    sp2.SetStartDate("20070605")
-    sp2.SetEndDate("20080605")
+    sp2.set_day_of_week_has_service(0)
+    sp2.set_day_of_week_has_service(2)
+    sp2.set_day_of_week_has_service(4)
+    sp2.set_start_date("20070605")
+    sp2.set_end_date("20080605")
     schedule.add_service_period_object(sp2)
 
     sp3 = transitfeed.ServicePeriod("SID3")
-    sp3.SetWeekendService(True)
-    sp3.SetStartDate("20070605")
-    sp3.SetEndDate("20080605")
+    sp3.set_weekend_service(True)
+    sp3.set_start_date("20070605")
+    sp3.set_end_date("20080605")
     schedule.add_service_period_object(sp3)
 
     self.stop1 = schedule.add_stop(lng=-116.75167,
@@ -114,13 +114,13 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
-    trip1.AddStopTime(self.stop1, stop_time="6:00:00")
-    trip1.AddStopTime(self.stop2, stop_time="6:30:00")
+    trip1.add_stop_time(self.stop1, stop_time="6:00:00")
+    trip1.add_stop_time(self.stop2, stop_time="6:30:00")
 
     trip2 = route.add_trip(schedule, service_period=sp1, trip_id="CITY2")
     trip2.block_id = "BLOCK"
-    trip2.AddStopTime(self.stop2, stop_time="6:30:00")
-    trip2.AddStopTime(self.stop1, stop_time="7:00:00")
+    trip2.add_stop_time(self.stop2, stop_time="6:30:00")
+    trip2.add_stop_time(self.stop1, stop_time="7:00:00")
 
     schedule.validate(self.problems)
 
@@ -132,13 +132,13 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
-    trip1.AddStopTime(self.stop1, stop_time="6:00:00")
-    trip1.AddStopTime(self.stop2, stop_time="6:30:00")
+    trip1.add_stop_time(self.stop1, stop_time="6:00:00")
+    trip1.add_stop_time(self.stop2, stop_time="6:30:00")
 
     trip2 = route.add_trip(schedule, service_period=sp1, trip_id="CITY2")
     trip2.block_id = "BLOCK"
-    trip2.AddStopTime(self.stop2, stop_time="6:20:00")
-    trip2.AddStopTime(self.stop1, stop_time="6:50:00")
+    trip2.add_stop_time(self.stop2, stop_time="6:20:00")
+    trip2.add_stop_time(self.stop1, stop_time="6:50:00")
 
     schedule.validate(self.problems)
 
@@ -155,23 +155,23 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
-    trip1.AddStopTime(self.stop1, stop_time="6:00:00")
-    trip1.AddStopTime(self.stop2, stop_time="6:30:00")
+    trip1.add_stop_time(self.stop1, stop_time="6:00:00")
+    trip1.add_stop_time(self.stop2, stop_time="6:30:00")
 
     trip2 = route.add_trip(schedule, service_period=sp2, trip_id="CITY2")
     trip2.block_id = "BLOCK"
-    trip2.AddStopTime(self.stop2, stop_time="6:20:00")
-    trip2.AddStopTime(self.stop1, stop_time="6:50:00")
+    trip2.add_stop_time(self.stop2, stop_time="6:20:00")
+    trip2.add_stop_time(self.stop1, stop_time="6:50:00")
 
     trip3 = route.add_trip(schedule, service_period=sp1, trip_id="CITY3")
     trip3.block_id = "BLOCK"
-    trip3.AddStopTime(self.stop1, stop_time="7:00:00")
-    trip3.AddStopTime(self.stop2, stop_time="7:30:00")
+    trip3.add_stop_time(self.stop1, stop_time="7:00:00")
+    trip3.add_stop_time(self.stop2, stop_time="7:30:00")
 
     trip4 = route.add_trip(schedule, service_period=sp2, trip_id="CITY4")
     trip4.block_id = "BLOCK"
-    trip4.AddStopTime(self.stop2, stop_time="7:20:00")
-    trip4.AddStopTime(self.stop1, stop_time="7:50:00")
+    trip4.add_stop_time(self.stop2, stop_time="7:20:00")
+    trip4.add_stop_time(self.stop1, stop_time="7:50:00")
 
     schedule.validate(self.problems)
 
@@ -198,13 +198,13 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
-    trip1.AddStopTime(self.stop1, stop_time="6:00:00")
-    trip1.AddStopTime(self.stop2, stop_time="6:30:00")
+    trip1.add_stop_time(self.stop1, stop_time="6:00:00")
+    trip1.add_stop_time(self.stop2, stop_time="6:30:00")
 
     trip2 = route.add_trip(schedule, service_period=sp3, trip_id="CITY2")
     trip2.block_id = "BLOCK"
-    trip2.AddStopTime(self.stop2, stop_time="6:20:00")
-    trip2.AddStopTime(self.stop1, stop_time="6:50:00")
+    trip2.add_stop_time(self.stop2, stop_time="6:20:00")
+    trip2.add_stop_time(self.stop1, stop_time="6:50:00")
 
     schedule.validate(self.problems)
 
@@ -347,8 +347,8 @@ class GetServicePeriodsActiveEachDateTestCase(util.TestCase):
     schedule = transitfeed.Schedule()
     sp1 = transitfeed.ServicePeriod()
     sp1.service_id = "sp1"
-    sp1.SetDateHasService("20090101")
-    sp1.SetDateHasService("20090102")
+    sp1.set_date_has_service("20090101")
+    sp1.set_date_has_service("20090102")
     schedule.add_service_period_object(sp1)
     self.assertEquals(
         [],
@@ -363,16 +363,16 @@ class GetServicePeriodsActiveEachDateTestCase(util.TestCase):
     schedule = transitfeed.Schedule()
     sp1 = transitfeed.ServicePeriod()
     sp1.service_id = "sp1"
-    sp1.SetDateHasService("20081231")
-    sp1.SetDateHasService("20090101")
+    sp1.set_date_has_service("20081231")
+    sp1.set_date_has_service("20090101")
 
     schedule.add_service_period_object(sp1)
     sp2 = transitfeed.ServicePeriod()
     sp2.service_id = "sp2"
-    sp2.SetStartDate("20081201")
-    sp2.SetEndDate("20081231")
-    sp2.SetWeekendService()
-    sp2.SetWeekdayService()
+    sp2.set_start_date("20081201")
+    sp2.set_end_date("20081231")
+    sp2.set_weekend_service()
+    sp2.set_weekday_service()
     schedule.add_service_period_object(sp2)
     self.assertEquals(
         [],
@@ -397,7 +397,7 @@ class DuplicateTripTestCase(util.ValidationTestCase):
     schedule.add_agency_object(agency)
 
     service = schedule.get_default_service_period()
-    service.SetDateHasService('20070101')
+    service.set_date_has_service('20070101')
 
     route1 = transitfeed.Route('Route1', 'route 1', 3, 'route_1', 'agency1')
     schedule.add_route_object(route1)
@@ -430,20 +430,20 @@ class DuplicateTripTestCase(util.ValidationTestCase):
 
     stop1 = transitfeed.Stop(36.425288, -117.139162, "Demo Stop 1", "STOP1")
     schedule.add_stop_object(stop1)
-    trip1.AddStopTime(stop1, arrival_time="5:11:00", departure_time="5:12:00",
+    trip1.add_stop_time(stop1, arrival_time="5:11:00", departure_time="5:12:00",
                      stop_sequence=0, shape_dist_traveled=0)
-    trip2.AddStopTime(stop1, arrival_time="5:11:00", departure_time="5:12:00",
+    trip2.add_stop_time(stop1, arrival_time="5:11:00", departure_time="5:12:00",
                      stop_sequence=0, shape_dist_traveled=0)
-    trip3.AddStopTime(stop1, arrival_time="6:11:00", departure_time="6:12:00",
+    trip3.add_stop_time(stop1, arrival_time="6:11:00", departure_time="6:12:00",
                      stop_sequence=0, shape_dist_traveled=0)
 
     stop2 = transitfeed.Stop(36.424288, -117.158142, "Demo Stop 2", "STOP2")
     schedule.add_stop_object(stop2)
-    trip1.AddStopTime(stop2, arrival_time="5:15:00", departure_time="5:16:00",
+    trip1.add_stop_time(stop2, arrival_time="5:15:00", departure_time="5:16:00",
                       stop_sequence=1, shape_dist_traveled=1)
-    trip2.AddStopTime(stop2, arrival_time="5:25:00", departure_time="5:26:00",
+    trip2.add_stop_time(stop2, arrival_time="5:25:00", departure_time="5:26:00",
                       stop_sequence=1, shape_dist_traveled=1)
-    trip3.AddStopTime(stop2, arrival_time="6:15:00", departure_time="6:16:00",
+    trip3.add_stop_time(stop2, arrival_time="6:15:00", departure_time="6:16:00",
                       stop_sequence=1, shape_dist_traveled=1)
 
     schedule.validate(self.problems)
@@ -465,7 +465,7 @@ class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
                                route_type=1)
 
     service = schedule.get_default_service_period()
-    service.SetDateHasService("20070101")
+    service.set_date_has_service("20070101")
 
     trip1 = route1.add_trip(schedule, "trip1", service, "t1")
     trip2 = route2.add_trip(schedule, "trip2", service, "t2")
@@ -474,11 +474,11 @@ class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
     stop2 = schedule.add_stop(36.424288, -117.133142, "stop2")
     stop3 = schedule.add_stop(36.423288, -117.134142, "stop3")
 
-    trip1.AddStopTime(stop1, arrival_time="5:11:00", departure_time="5:12:00")
-    trip1.AddStopTime(stop2, arrival_time="5:21:00", departure_time="5:22:00")
+    trip1.add_stop_time(stop1, arrival_time="5:11:00", departure_time="5:12:00")
+    trip1.add_stop_time(stop2, arrival_time="5:21:00", departure_time="5:22:00")
 
-    trip2.AddStopTime(stop1, arrival_time="6:11:00", departure_time="6:12:00")
-    trip2.AddStopTime(stop3, arrival_time="6:21:00", departure_time="6:22:00")
+    trip2.add_stop_time(stop1, arrival_time="6:11:00", departure_time="6:12:00")
+    trip2.add_stop_time(stop3, arrival_time="6:21:00", departure_time="6:22:00")
 
     schedule.validate(self.problems)
     e = self.accumulator.PopException("StopWithMultipleRouteTypes")
@@ -658,9 +658,9 @@ class DuplicateStopValidationTestCase(util.ValidationTestCase):
     schedule.add_route_object(route)
 
     service_period = transitfeed.ServicePeriod("WEEK")
-    service_period.SetStartDate("20070101")
-    service_period.SetEndDate("20071231")
-    service_period.SetWeekdayService(True)
+    service_period.set_start_date("20070101")
+    service_period.set_end_date("20071231")
+    service_period.set_weekday_service(True)
     schedule.add_service_period_object(service_period)
 
     trip = transitfeed.Trip()
@@ -675,7 +675,7 @@ class DuplicateStopValidationTestCase(util.ValidationTestCase):
     stop1.stop_lat = 78.243587
     stop1.stop_lon = 32.258937
     schedule.add_stop_object(stop1)
-    trip.AddStopTime(stop1, arrival_time="12:00:00", departure_time="12:00:00")
+    trip.add_stop_time(stop1, arrival_time="12:00:00", departure_time="12:00:00")
 
     stop2 = transitfeed.Stop()
     stop2.stop_id = "STOP2"
@@ -721,9 +721,9 @@ class DuplicateTripIDValidationTestCase(util.TestCase):
     schedule.add_route_object(route)
 
     service_period = transitfeed.ServicePeriod("WEEK")
-    service_period.SetStartDate("20070101")
-    service_period.SetEndDate("20071231")
-    service_period.SetWeekdayService(True)
+    service_period.set_start_date("20070101")
+    service_period.set_end_date("20071231")
+    service_period.set_weekday_service(True)
     schedule.add_service_period_object(service_period)
 
     trip1 = transitfeed.Trip()

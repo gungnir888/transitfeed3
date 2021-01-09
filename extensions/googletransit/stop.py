@@ -23,7 +23,7 @@ class Stop(transitfeed.Stop):
   - Adding and validating new fields (see _FIELD_NAMES). See proposal at
     https://sites.google.com/site/gtfschanges/spec-changes-summary#stops
   - Overriding validate_after_add() in order to call new validation functions.
-  - Overriding ValidateStopLocationType(), adding location_type 2 (entrance).
+  - Overriding validate_stop_location_type(), adding location_type 2 (entrance).
   """
 
   _FIELD_NAMES = transitfeed.Stop._FIELD_NAMES + ['vehicle_type', 'platform_code']
@@ -52,9 +52,9 @@ class Stop(transitfeed.Stop):
     self.ValidateVehicleType(problems)
     return True # None of these checks are blocking
 
-  # Overriding transitfeed.Stop.ValidateStopLocationType().
+  # Overriding transitfeed.Stop.validate_stop_location_type().
   # Adding location_type 2 (entrance).
-  def ValidateStopLocationType(self, problems):
+  def validate_stop_location_type(self, problems):
     self.location_type = util.validate_and_return_int_value(
         self.location_type, [0, 1, 2], 0, True, 'location_type', problems)
     # Entrances must have a parent_station.
@@ -62,12 +62,12 @@ class Stop(transitfeed.Stop):
       problems.invalid_value('location_type', self.location_type,
           reason='an entrance must have a parent_station')
 
-  # Overriding _ReportMissingRequiredField() in order to allow empty stop_name
+  # Overriding _report_missing_required_field() in order to allow empty stop_name
   # if location_type=2 (entrance).
-  def _ReportMissingRequiredField(self, problems, required):
+  def _report_missing_required_field(self, problems, required):
     if required == 'stop_name':
       # stops of type 2 (entrance) may have an empty stop_name
-      self.ValidateStopLocationType(problems)
+      self.validate_stop_location_type(problems)
       if self.location_type == 2:
         return
     problems.missing_value(required)

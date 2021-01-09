@@ -289,7 +289,7 @@ class MareyGraph:
       trip = triplist[0]
 
     t_dists2 = [DistanceInTravelTime(stop[3],tail[2]) for (stop,tail)
-                 in itertools.izip(trip.GetTimeStops(),trip.GetTimeStops()[1:])]
+                 in itertools.izip(trip.get_time_stops(),trip.get_time_stops()[1:])]
     return t_dists2
 
   def _AddWarning(self, str):
@@ -330,18 +330,18 @@ class MareyGraph:
         color=colpar
 
       start_offsets = [0]
-      first_stop = t.GetTimeStops()[0]
+      first_stop = t.get_time_stops()[0]
 
       for j,freq_offset in enumerate(start_offsets):
         if j>0 and not colpar:
           color="purple"
         scriptcall = 'onmouseover="LineClick(\'%s\',\'Trip %s starting %s\')"' % (t.trip_id,
-            t.trip_id, transitfeed.format_seconds_since_midnight(t.GetStartTime()))
+            t.trip_id, transitfeed.format_seconds_since_midnight(t.get_start_time()))
         tmpstrhead = '<polyline class="T" id="%s" stroke="%s" %s points="' % \
           (str(t.trip_id),color, scriptcall)
         tmpstrs.append(tmpstrhead)
 
-        for i, s in enumerate(t.GetTimeStops()):
+        for i, s in enumerate(t.get_time_stops()):
           arr_t = s[0]
           dep_t = s[1]
           if arr_t is None or dep_t is None:
@@ -356,7 +356,7 @@ class MareyGraph:
   def _Uniform(self, triplist):
     """Fallback to assuming uniform distance between stations"""
     # This should not be neseccary, but we are in fallback mode
-    longest = max([len(t.GetTimeStops()) for t in triplist])
+    longest = max([len(t.get_time_stops()) for t in triplist])
     return [100] * longest
 
   def _DrawStations(self, color="#aaa"):
