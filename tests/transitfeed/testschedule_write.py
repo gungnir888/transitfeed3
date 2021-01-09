@@ -86,7 +86,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     stop2 = schedule.AddStop(lng=140.001, lat=48.201,
                              name=u"remote \u020b station")
     route = schedule.AddRoute(u"\u03b2", "Beta", "Bus")
-    trip = route.AddTrip(schedule, u"to remote \u020b station")
+    trip = route.add_trip(schedule, u"to remote \u020b station")
     repr(stop1)
     repr(stop2)
     repr(route)
@@ -133,7 +133,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     self.assertEqual(route.route_short_name, "R")
     self.assertEqual(route.route_type, 3)
 
-    trip = route.AddTrip(schedule, headsign="To The End",
+    trip = route.add_trip(schedule, headsign="To The End",
                          service_period=service_period)
     trip_id = trip.trip_id
     self.assertTrue(trip_id)
@@ -196,12 +196,12 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     service_period = schedule.GetDefaultServicePeriod()
     service_period.SetDateHasService("20070101")
     route = schedule.AddRoute("0", "Long Name", "Bus")
-    route.AddTrip()
-    route.AddTrip(schedule=schedule, headsign="hs1",
+    route.add_trip()
+    route.add_trip(schedule=schedule, headsign="hs1",
                   service_period=service_period, trip_id="1")
-    route.AddTrip(schedule, "hs2", service_period, "2")
-    route.AddTrip(trip_id="4")
-    route.AddTrip()  # This will be given a random trip_id
+    route.add_trip(schedule, "hs2", service_period, "2")
+    route.add_trip(trip_id="4")
+    route.add_trip()  # This will be given a random trip_id
     trip_list = sorted(schedule.GetTripList(), key=lambda t: int(t.trip_id))
     self.assertMatchesRegex("0 1 2 4 \d{7,9}",
                             " ".join(t.trip_id for t in trip_list))

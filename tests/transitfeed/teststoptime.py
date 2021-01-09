@@ -136,7 +136,7 @@ class TooFastTravelTestCase(util.ValidationTestCase):
     super(TooFastTravelTestCase, self).setUp()
     self.schedule = self.SimpleSchedule()
     self.route = self.schedule.GetRoute("054C")
-    self.trip = self.route.AddTrip()
+    self.trip = self.route.add_trip()
 
   def AddStopDistanceTime(self, dist_time_list):
     # latitude where each 0.01 degrees longitude is 1km
@@ -275,7 +275,7 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
     route = self.schedule.AddRoute("", "City", "Bus", route_id="CITY")
 
-    self.trip = route.AddTrip(self.schedule, trip_id="CITY1")
+    self.trip = route.add_trip(self.schedule, trip_id="CITY1")
 
   def testtoo_many_consecutive_stop_times_with_same_time(self):
     trip = self.trip

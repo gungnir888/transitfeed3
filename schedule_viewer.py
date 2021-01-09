@@ -196,7 +196,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     date = params.get('date', "")
     sample_size = 3  # For each pattern return the start time for this many trips
 
-    pattern_id_trip_dict = route.GetPatternIdTripDict()
+    pattern_id_trip_dict = route.get_pattern_id_trip_dict()
     patterns = []
 
     for pattern_id, trips in pattern_id_trip_dict.items():
@@ -423,7 +423,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       self.send_error(404)
       return
 
-    pattern_id_trip_dict = route.GetPatternIdTripDict()
+    pattern_id_trip_dict = route.get_pattern_id_trip_dict()
     pattern_id = trip.pattern_id
     if pattern_id not in pattern_id_trip_dict:
       print('no pattern %s found in %s' % (pattern_id, pattern_id_trip_dict.keys()))

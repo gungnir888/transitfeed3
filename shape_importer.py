@@ -214,7 +214,7 @@ def main(key_cols):
   print('Matching shapes to trips...')
   for route in schedule.GetRouteList():
     print('Processing route', route.route_short_name)
-    patterns = route.GetPatternIdTripDict()
+    patterns = route.get_pattern_id_trip_dict()
     for pattern_id, trips in patterns.items():
       pattern_count += 1
       pattern = trips[0].GetPattern()

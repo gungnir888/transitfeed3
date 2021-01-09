@@ -112,12 +112,12 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     schedule, route, sp1 = self.schedule, self.route, self.sp1
 
-    trip1 = route.AddTrip(schedule, service_period=sp1, trip_id="CITY1")
+    trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
     trip1.AddStopTime(self.stop1, stop_time="6:00:00")
     trip1.AddStopTime(self.stop2, stop_time="6:30:00")
 
-    trip2 = route.AddTrip(schedule, service_period=sp1, trip_id="CITY2")
+    trip2 = route.add_trip(schedule, service_period=sp1, trip_id="CITY2")
     trip2.block_id = "BLOCK"
     trip2.AddStopTime(self.stop2, stop_time="6:30:00")
     trip2.AddStopTime(self.stop1, stop_time="7:00:00")
@@ -130,12 +130,12 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     schedule, route, sp1 = self.schedule, self.route, self.sp1
 
-    trip1 = route.AddTrip(schedule, service_period=sp1, trip_id="CITY1")
+    trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
     trip1.AddStopTime(self.stop1, stop_time="6:00:00")
     trip1.AddStopTime(self.stop2, stop_time="6:30:00")
 
-    trip2 = route.AddTrip(schedule, service_period=sp1, trip_id="CITY2")
+    trip2 = route.add_trip(schedule, service_period=sp1, trip_id="CITY2")
     trip2.block_id = "BLOCK"
     trip2.AddStopTime(self.stop2, stop_time="6:20:00")
     trip2.AddStopTime(self.stop1, stop_time="6:50:00")
@@ -153,22 +153,22 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     schedule, route, sp1, sp2 = self.schedule, self.route, self.sp1, self.sp2
 
-    trip1 = route.AddTrip(schedule, service_period=sp1, trip_id="CITY1")
+    trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
     trip1.AddStopTime(self.stop1, stop_time="6:00:00")
     trip1.AddStopTime(self.stop2, stop_time="6:30:00")
 
-    trip2 = route.AddTrip(schedule, service_period=sp2, trip_id="CITY2")
+    trip2 = route.add_trip(schedule, service_period=sp2, trip_id="CITY2")
     trip2.block_id = "BLOCK"
     trip2.AddStopTime(self.stop2, stop_time="6:20:00")
     trip2.AddStopTime(self.stop1, stop_time="6:50:00")
 
-    trip3 = route.AddTrip(schedule, service_period=sp1, trip_id="CITY3")
+    trip3 = route.add_trip(schedule, service_period=sp1, trip_id="CITY3")
     trip3.block_id = "BLOCK"
     trip3.AddStopTime(self.stop1, stop_time="7:00:00")
     trip3.AddStopTime(self.stop2, stop_time="7:30:00")
 
-    trip4 = route.AddTrip(schedule, service_period=sp2, trip_id="CITY4")
+    trip4 = route.add_trip(schedule, service_period=sp2, trip_id="CITY4")
     trip4.block_id = "BLOCK"
     trip4.AddStopTime(self.stop2, stop_time="7:20:00")
     trip4.AddStopTime(self.stop1, stop_time="7:50:00")
@@ -196,12 +196,12 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
     schedule, route, sp1, sp3 = self.schedule, self.route, self.sp1, self.sp3
 
-    trip1 = route.AddTrip(schedule, service_period=sp1, trip_id="CITY1")
+    trip1 = route.add_trip(schedule, service_period=sp1, trip_id="CITY1")
     trip1.block_id = "BLOCK"
     trip1.AddStopTime(self.stop1, stop_time="6:00:00")
     trip1.AddStopTime(self.stop2, stop_time="6:30:00")
 
-    trip2 = route.AddTrip(schedule, service_period=sp3, trip_id="CITY2")
+    trip2 = route.add_trip(schedule, service_period=sp3, trip_id="CITY2")
     trip2.block_id = "BLOCK"
     trip2.AddStopTime(self.stop2, stop_time="6:20:00")
     trip2.AddStopTime(self.stop1, stop_time="6:50:00")
@@ -467,8 +467,8 @@ class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
     service = schedule.GetDefaultServicePeriod()
     service.SetDateHasService("20070101")
 
-    trip1 = route1.AddTrip(schedule, "trip1", service, "t1")
-    trip2 = route2.AddTrip(schedule, "trip2", service, "t2")
+    trip1 = route1.add_trip(schedule, "trip1", service, "t1")
+    trip2 = route2.add_trip(schedule, "trip2", service, "t2")
 
     stop1 = schedule.AddStop(36.425288, -117.133162, "stop1")
     stop2 = schedule.AddStop(36.424288, -117.133142, "stop2")

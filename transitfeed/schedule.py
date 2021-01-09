@@ -463,7 +463,7 @@ class Schedule(object):
         problem_reporter = self.problem_reporter
       trip.validate(problem_reporter, validate_children=False)
     try:
-      self.routes[trip.route_id]._AddTripObject(trip)
+      self.routes[trip.route_id]._add_trip_object(trip)
     except KeyError:
       # Invalid route_id was reported in the Trip.Validate call above
       pass

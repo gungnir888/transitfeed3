@@ -79,7 +79,7 @@ def SaveFeed(input, output):
     r = schedule.AddRoute(short_name="",
         long_name=xml_shuttleGroup.attrib['name'], route_type='Bus')
     for xml_route in xml_shuttleGroup.getiterator('route'):
-      t = r.AddTrip(schedule=schedule, headsign=xml_route.attrib['name'],
+      t = r.add_trip(schedule=schedule, headsign=xml_route.attrib['name'],
           trip_id=xml_route.attrib['id'])
       trip_stops = []  # Build a list of (time, Stop) tuples
       for xml_schedule in xml_route.getiterator('schedule'):

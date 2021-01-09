@@ -539,7 +539,7 @@ class Trip(GtfsObjectBase):
           self.service_id not in self._schedule.service_periods):
         problems.InvalidValue('service_id', self.service_id)
 
-  def ValidateBikesAllowed(self, problems):
+  def validate_bikes_allowed(self, problems):
     if self.bikes_allowed:
       util.validate_yes_no_unknown(self.bikes_allowed, 'bikes_allowed', problems)
 
@@ -567,7 +567,7 @@ class Trip(GtfsObjectBase):
     self.ValidateShapeIdsExistInShapeList(problems)
     self.ValidateRouteIdExistsInRouteList(problems)
     self.ValidateServiceIdExistsInServiceList(problems)
-    self.ValidateBikesAllowed(problems)
+    self.validate_bikes_allowed(problems)
     self.ValidateWheelchairAccessible(problems)
     if self._schedule and validate_children:
       self.ValidateChildren(problems)

@@ -453,7 +453,7 @@ class KMLWriter(object):
     Returns:
       The Folder ElementTree.Element instance or None if there are no patterns.
     """
-    pattern_id_to_trips = route.GetPatternIdTripDict()
+    pattern_id_to_trips = route.get_pattern_id_trip_dict()
     if not pattern_id_to_trips:
       return None
 

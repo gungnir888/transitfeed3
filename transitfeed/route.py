@@ -19,6 +19,7 @@ from .gtfsobjectbase import GtfsObjectBase
 from . import problems as problems_module
 from . import util
 
+
 class Route(GtfsObjectBase):
   """Represents a single route."""
 
@@ -66,7 +67,7 @@ class Route(GtfsObjectBase):
         field_dict['agency_id'] = agency_id
     self.__dict__.update(field_dict)
 
-  def AddTrip(self, schedule=None, headsign=None, service_period=None,
+  def add_trip(self, schedule=None, headsign=None, service_period=None,
               trip_id=None):
     """Add a trip to this route.
 
@@ -94,7 +95,7 @@ class Route(GtfsObjectBase):
     schedule.AddTripObject(trip_obj)
     return trip_obj
 
-  def _AddTripObject(self, trip):
+  def _add_trip_object(self, trip):
     # Only class Schedule may call this. Users of the API should call
     # Route.AddTrip or schedule.AddTripObject.
     self._trips.append(trip)
@@ -110,22 +111,22 @@ class Route(GtfsObjectBase):
     else:
       return GtfsObjectBase.__getattr__(self, name)
 
-  def GetPatternIdTripDict(self):
+  def get_pattern_id_trip_dict(self):
     """Return a dictionary that maps pattern_id to a list of Trip objects."""
     d = {}
     for t in self._trips:
       d.setdefault(t.pattern_id, []).append(t)
     return d
 
-  def ValidateRouteIdIsPresent(self, problems):
+  def validate_route_id_is_present(self, problems):
     if util.is_empty(self.route_id):
       problems.missing_value('route_id')
 
-  def ValidateRouteTypeIsPresent(self, problems):
+  def validate_route_type_is_present(self, problems):
     if util.is_empty(self.route_type):
       problems.MissingValue('route_type')
 
-  def ValidateRouteShortAndLongNamesAreNotBlank(self, problems):
+  def validate_route_short_and_long_names_are_not_blank(self, problems):
     if util.is_empty(self.route_short_name) and \
         util.is_empty(self.route_long_name):
       problems.invalid_value('route_short_name',
@@ -133,7 +134,7 @@ class Route(GtfsObjectBase):
                             'Both route_short_name and '
                             'route_long name are blank.')
 
-  def ValidateRouteShortNameIsNotTooLong(self, problems):
+  def validate_route_short_name_is_not_too_long(self, problems):
     if self.route_short_name and len(self.route_short_name) > 6:
       problems.invalid_value('route_short_name',
                             self.route_short_name,
@@ -145,7 +146,7 @@ class Route(GtfsObjectBase):
                             'OK to leave this field empty.',
                             type=problems_module.TYPE_WARNING)
 
-  def ValidateRouteLongNameDoesNotContainShortName(self, problems):
+  def validate_route_long_name_does_not_contain_short_name(self, problems):
     if self.route_short_name and self.route_long_name:
       short_name = self.route_short_name.strip().lower()
       long_name = self.route_long_name.strip().lower()
@@ -160,7 +161,7 @@ class Route(GtfsObjectBase):
                               'side-by-side.',
                               type=problems_module.TYPE_WARNING)
 
-  def ValidateRouteShortAndLongNamesAreNotEqual(self, problems):
+  def validate_route_short_and_long_names_are_not_equal(self, problems):
     if self.route_short_name and self.route_long_name:
       short_name = self.route_short_name.strip().lower()
       long_name = self.route_long_name.strip().lower()
@@ -174,7 +175,7 @@ class Route(GtfsObjectBase):
                               'short or long name (but not both).',
                               type=problems_module.TYPE_WARNING)
 
-  def ValidateRouteDescriptionNotTheSameAsRouteName(self, problems):
+  def validate_route_description_not_the_same_as_route_name(self, problems):
     if (self.route_desc and
         ((self.route_desc == self.route_short_name) or
          (self.route_desc == self.route_long_name))):
@@ -182,7 +183,7 @@ class Route(GtfsObjectBase):
                             self.route_desc,
                             'route_desc shouldn\'t be the same as '
                             'route_short_name or route_long_name')
-  def ValidateRouteTypeHasValidValue(self, problems):
+  def validate_route_type_has_valid_value(self, problems):
     if self.route_type is not None:
       try:
         if not isinstance(self.route_type, int):
@@ -195,11 +196,11 @@ class Route(GtfsObjectBase):
                                 self.route_type,
                                 type=problems_module.TYPE_WARNING)
 
-  def ValidateRouteUrl(self, problems):
+  def validate_route_url(self, problems):
     if self.route_url:
       util.validate_url(self.route_url, 'route_url', problems)
 
-  def ValidateRouteColor(self, problems):
+  def validate_route_color(self, problems):
     if self.route_color:
       if not util.is_valid_hex_color(self.route_color):
         problems.invalid_value('route_color', self.route_color,
@@ -208,7 +209,7 @@ class Route(GtfsObjectBase):
                               'representing the RGB values. Example: 44AA06')
         self.route_color = None
 
-  def ValidateRouteTextColor(self, problems):
+  def validate_route_text_color(self, problems):
     if self.route_text_color:
       if not util.is_valid_hex_color(self.route_text_color):
         problems.invalid_value('route_text_color', self.route_text_color,
@@ -218,7 +219,7 @@ class Route(GtfsObjectBase):
                               'Example: 44AA06')
         self.route_text_color = None
 
-  def ValidateRouteAndTextColors(self, problems):
+  def validate_route_and_text_colors(self, problems):
     if self.route_color:
       bg_lum  = util.color_luminance(self.route_color)
     else:
@@ -246,24 +247,24 @@ class Route(GtfsObjectBase):
                             'a legible contrast between the two.',
                             type=problems_module.TYPE_WARNING)
 
-  def ValidateBikesAllowed(self, problems):
+  def validate_bikes_allowed(self, problems):
     if self.bikes_allowed:
       util.validate_yes_no_unknown(self.bikes_allowed, 'bikes_allowed', problems)
 
   def validate_before_add(self, problems):
-    self.ValidateRouteIdIsPresent(problems)
-    self.ValidateRouteTypeIsPresent(problems)
-    self.ValidateRouteShortAndLongNamesAreNotBlank(problems)
-    self.ValidateRouteShortNameIsNotTooLong(problems)
-    self.ValidateRouteLongNameDoesNotContainShortName(problems)
-    self.ValidateRouteShortAndLongNamesAreNotEqual(problems)
-    self.ValidateRouteDescriptionNotTheSameAsRouteName(problems)
-    self.ValidateRouteTypeHasValidValue(problems)
-    self.ValidateRouteUrl(problems)
-    self.ValidateRouteColor(problems)
-    self.ValidateRouteTextColor(problems)
-    self.ValidateRouteAndTextColors(problems)
-    self.ValidateBikesAllowed(problems)
+    self.validate_route_id_is_present(problems)
+    self.validate_route_type_is_present(problems)
+    self.validate_route_short_and_long_names_are_not_blank(problems)
+    self.validate_route_short_name_is_not_too_long(problems)
+    self.validate_route_long_name_does_not_contain_short_name(problems)
+    self.validate_route_short_and_long_names_are_not_equal(problems)
+    self.validate_route_description_not_the_same_as_route_name(problems)
+    self.validate_route_type_has_valid_value(problems)
+    self.validate_route_url(problems)
+    self.validate_route_color(problems)
+    self.validate_route_text_color(problems)
+    self.validate_route_and_text_colors(problems)
+    self.validate_bikes_allowed(problems)
 
     # None of these checks are blocking
     return True

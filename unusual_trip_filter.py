@@ -61,7 +61,7 @@ class UnusualTripFilter(object):
       return
     self.info('Filtering infrequent trips for route %s.' % route.route_id)
     trip_count = len(route.trips)
-    for pattern_id, pattern in route.GetPatternIdTripDict().items():
+    for pattern_id, pattern in route.get_pattern_id_trip_dict().items():
       ratio = float(1.0 * len(pattern) / trip_count)
       if not self._force:
         if (ratio < self._threshold):

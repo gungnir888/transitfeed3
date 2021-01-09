@@ -218,7 +218,7 @@ class TripSequenceValidationTestCase(util.ValidationTestCase):
   def runTest(self):
     schedule = self.SimpleSchedule()
     # Make a new trip without any stop times
-    trip = schedule.GetRoute("054C").AddTrip(trip_id="054C-00")
+    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
     stop1 = schedule.GetStop('stop1')
     stop2 = schedule.GetStop('stop2')
     stop3 = schedule.GetStop('stop3')
@@ -285,7 +285,7 @@ class TripDistanceFromStopToShapeValidationTestCase(util.ValidationTestCase):
 class TripHasStopTimeValidationTestCase(util.ValidationTestCase):
   def runTest(self):
     schedule = self.SimpleSchedule()
-    trip = schedule.GetRoute("054C").AddTrip(trip_id="054C-00")
+    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
 
     # We should get an OtherProblem here because the trip has no stops.
     self.ValidateAndExpectOtherProblem(schedule)
@@ -332,7 +332,7 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     shape.AddPoint(36.424288, -117.133142, 1)
     schedule.AddShapeObject(shape)
 
-    trip = schedule.GetRoute("054C").AddTrip(trip_id="054C-00")
+    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
     trip.shape_id = "shape_1"
 
     stop = transitfeed.Stop(36.425288, -117.133162, "Demo Stop 1", "STOP1")
@@ -393,7 +393,7 @@ class StopMatchWithShapeTestCase(util.ValidationTestCase):
     shape.AddPoint(36.424288, -117.143142, 1)
     schedule.AddShapeObject(shape)
 
-    trip = schedule.GetRoute("054C").AddTrip(trip_id="054C-00")
+    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
     trip.shape_id = "shape_1"
 
     # Stop 1 is only 600 meters away from shape, which is allowed.
@@ -423,7 +423,7 @@ class TripAddStopTimeObjectTestCase(util.ValidationTestCase):
     stop1 = schedule.AddStop(lng=140, lat=48.2, name="Stop 1")
     stop2 = schedule.AddStop(lng=140.001, lat=48.201, name="Stop 2")
     route = schedule.AddRoute("B", "Beta", "Bus")
-    trip = route.AddTrip(schedule, "bus trip")
+    trip = route.add_trip(schedule, "bus trip")
     trip.AddStopTimeObject(transitfeed.StopTime(self.problems, stop1,
                                                 arrival_secs=10,
                                                 departure_secs=10),
@@ -461,7 +461,7 @@ class TripReplaceStopTimeObjectTestCase(util.TestCase):
       schedule.GetDefaultServicePeriod().SetDateHasService('20070101')
     stop1 = schedule.AddStop(lng=140, lat=48.2, name="Stop 1")
     route = schedule.AddRoute("B", "Beta", "Bus")
-    trip = route.AddTrip(schedule, "bus trip")
+    trip = route.add_trip(schedule, "bus trip")
     stoptime = transitfeed.StopTime(transitfeed.default_problem_reporter, stop1,
                                     arrival_secs=10,
                                     departure_secs=10)
@@ -497,7 +497,7 @@ class SingleTripTestCase(util.TestCase):
     service_period = schedule.GetDefaultServicePeriod()
     service_period.SetDateHasService("20070101")
 
-    trip = route.AddTrip(schedule, 'via Polish Hill')
+    trip = route.add_trip(schedule, 'via Polish Hill')
 
     stop1 = schedule.AddStop(36.425288, -117.133162, "Demo Stop 1")
     stop2 = schedule.AddStop(36.424288, -117.133142, "Demo Stop 2")
@@ -587,7 +587,7 @@ class TripClearStopTimesTestCase(util.TestCase):
     stop2 = schedule.AddStop(36, -117.2, "Demo Stop 2")
     stop3 = schedule.AddStop(36, -117.3, "Demo Stop 3")
 
-    trip = route.AddTrip(schedule, "via Polish Hill")
+    trip = route.add_trip(schedule, "via Polish Hill")
     trip.ClearStopTimes()
     self.assertFalse(trip.GetStopTimes())
     trip.AddStopTime(stop1, stop_time="5:11:00")
@@ -718,7 +718,7 @@ class GetTripTimeTestCase(util.TestCase):
     self.stop5 = schedule.AddStop(lng=140.05, lat=0, name="140.05,0")
     self.route1 = schedule.AddRoute("1", "One", "Bus")
 
-    self.trip1 = self.route1.AddTrip(schedule, "trip 1", trip_id='trip1')
+    self.trip1 = self.route1.add_trip(schedule, "trip 1", trip_id='trip1')
     self.trip1.AddStopTime(self.stop1, schedule=schedule, departure_secs=100,
                            arrival_secs=100)
     self.trip1.AddStopTime(self.stop2, schedule=schedule)
@@ -730,7 +730,7 @@ class GetTripTimeTestCase(util.TestCase):
     self.trip1.AddStopTime(self.stop4, schedule=schedule, departure_secs=400,
                            arrival_secs=400)
 
-    self.trip2 = self.route1.AddTrip(schedule, "trip 2", trip_id='trip2')
+    self.trip2 = self.route1.add_trip(schedule, "trip 2", trip_id='trip2')
     self.trip2.AddStopTime(self.stop2, schedule=schedule, departure_secs=500,
                            arrival_secs=500)
     self.trip2.AddStopTime(self.stop3, schedule=schedule, departure_secs=600,
@@ -740,7 +740,7 @@ class GetTripTimeTestCase(util.TestCase):
     self.trip2.AddStopTime(self.stop3, schedule=schedule, departure_secs=800,
                            arrival_secs=800)
 
-    self.trip3 = self.route1.AddTrip(schedule, "trip 3", trip_id='trip3')
+    self.trip3 = self.route1.add_trip(schedule, "trip 3", trip_id='trip3')
 
   def testGetTimeInterpolatedStops(self):
     rv = self.trip1.GetTimeInterpolatedStops()
@@ -831,7 +831,7 @@ class GetFrequencyTimesTestCase(util.TestCase):
     self.stop5 = schedule.AddStop(lng=140.05, lat=0, name="140.05,0")
     self.route1 = schedule.AddRoute("1", "One", "Bus")
 
-    self.trip1 = self.route1.AddTrip(schedule, "trip 1", trip_id="trip1")
+    self.trip1 = self.route1.add_trip(schedule, "trip 1", trip_id="trip1")
     # add different types of stop times
     self.trip1.AddStopTime(self.stop1, arrival_time="17:00:00",
         departure_time="17:01:00") # both arrival and departure time

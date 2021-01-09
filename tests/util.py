@@ -453,7 +453,7 @@ class ValidationTestCase(TestCase):
     stop2 = schedule.AddStop(lng=1.01, lat=48.2, name="Stop 2", stop_id="stop2")
     stop3 = schedule.AddStop(lng=1.03, lat=48.2, name="Stop 3", stop_id="stop3")
     route = schedule.AddRoute("54C", "", "Bus", route_id="054C")
-    trip = route.AddTrip(schedule, "bus trip", trip_id="CITY1")
+    trip = route.add_trip(schedule, "bus trip", trip_id="CITY1")
     trip.AddStopTime(stop1, stop_time="12:00:00")
     trip.AddStopTime(stop2, stop_time="12:00:45")
     trip.AddStopTime(stop3, stop_time="12:02:30")
