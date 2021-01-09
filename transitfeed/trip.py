@@ -386,10 +386,10 @@ class Trip(GtfsObjectBase):
   def AddFrequencyObject(self, frequency, problem_reporter):
     """Add a Frequency object to this trip's list of Frequencies."""
     if frequency is not None:
-      self.AddFrequency(frequency.StartTime(),
-                        frequency.EndTime(),
-                        frequency.HeadwaySecs(),
-                        frequency.ExactTimes(),
+      self.AddFrequency(frequency.get_start_time(),
+                        frequency.get_end_time(),
+                        frequency.get_headway_secs(),
+                        frequency.get_exact_times(),
                         problem_reporter)
 
   def AddHeadwayPeriod(self, start_time, end_time, headway_secs,

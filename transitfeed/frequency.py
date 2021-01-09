@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from .gtfsobjectbase import GtfsObjectBase
 from . import util
 
+
 class Frequency(GtfsObjectBase):
     """This class represents a period of a trip during which the vehicle travels
     at regular intervals (rather than specifying exact times for each stop)."""
@@ -36,22 +37,22 @@ class Frequency(GtfsObjectBase):
         else:
           self.__dict__.update(field_dict)
 
-    def StartTime(self):
+    def get_start_time(self):
       return self.start_time
 
-    def EndTime(self):
+    def get_end_time(self):
       return self.end_time
 
-    def TripId(self):
+    def get_trip_id(self):
       return self.trip_id
 
-    def HeadwaySecs(self):
+    def get_headway_secs(self):
       return self.headway_secs
 
-    def ExactTimes(self):
+    def get_exact_times(self):
       return self.exact_times
 
-    def ValidateExactTimes(self, problems):
+    def validate_exact_times(self, problems):
       if util.is_empty(self.exact_times):
         self.exact_times = 0
         return
@@ -71,7 +72,7 @@ class Frequency(GtfsObjectBase):
             'stop_times file).')
 
     def validate_before_add(self, problems):
-      self.ValidateExactTimes(problems)
+      self.validate_exact_times(problems)
       return True
 
     def validate_after_add(self, problems):

@@ -100,28 +100,28 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800"})
     frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.ExactTimes(), 0)
+    self.assertEquals(frequency.get_exact_times(), 0)
     # Test that empty exact_times converts to 0
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": ""})
     frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.ExactTimes(), 0)
+    self.assertEquals(frequency.get_exact_times(), 0)
     # Test that exact_times "0" converts to 0
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": "0"})
     frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.ExactTimes(), 0)
+    self.assertEquals(frequency.get_exact_times(), 0)
     # Test that exact_times "1" converts to 1
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": "1"})
     frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.ExactTimes(), 1)
+    self.assertEquals(frequency.get_exact_times(), 1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testExactTimesAsIntValue(self):
@@ -131,21 +131,21 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": None})
     frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.ExactTimes(), 0)
+    self.assertEquals(frequency.get_exact_times(), 0)
     # Test that exact_times 0 remains 0
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": 0})
     frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.ExactTimes(), 0)
+    self.assertEquals(frequency.get_exact_times(), 0)
     # Test that exact_times 1 remains 1
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": 1})
     frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.ExactTimes(), 1)
+    self.assertEquals(frequency.get_exact_times(), 1)
     self.accumulator.AssertNoMoreExceptions()
 
   def testExactTimesInvalidValues(self):

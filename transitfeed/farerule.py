@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from .problems import default_problem_reporter
 from .gtfsobjectbase import GtfsObjectBase
 
+
 class FareRule(GtfsObjectBase):
   """This class represents a rule that determines which itineraries a
   fare rule applies to."""

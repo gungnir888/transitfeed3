@@ -33,11 +33,11 @@ class FeedInfo(transitfeed.GtfsObjectBase):
     if field_dict:
       self.__dict__.update(field_dict)
 
-  def ValidateFeedInfoLang(self, problems):
+  def validate_feed_info_lang(self, problems):
     return not transitfeed.validate_language_code(self.feed_lang, 'feed_lang',
                                                 problems)
 
-  def ValidateFeedInfoPublisherUrl(self, problems):
+  def validate_feed_info_publisher_url(self, problems):
     return not transitfeed.validate_url(self.feed_publisher_url,
                                        'feed_publisher_url', problems)
 
@@ -62,8 +62,8 @@ class FeedInfo(transitfeed.GtfsObjectBase):
     transitfeed.validate_required_fields_are_not_empty(self,
                                                   self._REQUIRED_FIELD_NAMES,
                                                   problems)
-    self.ValidateFeedInfoLang(problems)
-    self.ValidateFeedInfoPublisherUrl(problems)
+    self.validate_feed_info_lang(problems)
+    self.validate_feed_info_publisher_url(problems)
     self.validate_dates(problems)
     return True # none of the above validations is blocking
 
