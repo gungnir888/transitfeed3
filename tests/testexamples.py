@@ -108,7 +108,7 @@ class filter_unused_stops(util.TempDirTestCaseBase):
     # Make sure unused stop was removed and another stop still exists.
     schedule = transitfeed.Loader(
         'output.zip', problems=problem_reporter, extra_validation=True).load()
-    schedule.GetStop('STAGECOACH')
+    schedule.get_stop('STAGECOACH')
     accumulator.AssertNoMoreExceptions()
 
 

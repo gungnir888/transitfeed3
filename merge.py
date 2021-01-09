@@ -469,12 +469,12 @@ class DataSetMerger(object):
       KeyError: Either aaid or baid is not a valid agency id.
     """
     a_agency_id = (a_agency_id or
-                   self.feed_merger.a_schedule.GetDefaultAgency().agency_id)
+                   self.feed_merger.a_schedule.get_default_agency().agency_id)
     b_agency_id = (b_agency_id or
-                   self.feed_merger.b_schedule.GetDefaultAgency().agency_id)
-    a_agency = self.feed_merger.a_schedule.GetAgency(
+                   self.feed_merger.b_schedule.get_default_agency().agency_id)
+    a_agency = self.feed_merger.a_schedule.get_agency(
         a_agency_id)._migrated_entity
-    b_agency = self.feed_merger.b_schedule.GetAgency(
+    b_agency = self.feed_merger.b_schedule.get_agency(
         b_agency_id)._migrated_entity
     if a_agency != b_agency:
       raise MergeError('agency must be the same')
@@ -667,7 +667,7 @@ class DataSetMerger(object):
     """Returns an iterator of entities for this data set in the given schedule.
 
     This method usually corresponds to one of the methods from
-    transitfeed.Schedule like GetAgencyList() or GetRouteList().
+    transitfeed.Schedule like get_agency_list() or get_route_list().
 
     Note: This method must be overwritten in a subclass if _MergeSameId or
     _MergeDifferentId are to be used.
@@ -684,7 +684,7 @@ class DataSetMerger(object):
     """Returns an entity given its id.
 
     This method usually corresponds to one of the methods from
-    transitfeed.Schedule like GetAgency() or GetRoute().
+    transitfeed.Schedule like get_agency() or get_route().
 
     Note: This method must be overwritten in a subclass if _MergeSameId or
     _MergeDifferentId are to be used.
@@ -829,10 +829,10 @@ class AgencyMerger(DataSetMerger):
   DATASET_NAME = 'Agencies'
 
   def _GetIter(self, schedule):
-    return schedule.GetAgencyList()
+    return schedule.get_agency_list()
 
   def _GetById(self, schedule, agency_id):
-    return schedule.GetAgency(agency_id)
+    return schedule.get_agency(agency_id)
 
   def _MergeEntities(self, a, b):
     """Merges two agencies.
@@ -885,7 +885,7 @@ class AgencyMerger(DataSetMerger):
 
   def _add(self, a, b, migrated):
     self.feed_merger.Register(a, b, migrated)
-    self.feed_merger.merged_schedule.AddAgencyObject(migrated)
+    self.feed_merger.merged_schedule.add_agency_object(migrated)
 
   def _GetId(self, entity):
     return entity.agency_id
@@ -920,10 +920,10 @@ class StopMerger(DataSetMerger):
     self.largest_stop_distance = distance
 
   def _GetIter(self, schedule):
-    return schedule.GetStopList()
+    return schedule.get_stop_list()
 
   def _GetById(self, schedule, stop_id):
-    return schedule.GetStop(stop_id)
+    return schedule.get_stop(stop_id)
 
   def _MergeEntities(self, a, b):
     """Merges two stops.
@@ -992,9 +992,9 @@ class StopMerger(DataSetMerger):
       merged_stop.zone_id = a.zone_id
       if merged_stop.parent_station:
         # Merged stop has a parent. Update it to be the parent it had in b.
-        parent_in_b = fm.b_schedule.GetStop(b.parent_station)
+        parent_in_b = fm.b_schedule.get_stop(b.parent_station)
         merged_stop.parent_station = fm.b_merge_map[parent_in_b].stop_id
-      fm.merged_schedule.AddStopObject(merged_stop)
+      fm.merged_schedule.add_stop_object(merged_stop)
 
     self._UpdateAndMigrateUnmerged(self._a_not_merged, fm.a_zone_map,
                                    fm.a_merge_map, fm.a_schedule)
@@ -1003,8 +1003,8 @@ class StopMerger(DataSetMerger):
 
     print('Stops merged: %d of %d, %d' % (
         num_merged,
-        len(fm.a_schedule.GetStopList()),
-        len(fm.b_schedule.GetStopList())))
+        len(fm.a_schedule.get_stop_list()),
+        len(fm.b_schedule.get_stop_list())))
     return True
 
   def _UpdateAndMigrateUnmerged(self, not_merged_stops, zone_map, merge_map,
@@ -1032,9 +1032,9 @@ class StopMerger(DataSetMerger):
         migrated_stop.zone_id = self.feed_merger.GenerateId(stop.zone_id)
         zone_map[stop.zone_id] = migrated_stop.zone_id
       if stop.parent_station:
-        parent_original = schedule.GetStop(stop.parent_station)
+        parent_original = schedule.get_stop(stop.parent_station)
         migrated_stop.parent_station = merge_map[parent_original].stop_id
-      self.feed_merger.merged_schedule.AddStopObject(migrated_stop)
+      self.feed_merger.merged_schedule.add_stop_object(migrated_stop)
 
 
 class RouteMerger(DataSetMerger):
@@ -1045,10 +1045,10 @@ class RouteMerger(DataSetMerger):
   DATASET_NAME = 'Routes'
 
   def _GetIter(self, schedule):
-    return schedule.GetRouteList()
+    return schedule.get_route_list()
 
   def _GetById(self, schedule, route_id):
-    return schedule.GetRoute(route_id)
+    return schedule.get_route(route_id)
 
   def _MergeEntities(self, a, b):
     scheme = {'route_short_name': self._MergeIdentical,
@@ -1066,16 +1066,16 @@ class RouteMerger(DataSetMerger):
     if newid:
       migrated_route.route_id = self.feed_merger.GenerateId(entity.route_id)
     if entity.agency_id:
-      original_agency = schedule.GetAgency(entity.agency_id)
+      original_agency = schedule.get_agency(entity.agency_id)
     else:
-      original_agency = schedule.GetDefaultAgency()
+      original_agency = schedule.get_default_agency()
 
     migrated_route.agency_id = original_agency._migrated_entity.agency_id
     return migrated_route
 
   def _add(self, a, b, migrated_route):
     self.feed_merger.Register(a, b, migrated_route)
-    self.feed_merger.merged_schedule.AddRouteObject(migrated_route)
+    self.feed_merger.merged_schedule.add_route_object(migrated_route)
 
   def _GetId(self, entity):
     return entity.route_id
@@ -1105,10 +1105,10 @@ class ServicePeriodMerger(DataSetMerger):
     pass
 
   def _GetIter(self, schedule):
-    return schedule.GetServicePeriodList()
+    return schedule.get_service_period_list()
 
   def _GetById(self, schedule, service_id):
-    return schedule.GetServicePeriod(service_id)
+    return schedule.get_service_period(service_id)
 
   def _MergeEntities(self, a, b):
     """Tries to merge two service periods.
@@ -1145,7 +1145,7 @@ class ServicePeriodMerger(DataSetMerger):
 
   def _add(self, a, b, migrated_service_period):
     self.feed_merger.Register(a, b, migrated_service_period)
-    self.feed_merger.merged_schedule.AddServicePeriodObject(
+    self.feed_merger.merged_schedule.add_service_period_object(
         migrated_service_period)
 
   def _GetId(self, entity):
@@ -1196,9 +1196,9 @@ class ServicePeriodMerger(DataSetMerger):
     one_day_delta = datetime.timedelta(days=1)
     before = (cutoff_date - one_day_delta).strftime('%Y%m%d')
 
-    for a in self.feed_merger.a_schedule.GetServicePeriodList():
+    for a in self.feed_merger.a_schedule.get_service_period_list():
       TruncatePeriod(a, 0, before)
-    for b in self.feed_merger.b_schedule.GetServicePeriodList():
+    for b in self.feed_merger.b_schedule.get_service_period_list():
       TruncatePeriod(b, cutoff, '9'*8)
 
   def CheckDisjointCalendars(self):
@@ -1212,13 +1212,13 @@ class ServicePeriodMerger(DataSetMerger):
     """
     # TODO: Do an exact check here.
 
-    a_service_periods = self.feed_merger.a_schedule.GetServicePeriodList()
-    b_service_periods = self.feed_merger.b_schedule.GetServicePeriodList()
+    a_service_periods = self.feed_merger.a_schedule.get_service_period_list()
+    b_service_periods = self.feed_merger.b_schedule.get_service_period_list()
 
     for a_service_period in a_service_periods:
-      a_start, a_end = a_service_period.GetDateRange()
+      a_start, a_end = a_service_period.get_date_range()
       for b_service_period in b_service_periods:
-        b_start, b_end = b_service_period.GetDateRange()
+        b_start, b_end = b_service_period.get_date_range()
         overlap_start = max(a_start, b_start)
         overlap_end = min(a_end, b_end)
         if overlap_end >= overlap_start:
@@ -1237,10 +1237,10 @@ class FareMerger(DataSetMerger):
   DATASET_NAME = 'Fares'
 
   def _GetIter(self, schedule):
-    return schedule.GetFareAttributeList()
+    return schedule.get_fare_attribute_list()
 
   def _GetById(self, schedule, fare_id):
-    return schedule.GetFareAttribute(fare_id)
+    return schedule.get_fare_attribute(fare_id)
 
   def _MergeEntities(self, a, b):
     """Merges the fares if all the attributes are the same."""
@@ -1261,7 +1261,7 @@ class FareMerger(DataSetMerger):
 
   def _add(self, a, b, migrated_fare):
     self.feed_merger.Register(a, b, migrated_fare)
-    self.feed_merger.merged_schedule.AddFareAttributeObject(migrated_fare)
+    self.feed_merger.merged_schedule.add_fare_attribute_object(migrated_fare)
 
   def _GetId(self, fare):
     return fare.fare_id
@@ -1270,8 +1270,8 @@ class FareMerger(DataSetMerger):
     num_merged = self._MergeSameId()
     print('Fares merged: %d of %d, %d' % (
         num_merged,
-        len(self.feed_merger.a_schedule.GetFareAttributeList()),
-        len(self.feed_merger.b_schedule.GetFareAttributeList())))
+        len(self.feed_merger.a_schedule.get_fare_attribute_list()),
+        len(self.feed_merger.b_schedule.get_fare_attribute_list())))
     return True
 
 
@@ -1291,7 +1291,7 @@ class TransferMerger(DataSetMerger):
   DATASET_NAME = 'Transfers'
 
   def _GetIter(self, schedule):
-    return schedule.GetTransferIter()
+    return schedule.get_transfer_iter()
 
   def _GetId(self, transfer):
     return transfer._ID()
@@ -1300,16 +1300,16 @@ class TransferMerger(DataSetMerger):
     # Make a copy of the original and then fix the stop_id references.
     migrated_transfer = transitfeed.Transfer(field_dict=original_transfer)
     if original_transfer.from_stop_id:
-      migrated_transfer.from_stop_id = schedule.GetStop(
+      migrated_transfer.from_stop_id = schedule.get_stop(
           original_transfer.from_stop_id)._migrated_entity.stop_id
     if migrated_transfer.to_stop_id:
-      migrated_transfer.to_stop_id = schedule.GetStop(
+      migrated_transfer.to_stop_id = schedule.get_stop(
           original_transfer.to_stop_id)._migrated_entity.stop_id
     return migrated_transfer
 
   def _add(self, a, b, migrated_transfer):
     self.feed_merger.Register(a, b, migrated_transfer)
-    self.feed_merger.merged_schedule.AddTransferObject(migrated_transfer)
+    self.feed_merger.merged_schedule.add_transfer_object(migrated_transfer)
 
   def MergeDataSets(self):
     # If both schedules contain rows with equivalent from_stop_id and
@@ -1320,8 +1320,8 @@ class TransferMerger(DataSetMerger):
         self._num_merged,
         # http://mail.python.org/pipermail/baypiggies/2008-August/003817.html
         # claims this is a good way to find number of items in an iterable.
-        sum(1 for _ in self.feed_merger.a_schedule.GetTransferIter()),
-        sum(1 for _ in self.feed_merger.b_schedule.GetTransferIter())))
+        sum(1 for _ in self.feed_merger.a_schedule.get_transfer_iter()),
+        sum(1 for _ in self.feed_merger.b_schedule.get_transfer_iter())))
     return True
 
 
@@ -1349,10 +1349,10 @@ class ShapeMerger(DataSetMerger):
     self.largest_shape_distance = distance
 
   def _GetIter(self, schedule):
-    return schedule.GetShapeList()
+    return schedule.get_shape_list()
 
   def _GetById(self, schedule, shape_id):
-    return schedule.GetShape(shape_id)
+    return schedule.get_shape(shape_id)
 
   def _MergeEntities(self, a, b):
     """Merges the shapes by taking the new shape.
@@ -1393,7 +1393,7 @@ class ShapeMerger(DataSetMerger):
 
   def _add(self, a, b, migrated_shape):
     self.feed_merger.Register(a, b, migrated_shape)
-    self.feed_merger.merged_schedule.AddShapeObject(migrated_shape)
+    self.feed_merger.merged_schedule.add_shape_object(migrated_shape)
 
   def _GetId(self, shape):
     return shape.shape_id
@@ -1418,10 +1418,10 @@ class TripMerger(DataSetMerger):
     pass
 
   def _GetIter(self, schedule):
-    return schedule.GetTripList()
+    return schedule.get_trip_list()
 
   def _GetById(self, schedule, trip_id):
-    return schedule.GetTrip(trip_id)
+    return schedule.get_trip(trip_id)
 
   def _MergeEntities(self, a, b):
     """Raises a MergeError because currently trips cannot be merged."""
@@ -1436,7 +1436,7 @@ class TripMerger(DataSetMerger):
           original_trip.trip_id)
       migrated_trip.original_trip_id = original_trip.trip_id
     # Need to add trip to schedule before copying stoptimes
-    self.feed_merger.merged_schedule.AddTripObject(migrated_trip,
+    self.feed_merger.merged_schedule.add_trip_object(migrated_trip,
                                                    validate=False)
 
     if schedule == self.feed_merger.a_schedule:
@@ -1444,10 +1444,10 @@ class TripMerger(DataSetMerger):
     else:
       merge_map = self.feed_merger.b_merge_map
 
-    original_route = schedule.GetRoute(original_trip.route_id)
+    original_route = schedule.get_route(original_trip.route_id)
     migrated_trip.route_id = merge_map[original_route].route_id
 
-    original_service_period = schedule.GetServicePeriod(
+    original_service_period = schedule.get_service_period(
         original_trip.service_id)
     migrated_trip.service_id = merge_map[original_service_period].service_id
 
@@ -1457,7 +1457,7 @@ class TripMerger(DataSetMerger):
           original_trip.block_id)
 
     if original_trip.shape_id:
-      original_shape = schedule.GetShape(original_trip.shape_id)
+      original_shape = schedule.get_shape(original_trip.shape_id)
       migrated_trip.shape_id = merge_map[original_shape].shape_id
 
     for original_stop_time in original_trip.GetStopTimes():
@@ -1519,12 +1519,12 @@ class FareRuleMerger(DataSetMerger):
                                             [self.feed_merger.b_schedule,
                                              self.feed_merger.b_merge_map,
                                              self.feed_merger.b_zone_map]):
-      for fare in schedule.GetFareAttributeList():
+      for fare in schedule.get_fare_attribute_list():
         for fare_rule in fare.get_fare_rule_list():
           fare_id = merge_map[
-              schedule.GetFareAttribute(fare_rule.fare_id)].fare_id
+              schedule.get_fare_attribute(fare_rule.fare_id)].fare_id
           route_id = (fare_rule.route_id and
-                      merge_map[schedule.GetRoute(fare_rule.route_id)].route_id)
+                      merge_map[schedule.get_route(fare_rule.route_id)].route_id)
           origin_id = (fare_rule.origin_id and
                        zone_map[fare_rule.origin_id])
           destination_id = (fare_rule.destination_id and
@@ -1535,7 +1535,7 @@ class FareRuleMerger(DataSetMerger):
                      contains_id))
     for fare_rule_tuple in rules:
       migrated_fare_rule = transitfeed.FareRule(*fare_rule_tuple)
-      self.feed_merger.merged_schedule.AddFareRuleObject(migrated_fare_rule)
+      self.feed_merger.merged_schedule.add_fare_rule_object(migrated_fare_rule)
 
     if rules:
       self.feed_merger.problem_reporter.FareRulesBroken(self)
@@ -1621,13 +1621,13 @@ class FeedMerger(object):
       else:
         return 0
 
-    id_data_sets = {'agency_id': schedule.GetAgencyList(),
-                    'stop_id': schedule.GetStopList(),
-                    'route_id': schedule.GetRouteList(),
-                    'trip_id': schedule.GetTripList(),
-                    'service_id': schedule.GetServicePeriodList(),
-                    'fare_id': schedule.GetFareAttributeList(),
-                    'shape_id': schedule.GetShapeList()}
+    id_data_sets = {'agency_id': schedule.get_agency_list(),
+                    'stop_id': schedule.get_stop_list(),
+                    'route_id': schedule.get_route_list(),
+                    'trip_id': schedule.get_trip_list(),
+                    'service_id': schedule.get_service_period_list(),
+                    'fare_id': schedule.get_fare_attribute_list(),
+                    'shape_id': schedule.get_shape_list()}
 
     max_postfix_number = 0
     for id_name, entity_list in id_data_sets.items():
@@ -1850,7 +1850,7 @@ https://github.com/google/transitfeed/wiki/Merge
     service_period_merger.DisjoinCalendars(options.cutoff_date)
 
   if feed_merger.MergeSchedules():
-    feed_merger.GetMergedSchedule().WriteGoogleTransitFeed(merged_feed_path)
+    feed_merger.GetMergedSchedule().write_google_transit_feed(merged_feed_path)
   else:
     merged_feed_path = None
 

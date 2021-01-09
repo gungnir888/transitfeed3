@@ -184,7 +184,7 @@ class ServicePeriodDateRangeTestCase(util.ValidationTestCase):
     period.SetWeekdayService(True)
     period.SetDateHasService('20071231', False)
     period.validate(self.problems)
-    self.assertEqual(('20070101', '20071231'), period.GetDateRange())
+    self.assertEqual(('20070101', '20071231'), period.get_date_range())
 
     period2 = transitfeed.ServicePeriod()
     period2.service_id = 'HOLIDAY'
@@ -192,30 +192,30 @@ class ServicePeriodDateRangeTestCase(util.ValidationTestCase):
     period2.SetDateHasService('20080101', True)
     period2.SetDateHasService('20080102', False)
     period2.validate(self.problems)
-    self.assertEqual(('20071225', '20080101'), period2.GetDateRange())
+    self.assertEqual(('20071225', '20080101'), period2.get_date_range())
 
     period2.start_date = '20071201'
     period2.end_date = '20071225'
     period2.validate(self.problems)
-    self.assertEqual(('20071201', '20080101'), period2.GetDateRange())
+    self.assertEqual(('20071201', '20080101'), period2.get_date_range())
 
     period3 = transitfeed.ServicePeriod()
-    self.assertEqual((None, None), period3.GetDateRange())
+    self.assertEqual((None, None), period3.get_date_range())
 
     period4 = transitfeed.ServicePeriod()
     period4.service_id = 'halloween'
     period4.SetDateHasService('20051031', True)
-    self.assertEqual(('20051031', '20051031'), period4.GetDateRange())
+    self.assertEqual(('20051031', '20051031'), period4.get_date_range())
     period4.validate(self.problems)
 
     schedule = transitfeed.Schedule(problem_reporter=self.problems)
-    self.assertEqual((None, None), schedule.GetDateRange())
-    schedule.AddServicePeriodObject(period)
-    self.assertEqual(('20070101', '20071231'), schedule.GetDateRange())
-    schedule.AddServicePeriodObject(period2)
-    self.assertEqual(('20070101', '20080101'), schedule.GetDateRange())
-    schedule.AddServicePeriodObject(period4)
-    self.assertEqual(('20051031', '20080101'), schedule.GetDateRange())
+    self.assertEqual((None, None), schedule.get_date_range())
+    schedule.add_service_period_object(period)
+    self.assertEqual(('20070101', '20071231'), schedule.get_date_range())
+    schedule.add_service_period_object(period2)
+    self.assertEqual(('20070101', '20080101'), schedule.get_date_range())
+    schedule.add_service_period_object(period4)
+    self.assertEqual(('20051031', '20080101'), schedule.get_date_range())
     self.accumulator.AssertNoMoreExceptions()
 
 
@@ -331,7 +331,7 @@ class ExpirationDateTestCase(util.TestCase):
     two_months_from_now = time.localtime(now + 60 * seconds_per_day)
     date_format = "%Y%m%d"
 
-    service_period = schedule.GetDefaultServicePeriod()
+    service_period = schedule.get_default_service_period()
     service_period.SetWeekdayService(True)
     service_period.SetStartDate("20070101")
 
@@ -363,7 +363,7 @@ class FutureServiceStartDateTestCase(util.TestCase):
     tomorrow = today + datetime.timedelta(days=1)
     two_months_from_today = today + datetime.timedelta(days=60)
 
-    service_period = schedule.GetDefaultServicePeriod()
+    service_period = schedule.get_default_service_period()
     service_period.SetWeekdayService(True)
     service_period.SetWeekendService(True)
     service_period.SetEndDate(two_months_from_today.strftime("%Y%m%d"))
@@ -488,18 +488,18 @@ class DefaultServicePeriodTestCase(util.TestCase):
     service1 = transitfeed.ServicePeriod()
     service1.SetDateHasService('20070101', True)
     service1.service_id = 'SERVICE1'
-    schedule.SetDefaultServicePeriod(service1)
-    self.assertEqual(service1, schedule.GetDefaultServicePeriod())
-    self.assertEqual(service1, schedule.GetServicePeriod(service1.service_id))
+    schedule.set_default_service_period(service1)
+    self.assertEqual(service1, schedule.get_default_service_period())
+    self.assertEqual(service1, schedule.get_service_period(service1.service_id))
 
   def test_NewDefault(self):
     schedule = transitfeed.Schedule()
-    service1 = schedule.NewDefaultServicePeriod()
+    service1 = schedule.new_default_service_period()
     self.assertTrue(service1.service_id)
-    schedule.GetServicePeriod(service1.service_id)
+    schedule.get_service_period(service1.service_id)
     service1.SetDateHasService('20070101', True)  # Make service1 different
-    service2 = schedule.NewDefaultServicePeriod()
-    schedule.GetServicePeriod(service2.service_id)
+    service2 = schedule.new_default_service_period()
+    schedule.get_service_period(service2.service_id)
     self.assertTrue(service1.service_id)
     self.assertTrue(service2.service_id)
     self.assertNotEqual(service1, service2)
@@ -507,29 +507,29 @@ class DefaultServicePeriodTestCase(util.TestCase):
 
   def test_NoServicesMakesNewDefault(self):
     schedule = transitfeed.Schedule()
-    service1 = schedule.GetDefaultServicePeriod()
-    self.assertEqual(service1, schedule.GetServicePeriod(service1.service_id))
+    service1 = schedule.get_default_service_period()
+    self.assertEqual(service1, schedule.get_service_period(service1.service_id))
 
   def test_AssumeSingleServiceIsDefault(self):
     schedule = transitfeed.Schedule()
     service1 = transitfeed.ServicePeriod()
     service1.SetDateHasService('20070101', True)
     service1.service_id = 'SERVICE1'
-    schedule.AddServicePeriodObject(service1)
-    self.assertEqual(service1, schedule.GetDefaultServicePeriod())
-    self.assertEqual(service1.service_id, schedule.GetDefaultServicePeriod().service_id)
+    schedule.add_service_period_object(service1)
+    self.assertEqual(service1, schedule.get_default_service_period())
+    self.assertEqual(service1.service_id, schedule.get_default_service_period().service_id)
 
   def test_MultipleServicesCausesNoDefault(self):
     schedule = transitfeed.Schedule()
     service1 = transitfeed.ServicePeriod()
     service1.service_id = 'SERVICE1'
     service1.SetDateHasService('20070101', True)
-    schedule.AddServicePeriodObject(service1)
+    schedule.add_service_period_object(service1)
     service2 = transitfeed.ServicePeriod()
     service2.service_id = 'SERVICE2'
     service2.SetDateHasService('20070201', True)
-    schedule.AddServicePeriodObject(service2)
-    service_d = schedule.GetDefaultServicePeriod()
+    schedule.add_service_period_object(service2)
+    service_d = schedule.get_default_service_period()
     self.assertEqual(service_d, None)
 
 

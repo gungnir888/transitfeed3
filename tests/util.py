@@ -441,18 +441,18 @@ class ValidationTestCase(TestCase):
   def SimpleSchedule(self):
     """Return a minimum schedule that will load without warnings."""
     schedule = transitfeed.Schedule(problem_reporter=self.problems)
-    schedule.AddAgency("Fly Agency", "http://iflyagency.com",
+    schedule.add_agency("Fly Agency", "http://iflyagency.com",
                        "America/Los_Angeles")
     service_period = transitfeed.ServicePeriod("WEEK")
     service_period.SetWeekdayService(True)
     service_period.SetStartDate("20091203")
     service_period.SetEndDate("20111203")
     service_period.SetDateHasService("20091203")
-    schedule.AddServicePeriodObject(service_period)
-    stop1 = schedule.AddStop(lng=1.00, lat=48.2, name="Stop 1", stop_id="stop1")
-    stop2 = schedule.AddStop(lng=1.01, lat=48.2, name="Stop 2", stop_id="stop2")
-    stop3 = schedule.AddStop(lng=1.03, lat=48.2, name="Stop 3", stop_id="stop3")
-    route = schedule.AddRoute("54C", "", "Bus", route_id="054C")
+    schedule.add_service_period_object(service_period)
+    stop1 = schedule.add_stop(lng=1.00, lat=48.2, name="Stop 1", stop_id="stop1")
+    stop2 = schedule.add_stop(lng=1.01, lat=48.2, name="Stop 2", stop_id="stop2")
+    stop3 = schedule.add_stop(lng=1.03, lat=48.2, name="Stop 3", stop_id="stop3")
+    route = schedule.add_route("54C", "", "Bus", route_id="054C")
     trip = route.add_trip(schedule, "bus trip", trip_id="CITY1")
     trip.AddStopTime(stop1, stop_time="12:00:00")
     trip.AddStopTime(stop2, stop_time="12:00:45")

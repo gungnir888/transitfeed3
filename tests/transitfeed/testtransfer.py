@@ -174,8 +174,8 @@ class TransferObjectTestCase(util.ValidationTestCase):
     # from_stop_id and to_stop_id are present in schedule
     schedule = transitfeed.Schedule()
     # 597m appart
-    stop1 = schedule.AddStop(57.5, 30.2, "stop 1")
-    stop2 = schedule.AddStop(57.5, 30.21, "stop 2")
+    stop1 = schedule.add_stop(57.5, 30.2, "stop 1")
+    stop2 = schedule.add_stop(57.5, 30.21, "stop 2")
     transfer = transitfeed.Transfer(schedule=schedule)
     transfer.from_stop_id = stop1.stop_id
     transfer.to_stop_id = stop2.stop_id
@@ -187,7 +187,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
 
     # only from_stop_id is present in schedule
     schedule = transitfeed.Schedule()
-    stop1 = schedule.AddStop(57.5, 30.2, "stop 1")
+    stop1 = schedule.add_stop(57.5, 30.2, "stop 1")
     transfer = transitfeed.Transfer(schedule=schedule)
     transfer.from_stop_id = stop1.stop_id
     transfer.to_stop_id = "unexist"
@@ -203,14 +203,14 @@ class TransferObjectTestCase(util.ValidationTestCase):
     transfer = transitfeed.Transfer()
     transfer.from_stop_id = stop1.stop_id
     transfer.to_stop_id = stop1.stop_id
-    schedule.AddTransferObject(transfer)
+    schedule.add_transfer_object(transfer)
     self.assertRaises(AssertionError, schedule.AddTransferObject, transfer)
 
   def testValidationSpeedDistanceAllTransferTypes(self):
     schedule = transitfeed.Schedule()
     transfer = transitfeed.Transfer(schedule=schedule)
-    stop1 = schedule.AddStop(1, 0, "stop 1")
-    stop2 = schedule.AddStop(0, 1, "stop 2")
+    stop1 = schedule.add_stop(1, 0, "stop 1")
+    stop2 = schedule.add_stop(0, 1, "stop 2")
     transfer = transitfeed.Transfer(schedule=schedule)
     transfer.from_stop_id = stop1.stop_id
     transfer.to_stop_id = stop2.stop_id
@@ -266,8 +266,8 @@ class TransferObjectTestCase(util.ValidationTestCase):
     # and transfer time is too small
     schedule = transitfeed.Schedule()
     # 298m appart
-    stop1 = schedule.AddStop(57.5, 30.2, "stop 1")
-    stop2 = schedule.AddStop(57.5, 30.205, "stop 2")
+    stop1 = schedule.add_stop(57.5, 30.2, "stop 1")
+    stop2 = schedule.add_stop(57.5, 30.205, "stop 2")
     transfer = transitfeed.Transfer(schedule=schedule)
     transfer.from_stop_id = stop1.stop_id
     transfer.to_stop_id = stop2.stop_id
@@ -287,8 +287,8 @@ class TransferObjectTestCase(util.ValidationTestCase):
     # are very close together.
     schedule = transitfeed.Schedule()
     # 239m appart
-    stop1 = schedule.AddStop(57.5, 30.2, "stop 1")
-    stop2 = schedule.AddStop(57.5, 30.204, "stop 2")
+    stop1 = schedule.add_stop(57.5, 30.2, "stop 1")
+    stop2 = schedule.add_stop(57.5, 30.204, "stop 2")
     transfer = transitfeed.Transfer(schedule=schedule)
     transfer.from_stop_id = stop1.stop_id
     transfer.to_stop_id = stop2.stop_id
@@ -305,11 +305,11 @@ class TransferObjectTestCase(util.ValidationTestCase):
     schedule = self.SimpleSchedule()
     transfer.to_stop_id = "stop1"
     transfer.from_stop_id = "stop1"
-    schedule.AddTransferObject(transfer)
+    schedule.add_transfer_object(transfer)
     transfer.attr2 = "foo2"
 
     saved_schedule_file = StringIO()
-    schedule.WriteGoogleTransitFeed(saved_schedule_file)
+    schedule.write_google_transit_feed(saved_schedule_file)
     self.accumulator.AssertNoMoreExceptions()
 
     # Ignore NoServiceExceptions error to keep the test simple
@@ -318,7 +318,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     loaded_schedule = transitfeed.Loader(saved_schedule_file,
                                          problems=load_problems,
                                          extra_validation=True).load()
-    transfers = loaded_schedule.GetTransferList()
+    transfers = loaded_schedule.get_transfer_list()
     self.assertEquals(1, len(transfers))
     self.assertEquals("foo1", transfers[0].attr1)
     self.assertEquals("foo1", transfers[0]["attr1"])
@@ -328,10 +328,10 @@ class TransferObjectTestCase(util.ValidationTestCase):
   def testDuplicateId(self):
     schedule = self.SimpleSchedule()
     transfer1 = transitfeed.Transfer(from_stop_id="stop1", to_stop_id="stop2")
-    schedule.AddTransferObject(transfer1)
+    schedule.add_transfer_object(transfer1)
     transfer2 = transitfeed.Transfer(field_dict=transfer1)
     transfer2.transfer_type = 3
-    schedule.AddTransferObject(transfer2)
+    schedule.add_transfer_object(transfer2)
     transfer2.validate()
     e = self.accumulator.PopException('DuplicateID')
     self.assertEquals('(from_stop_id, to_stop_id)', e.column_name)
@@ -339,21 +339,21 @@ class TransferObjectTestCase(util.ValidationTestCase):
     self.assertTrue(e.is_warning())
     self.accumulator.AssertNoMoreExceptions()
     # Check that both transfers were kept
-    self.assertEquals(transfer1, schedule.GetTransferList()[0])
-    self.assertEquals(transfer2, schedule.GetTransferList()[1])
+    self.assertEquals(transfer1, schedule.get_transfer_list()[0])
+    self.assertEquals(transfer2, schedule.get_transfer_list()[1])
 
     # Adding a transfer with a different ID shouldn't cause a problem report.
     transfer3 = transitfeed.Transfer(from_stop_id="stop1", to_stop_id="stop3")
-    schedule.AddTransferObject(transfer3)
-    self.assertEquals(3, len(schedule.GetTransferList()))
+    schedule.add_transfer_object(transfer3)
+    self.assertEquals(3, len(schedule.get_transfer_list()))
     self.accumulator.AssertNoMoreExceptions()
 
     # GetTransferIter should return all Transfers
     transfer4 = transitfeed.Transfer(from_stop_id="stop1")
-    schedule.AddTransferObject(transfer4)
+    schedule.add_transfer_object(transfer4)
     self.assertEquals(
         ",stop2,stop2,stop3",
-        ",".join(sorted(t["to_stop_id"] for t in schedule.GetTransferIter())))
+        ",".join(sorted(t["to_stop_id"] for t in schedule.get_transfer_iter())))
     self.accumulator.AssertNoMoreExceptions()
 
 
@@ -415,7 +415,7 @@ class TransferValidationTestCase(util.MemoryZipTestCase):
     self.accumulator.AssertNoMoreExceptions()
 
     saved_schedule_file = StringIO()
-    schedule.WriteGoogleTransitFeed(saved_schedule_file)
+    schedule.write_google_transit_feed(saved_schedule_file)
     self.accumulator.AssertNoMoreExceptions()
     load_problems = util.GetTestFailureProblemReporter(
         self, ("ExpirationDate", "DuplicateID"))
@@ -424,4 +424,4 @@ class TransferValidationTestCase(util.MemoryZipTestCase):
                                          extra_validation=True).load()
     self.assertEquals(
         [0, 3],
-        [int(t.transfer_type) for t in loaded_schedule.GetTransferIter()])
+        [int(t.transfer_type) for t in loaded_schedule.get_transfer_iter()])

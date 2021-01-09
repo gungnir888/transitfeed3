@@ -48,7 +48,7 @@ def SaveFeed(input, output):
   tree = ET.parse(urllib.urlopen(input))
 
   schedule = transitfeed.Schedule()
-  service_period = schedule.GetDefaultServicePeriod()
+  service_period = schedule.get_default_service_period()
   service_period.SetWeekdayService()
   service_period.SetStartDate('20070314')
   service_period.SetEndDate('20071231')
@@ -64,11 +64,11 @@ def SaveFeed(input, output):
   service_period.SetDateHasService('20071231', has_service=False)
 
   stops = {}  # Map from xml stop id to python Stop object
-  agency = schedule.NewDefaultAgency(name='GBus', url='http://shuttle/',
+  agency = schedule.new_default_agency(name='GBus', url='http://shuttle/',
                                      timezone='America/Los_Angeles')
 
   for xml_stop in tree.getiterator('stop'):
-    stop = schedule.AddStop(lat=float(xml_stop.attrib['lat']),
+    stop = schedule.add_stop(lat=float(xml_stop.attrib['lat']),
                             lng=float(xml_stop.attrib['lng']),
                             name=xml_stop.attrib['name'])
     stops[xml_stop.attrib['id']] = stop
@@ -76,7 +76,7 @@ def SaveFeed(input, output):
   for xml_shuttleGroup in tree.getiterator('shuttleGroup'):
     if xml_shuttleGroup.attrib['name'] == 'Test':
       continue
-    r = schedule.AddRoute(short_name="",
+    r = schedule.add_route(short_name="",
         long_name=xml_shuttleGroup.attrib['name'], route_type='Bus')
     for xml_route in xml_shuttleGroup.getiterator('route'):
       t = r.add_trip(schedule=schedule, headsign=xml_route.attrib['name'],
@@ -90,7 +90,7 @@ def SaveFeed(input, output):
         t.AddStopTime(stop=stop, arrival_secs=time, departure_secs=time)
 
   schedule.validate(problems=NoUnusedStopExceptionProblemReporter())
-  schedule.WriteGoogleTransitFeed(output)
+  schedule.write_google_transit_feed(output)
 
 
 def main():

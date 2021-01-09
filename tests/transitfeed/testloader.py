@@ -190,7 +190,7 @@ class LoadAndRewriteFromZipTestCase(util.TestCase):
     schedule.load(util.DataPath('good_feed.zip'), extra_validation=True)
 
     # Finally see if write crashes
-    schedule.WriteGoogleTransitFeed(tempfile.TemporaryFile())
+    schedule.write_google_transit_feed(tempfile.TemporaryFile())
 
 
 class BasicMemoryZipTestCase(util.MemoryZipTestCase):
@@ -204,7 +204,7 @@ class ZipCompressionTestCase(util.MemoryZipTestCase):
     schedule = self.MakeLoaderAndLoad()
     self.zip.close()
     write_output = StringIO()
-    schedule.WriteGoogleTransitFeed(write_output)
+    schedule.write_google_transit_feed(write_output)
     recompressedzip = zlib.compress(write_output.getvalue())
     write_size = len(write_output.getvalue())
     recompressedzip_size = len(recompressedzip)
@@ -798,10 +798,10 @@ class BasicParsingTestCase(util.TestCase):
     self.assertEqual(0, len(schedule.fare_zones))
 
   def assertLoadedStopTimesCorrectly(self, schedule):
-    self.assertEqual(5, len(schedule.GetTrip('CITY1').GetStopTimes()))
-    self.assertEqual('to airport', schedule.GetTrip('STBA').GetStopTimes()[0].stop_headsign)
-    self.assertEqual(2, schedule.GetTrip('CITY1').GetStopTimes()[1].pickup_type)
-    self.assertEqual(3, schedule.GetTrip('CITY1').GetStopTimes()[1].drop_off_type)
+    self.assertEqual(5, len(schedule.get_trip('CITY1').GetStopTimes()))
+    self.assertEqual('to airport', schedule.get_trip('STBA').GetStopTimes()[0].stop_headsign)
+    self.assertEqual(2, schedule.get_trip('CITY1').GetStopTimes()[1].pickup_type)
+    self.assertEqual(3, schedule.get_trip('CITY1').GetStopTimes()[1].drop_off_type)
 
   def test_MemoryDb(self):
     loader = transitfeed.Loader(
@@ -833,7 +833,7 @@ class BasicParsingTestCase(util.TestCase):
       load_stop_times=False)
     schedule = loader.load()
     self.assertLoadedCorrectly(schedule)
-    self.assertEqual(0, len(schedule.GetTrip('CITY1').GetStopTimes()))
+    self.assertEqual(0, len(schedule.get_trip('CITY1').GetStopTimes()))
 
 
 class UndefinedStopAgencyTestCase(util.LoadTestCase):

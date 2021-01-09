@@ -268,12 +268,12 @@ class KMLWriter(object):
     Returns:
       The Folder ElementTree.Element instance or None if there are no stops.
     """
-    if not schedule.GetStopList():
+    if not schedule.get_stop_list():
       return None
     stop_folder = self._CreateFolder(doc, 'Stops')
     stop_folder_selection = self._StopFolderSelectionMethod(stop_folder)
     stop_style_selection = self._StopStyleSelectionMethod(doc)
-    stops = list(schedule.GetStopList())
+    stops = list(schedule.get_stop_list())
     stops.sort(key=lambda x: x.stop_name)
     for stop in stops:
       (folder, pathway_folder) = stop_folder_selection(stop)
@@ -511,7 +511,7 @@ class KMLWriter(object):
           len(trips), ', '.join(trip_ids))
       placemark = self._CreatePlacemark(folder, name, style_id, visible,
                                         description)
-      self._CreateLineStringForShape(placemark, schedule.GetShape(shape_id))
+      self._CreateLineStringForShape(placemark, schedule.get_shape(shape_id))
     return folder
 
   def _CreateRouteTripsFolder(self, parent, route, style_id=None, schedule=None):
@@ -614,7 +614,7 @@ class KMLWriter(object):
       description = '<br/>'.join(desc_items)
       return description or None
 
-    routes = [route for route in schedule.GetRouteList()
+    routes = [route for route in schedule.get_route_list()
               if route_type is None or route.route_type == route_type]
     if not routes:
       return None
@@ -660,10 +660,10 @@ class KMLWriter(object):
     Returns:
       The Folder ElementTree.Element instance or None.
     """
-    if not schedule.GetShapeList():
+    if not schedule.get_shape_list():
       return None
     shapes_folder = self._CreateFolder(doc, 'Shapes')
-    shapes = list(schedule.GetShapeList())
+    shapes = list(schedule.get_shape_list())
     shapes.sort(key=lambda x: x.shape_id)
     for shape in shapes:
       placemark = self._CreatePlacemark(shapes_folder, shape.shape_id)
@@ -710,7 +710,7 @@ class KMLWriter(object):
     self._CreateStopsFolder(schedule, doc)
     if self.split_routes:
       route_types = set()
-      for route in schedule.GetRouteList():
+      for route in schedule.get_route_list():
         route_types.add(route.route_type)
       route_types = list(route_types)
       route_types.sort()

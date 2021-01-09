@@ -73,4 +73,4 @@ class FeedInfo(transitfeed.GtfsObjectBase):
     pass
 
   def add_to_schedule(self, schedule, problems):
-    schedule.AddFeedInfoObject(self, problems)
+    schedule.add_feed_info_object(self, problems)

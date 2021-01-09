@@ -79,7 +79,7 @@ class GtfsObjectBase(GtfsFactoryUser):
     """Set an attribute, adding name to the list of columns as needed."""
     object.__setattr__(self, name, value)
     if name[0] != '_' and self._schedule:
-      self._schedule.AddTableColumn(self.__class__._TABLE_NAME, name)
+      self._schedule.add_table_column(self.__class__._TABLE_NAME, name)
 
   def __eq__(self, other):
     """Return true iff self and other are equivalent"""

@@ -57,7 +57,7 @@ def main():
   else:
     print("Removed %d stops" % removed)
 
-  schedule.WriteGoogleTransitFeed(output_path)
+  schedule.write_google_transit_feed(output_path)
 
 if __name__ == "__main__":
   main()

@@ -56,10 +56,10 @@ class TripMemoryZipTestCase(util.MemoryZipTestCase):
     loaded_schedule = transitfeed.Loader(schedule_file,
                                          problems=load_problems,
                                          extra_validation=True).load()
-    self.assertEqual("foo", loaded_schedule.GetTrip("AB1")["t_foo"])
-    self.assertEqual("", loaded_schedule.GetTrip("AB2")["t_foo"])
-    self.assertEqual("", loaded_schedule.GetTrip("AB1")["n_foo"])
-    self.assertEqual("bar", loaded_schedule.GetTrip("AB2")["n_foo"])
+    self.assertEqual("foo", loaded_schedule.get_trip("AB1")["t_foo"])
+    self.assertEqual("", loaded_schedule.get_trip("AB2")["t_foo"])
+    self.assertEqual("", loaded_schedule.get_trip("AB1")["n_foo"])
+    self.assertEqual("bar", loaded_schedule.get_trip("AB2")["n_foo"])
     # Uncomment the following lines to print the string in testExtraFileColumn
     # print repr(zipfile.ZipFile(schedule_file).read("trips.txt"))
     # self.fail()
@@ -68,18 +68,18 @@ class TripMemoryZipTestCase(util.MemoryZipTestCase):
     """Extra columns added to an object are preserved when writing."""
     schedule = self.MakeLoaderAndLoad()
     # Add an attribute to an existing trip
-    trip1 = schedule.GetTrip("AB1")
+    trip1 = schedule.get_trip("AB1")
     trip1.t_foo = "foo"
     # Make a copy of trip_id=AB1 and add an attribute before AddTripObject
     trip2 = transitfeed.Trip(field_dict=trip1)
     trip2.trip_id = "AB2"
     trip2.t_foo = ""
     trip2.n_foo = "bar"
-    schedule.AddTripObject(trip2)
-    trip2.AddStopTime(stop=schedule.GetStop("BULLFROG"), stop_time="09:00:00")
-    trip2.AddStopTime(stop=schedule.GetStop("STAGECOACH"), stop_time="09:30:00")
+    schedule.add_trip_object(trip2)
+    trip2.AddStopTime(stop=schedule.get_stop("BULLFROG"), stop_time="09:00:00")
+    trip2.AddStopTime(stop=schedule.get_stop("STAGECOACH"), stop_time="09:30:00")
     saved_schedule_file = StringIO()
-    schedule.WriteGoogleTransitFeed(saved_schedule_file)
+    schedule.write_google_transit_feed(saved_schedule_file)
     self.accumulator.AssertNoMoreExceptions()
 
     self.assertLoadAndCheckExtraValues(saved_schedule_file)
@@ -101,7 +101,7 @@ class TripMemoryZipTestCase(util.MemoryZipTestCase):
         self, ("ExpirationDate", "UnrecognizedColumn"))
     schedule = self.MakeLoaderAndLoad(problems=load1_problems)
     saved_schedule_file = StringIO()
-    schedule.WriteGoogleTransitFeed(saved_schedule_file)
+    schedule.write_google_transit_feed(saved_schedule_file)
 
     self.assertLoadAndCheckExtraValues(saved_schedule_file)
 
@@ -167,7 +167,7 @@ class TripValidationTestCase(util.ValidationTestCase):
     # schedule. The Validate calls made by self.Expect... above can't make this
     # check because trip is not in a schedule.
     trip.route_id = '054C-notfound'
-    schedule.AddTripObject(trip, self.problems, True)
+    schedule.add_trip_object(trip, self.problems, True)
     e = self.accumulator.PopException('InvalidValue')
     self.assertEqual('route_id', e.column_name)
     self.accumulator.AssertNoMoreExceptions()
@@ -218,10 +218,10 @@ class TripSequenceValidationTestCase(util.ValidationTestCase):
   def runTest(self):
     schedule = self.SimpleSchedule()
     # Make a new trip without any stop times
-    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
-    stop1 = schedule.GetStop('stop1')
-    stop2 = schedule.GetStop('stop2')
-    stop3 = schedule.GetStop('stop3')
+    trip = schedule.get_route("054C").add_trip(trip_id="054C-00")
+    stop1 = schedule.get_stop('stop1')
+    stop2 = schedule.get_stop('stop2')
+    stop3 = schedule.get_stop('stop3')
     stoptime1 = transitfeed.StopTime(self.problems, stop1,
                                      stop_time='12:00:00', stop_sequence=1)
     stoptime2 = transitfeed.StopTime(self.problems, stop2,
@@ -247,7 +247,7 @@ class TripServiceIDValidationTestCase(util.ValidationTestCase):
     trip1.trip_id = "054C_WEEK"
     self.ExpectInvalidValueInClosure(column_name="service_id",
                                      value="WEEKDAY",
-                                     c=lambda: schedule.AddTripObject(trip1,
+                                     c=lambda: schedule.add_trip_object(trip1,
                                                             validate=True))
 
 
@@ -272,7 +272,7 @@ class TripDistanceFromStopToShapeValidationTestCase(util.ValidationTestCase):
     shape.AddPoint(48.2, 1.01, 500)
     shape.AddPoint(48.2, 1.03, 1500)
     shape.max_distance = 1500
-    schedule.AddShapeObject(shape)
+    schedule.add_shape_object(shape)
 
     # The schedule should validate with no problems.
     self.ExpectNoProblems(schedule)
@@ -285,7 +285,7 @@ class TripDistanceFromStopToShapeValidationTestCase(util.ValidationTestCase):
 class TripHasStopTimeValidationTestCase(util.ValidationTestCase):
   def runTest(self):
     schedule = self.SimpleSchedule()
-    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
+    trip = schedule.get_route("054C").add_trip(trip_id="054C-00")
 
     # We should get an OtherProblem here because the trip has no stops.
     self.ValidateAndExpectOtherProblem(schedule)
@@ -304,13 +304,13 @@ class TripHasStopTimeValidationTestCase(util.ValidationTestCase):
 
     # Add a stop, but with only one stop passengers have nowhere to exit!
     stop = transitfeed.Stop(36.425288, -117.133162, "Demo Stop 1", "STOP1")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     trip.AddStopTime(stop, arrival_time="5:11:00", departure_time="5:12:00")
     self.ValidateAndExpectOtherProblem(schedule)
 
     # Add another stop, and then validation should be happy.
     stop = transitfeed.Stop(36.424288, -117.133142, "Demo Stop 2", "STOP2")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     trip.AddStopTime(stop, arrival_time="5:15:00", departure_time="5:16:00")
     schedule.validate(self.problems)
 
@@ -330,22 +330,22 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     shape = transitfeed.Shape("shape_1")
     shape.AddPoint(36.425288, -117.133162, 0)
     shape.AddPoint(36.424288, -117.133142, 1)
-    schedule.AddShapeObject(shape)
+    schedule.add_shape_object(shape)
 
-    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
+    trip = schedule.get_route("054C").add_trip(trip_id="054C-00")
     trip.shape_id = "shape_1"
 
     stop = transitfeed.Stop(36.425288, -117.133162, "Demo Stop 1", "STOP1")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     trip.AddStopTime(stop, arrival_time="5:11:00", departure_time="5:12:00",
                      stop_sequence=0, shape_dist_traveled=0)
     stop = transitfeed.Stop(36.424288, -117.133142, "Demo Stop 2", "STOP2")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     trip.AddStopTime(stop, arrival_time="5:15:00", departure_time="5:16:00",
                      stop_sequence=1, shape_dist_traveled=1)
 
     stop = transitfeed.Stop(36.423288, -117.133122, "Demo Stop 3", "STOP3")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     trip.AddStopTime(stop, arrival_time="5:18:00", departure_time="5:19:00",
                      stop_sequence=2, shape_dist_traveled=2)
     self.accumulator.AssertNoMoreExceptions()
@@ -357,7 +357,7 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     # Error if the distance decreases.
     shape.AddPoint(36.421288, -117.133132, 2)
     stop = transitfeed.Stop(36.421288, -117.133122, "Demo Stop 4", "STOP4")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     stoptime = transitfeed.StopTime(self.problems, stop,
                                     arrival_time="5:29:00",
                                     departure_time="5:29:00", stop_sequence=3,
@@ -391,19 +391,19 @@ class StopMatchWithShapeTestCase(util.ValidationTestCase):
     shape = transitfeed.Shape("shape_1")
     shape.AddPoint(36.425288, -117.133162, 0)
     shape.AddPoint(36.424288, -117.143142, 1)
-    schedule.AddShapeObject(shape)
+    schedule.add_shape_object(shape)
 
-    trip = schedule.GetRoute("054C").add_trip(trip_id="054C-00")
+    trip = schedule.get_route("054C").add_trip(trip_id="054C-00")
     trip.shape_id = "shape_1"
 
     # Stop 1 is only 600 meters away from shape, which is allowed.
     stop = transitfeed.Stop(36.425288, -117.139162, "Demo Stop 1", "STOP1")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     trip.AddStopTime(stop, arrival_time="5:11:00", departure_time="5:12:00",
                      stop_sequence=0, shape_dist_traveled=0)
     # Stop 2 is more than 1000 meters away from shape, which is not allowed.
     stop = transitfeed.Stop(36.424288, -117.158142, "Demo Stop 2", "STOP2")
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     trip.AddStopTime(stop, arrival_time="5:15:00", departure_time="5:16:00",
                      stop_sequence=1, shape_dist_traveled=1)
 
@@ -417,12 +417,12 @@ class StopMatchWithShapeTestCase(util.ValidationTestCase):
 class TripAddStopTimeObjectTestCase(util.ValidationTestCase):
   def runTest(self):
     schedule = transitfeed.Schedule(problem_reporter=self.problems)
-    schedule.AddAgency("\xc8\x8b Fly Agency", "http://iflyagency.com",
+    schedule.add_agency("\xc8\x8b Fly Agency", "http://iflyagency.com",
                        "America/Los_Angeles")
-    service_period = schedule.GetDefaultServicePeriod().SetDateHasService('20070101')
-    stop1 = schedule.AddStop(lng=140, lat=48.2, name="Stop 1")
-    stop2 = schedule.AddStop(lng=140.001, lat=48.201, name="Stop 2")
-    route = schedule.AddRoute("B", "Beta", "Bus")
+    service_period = schedule.get_default_service_period().SetDateHasService('20070101')
+    stop1 = schedule.add_stop(lng=140, lat=48.2, name="Stop 1")
+    stop2 = schedule.add_stop(lng=140.001, lat=48.201, name="Stop 2")
+    route = schedule.add_route("B", "Beta", "Bus")
     trip = route.add_trip(schedule, "bus trip")
     trip.AddStopTimeObject(transitfeed.StopTime(self.problems, stop1,
                                                 arrival_secs=10,
@@ -455,12 +455,12 @@ class TripAddStopTimeObjectTestCase(util.ValidationTestCase):
 class TripReplaceStopTimeObjectTestCase(util.TestCase):
   def runTest(self):
     schedule = transitfeed.Schedule()
-    schedule.AddAgency("\xc8\x8b Fly Agency", "http://iflyagency.com",
+    schedule.add_agency("\xc8\x8b Fly Agency", "http://iflyagency.com",
                        "America/Los_Angeles")
     service_period = \
-      schedule.GetDefaultServicePeriod().SetDateHasService('20070101')
-    stop1 = schedule.AddStop(lng=140, lat=48.2, name="Stop 1")
-    route = schedule.AddRoute("B", "Beta", "Bus")
+      schedule.get_default_service_period().SetDateHasService('20070101')
+    stop1 = schedule.add_stop(lng=140, lat=48.2, name="Stop 1")
+    route = schedule.add_route("B", "Beta", "Bus")
     trip = route.add_trip(schedule, "bus trip")
     stoptime = transitfeed.StopTime(transitfeed.default_problem_reporter, stop1,
                                     arrival_secs=10,
@@ -473,7 +473,7 @@ class TripReplaceStopTimeObjectTestCase(util.TestCase):
     self.assertEqual(len(stoptimes), 1)
     self.assertEqual(stoptimes[0].departure_secs, 20)
 
-    unknown_stop = schedule.AddStop(lng=140, lat=48.2, name="unknown")
+    unknown_stop = schedule.add_stop(lng=140, lat=48.2, name="unknown")
     unknown_stoptime = transitfeed.StopTime(
         transitfeed.default_problem_reporter, unknown_stop,
         arrival_secs=10,
@@ -488,19 +488,19 @@ class SingleTripTestCase(util.TestCase):
   def setUp(self):
     schedule = transitfeed.Schedule(
         problem_reporter=util.ExceptionProblemReporterNoExpiration())
-    schedule.NewDefaultAgency(agency_name="Test Agency",
+    schedule.new_default_agency(agency_name="Test Agency",
                               agency_url="http://example.com",
                               agency_timezone="America/Los_Angeles")
-    route = schedule.AddRoute(short_name="54C", long_name="Polish Hill",
+    route = schedule.add_route(short_name="54C", long_name="Polish Hill",
                               route_type=3)
 
-    service_period = schedule.GetDefaultServicePeriod()
+    service_period = schedule.get_default_service_period()
     service_period.SetDateHasService("20070101")
 
     trip = route.add_trip(schedule, 'via Polish Hill')
 
-    stop1 = schedule.AddStop(36.425288, -117.133162, "Demo Stop 1")
-    stop2 = schedule.AddStop(36.424288, -117.133142, "Demo Stop 2")
+    stop1 = schedule.add_stop(36.425288, -117.133162, "Demo Stop 1")
+    stop2 = schedule.add_stop(36.424288, -117.133142, "Demo Stop 2")
 
     self.schedule = schedule
     self.trip = trip
@@ -579,13 +579,13 @@ class TripClearStopTimesTestCase(util.TestCase):
   def runTest(self):
     schedule = transitfeed.Schedule(
         problem_reporter=util.ExceptionProblemReporterNoExpiration())
-    schedule.NewDefaultAgency(agency_name="Test Agency",
+    schedule.new_default_agency(agency_name="Test Agency",
                               agency_timezone="America/Los_Angeles")
-    route = schedule.AddRoute(short_name="54C", long_name="Hill", route_type=3)
-    schedule.GetDefaultServicePeriod().SetDateHasService("20070101")
-    stop1 = schedule.AddStop(36, -117.1, "Demo Stop 1")
-    stop2 = schedule.AddStop(36, -117.2, "Demo Stop 2")
-    stop3 = schedule.AddStop(36, -117.3, "Demo Stop 3")
+    route = schedule.add_route(short_name="54C", long_name="Hill", route_type=3)
+    schedule.get_default_service_period().SetDateHasService("20070101")
+    stop1 = schedule.add_stop(36, -117.1, "Demo Stop 1")
+    stop2 = schedule.add_stop(36, -117.2, "Demo Stop 2")
+    stop3 = schedule.add_stop(36, -117.3, "Demo Stop 3")
 
     trip = route.add_trip(schedule, "via Polish Hill")
     trip.ClearStopTimes()
@@ -626,15 +626,15 @@ class AddStopTimeParametersTestCase(util.TestCase):
   def runTest(self):
     problem_reporter = util.GetTestFailureProblemReporter(self)
     schedule = transitfeed.Schedule(problem_reporter=problem_reporter)
-    route = schedule.AddRoute(short_name="10", long_name="", route_type="Bus")
-    stop = schedule.AddStop(40, -128, "My stop")
+    route = schedule.add_route(short_name="10", long_name="", route_type="Bus")
+    stop = schedule.add_stop(40, -128, "My stop")
     # Stop must be added to schedule so that the call
     # AddStopTime -> AddStopTimeObject -> GetStopTimes -> GetStop can work
     trip = transitfeed.Trip()
     trip.route_id = route.route_id
-    trip.service_id = schedule.GetDefaultServicePeriod().service_id
+    trip.service_id = schedule.get_default_service_period().service_id
     trip.trip_id = "SAMPLE_TRIP"
-    schedule.AddTripObject(trip)
+    schedule.add_trip_object(trip)
 
     # First stop must have time
     trip.AddStopTime(stop, arrival_secs=300, departure_secs=360)
@@ -707,16 +707,16 @@ class GetTripTimeTestCase(util.TestCase):
     problems = util.GetTestFailureProblemReporter(self)
     schedule = transitfeed.Schedule(problem_reporter=problems)
     self.schedule = schedule
-    schedule.AddAgency("Agency", "http://iflyagency.com",
+    schedule.add_agency("Agency", "http://iflyagency.com",
                        "America/Los_Angeles")
-    service_period = schedule.GetDefaultServicePeriod()
+    service_period = schedule.get_default_service_period()
     service_period.SetDateHasService('20070101')
-    self.stop1 = schedule.AddStop(lng=140.01, lat=0, name="140.01,0")
-    self.stop2 = schedule.AddStop(lng=140.02, lat=0, name="140.02,0")
-    self.stop3 = schedule.AddStop(lng=140.03, lat=0, name="140.03,0")
-    self.stop4 = schedule.AddStop(lng=140.04, lat=0, name="140.04,0")
-    self.stop5 = schedule.AddStop(lng=140.05, lat=0, name="140.05,0")
-    self.route1 = schedule.AddRoute("1", "One", "Bus")
+    self.stop1 = schedule.add_stop(lng=140.01, lat=0, name="140.01,0")
+    self.stop2 = schedule.add_stop(lng=140.02, lat=0, name="140.02,0")
+    self.stop3 = schedule.add_stop(lng=140.03, lat=0, name="140.03,0")
+    self.stop4 = schedule.add_stop(lng=140.04, lat=0, name="140.04,0")
+    self.stop5 = schedule.add_stop(lng=140.05, lat=0, name="140.05,0")
+    self.route1 = schedule.add_route("1", "One", "Bus")
 
     self.trip1 = self.route1.add_trip(schedule, "trip 1", trip_id='trip1')
     self.trip1.AddStopTime(self.stop1, schedule=schedule, departure_secs=100,
@@ -779,7 +779,7 @@ class GetTripTimeTestCase(util.TestCase):
     self.assertEqual(True, rv[0][2])
 
   def testGetStopTimeTrips(self):
-    stopa = self.schedule.GetNearestStops(lon=140.03, lat=0)[0]
+    stopa = self.schedule.get_nearest_stops(lon=140.03, lat=0)[0]
     self.assertEqual("140.03,0", stopa.stop_name)  # Got stop3?
     rv = stopa.GetStopTimeTrips(self.schedule)
     self.assertEqual(3, len(rv))
@@ -818,18 +818,18 @@ class GetFrequencyTimesTestCase(util.TestCase):
     problems = util.GetTestFailureProblemReporter(self)
     schedule = transitfeed.Schedule(problem_reporter=problems)
     self.schedule = schedule
-    schedule.AddAgency("Agency", "http://iflyagency.com",
+    schedule.add_agency("Agency", "http://iflyagency.com",
                        "America/Los_Angeles")
-    service_period = schedule.GetDefaultServicePeriod()
+    service_period = schedule.get_default_service_period()
     service_period.SetStartDate("20080101")
     service_period.SetEndDate("20090101")
     service_period.SetWeekdayService(True)
-    self.stop1 = schedule.AddStop(lng=140.01, lat=0, name="140.01,0")
-    self.stop2 = schedule.AddStop(lng=140.02, lat=0, name="140.02,0")
-    self.stop3 = schedule.AddStop(lng=140.03, lat=0, name="140.03,0")
-    self.stop4 = schedule.AddStop(lng=140.04, lat=0, name="140.04,0")
-    self.stop5 = schedule.AddStop(lng=140.05, lat=0, name="140.05,0")
-    self.route1 = schedule.AddRoute("1", "One", "Bus")
+    self.stop1 = schedule.add_stop(lng=140.01, lat=0, name="140.01,0")
+    self.stop2 = schedule.add_stop(lng=140.02, lat=0, name="140.02,0")
+    self.stop3 = schedule.add_stop(lng=140.03, lat=0, name="140.03,0")
+    self.stop4 = schedule.add_stop(lng=140.04, lat=0, name="140.04,0")
+    self.stop5 = schedule.add_stop(lng=140.05, lat=0, name="140.05,0")
+    self.route1 = schedule.add_route("1", "One", "Bus")
 
     self.trip1 = self.route1.add_trip(schedule, "trip 1", trip_id="trip1")
     # add different types of stop times

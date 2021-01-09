@@ -162,10 +162,10 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
   def handle_GET_home(self):
     schedule = self.server.schedule
-    (min_lat, min_lon, max_lat, max_lon) = schedule.GetStopBoundingBox()
+    (min_lat, min_lon, max_lat, max_lon) = schedule.get_stop_bounding_box()
     forbid_editing = ('true', 'false')[self.AllowEditMode()]
 
-    agency = ', '.join(a.agency_name for a in schedule.GetAgencyList()).encode('utf-8')
+    agency = ', '.join(a.agency_name for a in schedule.get_agency_list()).encode('utf-8')
 
     key = self.server.key
     host = self.server.host
@@ -188,7 +188,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """Given a route_id generate a list of patterns of the route. For each
     pattern include some basic information and a few sample trips."""
     schedule = self.server.schedule
-    route = schedule.GetRoute(params.get('route', None))
+    route = schedule.get_route(params.get('route', None))
     if not route:
       self.send_error(404)
       return
@@ -209,7 +209,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       trips_with_service = []
       for trip in trips:
         service_id = trip.service_id
-        service_period = schedule.GetServicePeriod(service_id)
+        service_period = schedule.get_service_period(service_id)
 
         if date and not service_period.IsActiveOn(date):
           continue
@@ -271,14 +271,14 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """Return a list of all routes."""
     schedule = self.server.schedule
     result = []
-    for r in schedule.GetRouteList():
+    for r in schedule.get_route_list():
       result.append( (r.route_id, r.route_short_name, r.route_long_name) )
     result.sort(key = lambda x: x[1:3])
     return result
 
   def handle_json_GET_routerow(self, params):
     schedule = self.server.schedule
-    route = schedule.GetRoute(params.get('route', None))
+    route = schedule.get_route(params.get('route', None))
     return [transitfeed.Route._FIELD_NAMES, route.get_field_values_tuple()]
 
   def handle_json_GET_triprows(self, params):
@@ -286,11 +286,11 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     trip."""
     schedule = self.server.schedule
     try:
-      trip = schedule.GetTrip(params.get('trip', None))
+      trip = schedule.get_trip(params.get('trip', None))
     except KeyError:
       # if a non-existent trip is searched for, the return nothing
       return
-    route = schedule.GetRoute(trip.route_id)
+    route = schedule.get_route(trip.route_id)
     trip_row = dict(trip.items())
     route_row = dict(route.items())
     return [['trips.txt', trip_row], ['routes.txt', route_row]]
@@ -298,7 +298,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def handle_json_GET_tripstoptimes(self, params):
     schedule = self.server.schedule
     try:
-      trip = schedule.GetTrip(params.get('trip'))
+      trip = schedule.get_trip(params.get('trip'))
     except KeyError:
        # if a non-existent trip is searched for, the return nothing
       return
@@ -315,20 +315,20 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def handle_json_GET_tripshape(self, params):
     schedule = self.server.schedule
     try:
-      trip = schedule.GetTrip(params.get('trip'))
+      trip = schedule.get_trip(params.get('trip'))
     except KeyError:
        # if a non-existent trip is searched for, the return nothing
       return
     points = []
     if trip.shape_id:
-      shape = schedule.GetShape(trip.shape_id)
+      shape = schedule.get_shape(trip.shape_id)
       for (lat, lon, dist) in shape.points:
         points.append((lat, lon))
     else:
       time_stops = trip.GetTimeStops()
       for arr,dep,stop in time_stops:
         points.append((stop.stop_lat, stop.stop_lon))
-    route = schedule.GetRoute(trip.route_id)
+    route = schedule.get_route(trip.route_id)
     polyline_data = {'points': points}
     if route.route_color:
       polyline_data['color'] = '#' + route.route_color
@@ -340,7 +340,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     lat = float(params.get('lat'))
     lon = float(params.get('lon'))
     limit = int(params.get('limit'))
-    stops = schedule.GetNearestStops(lat=lat, lon=lon, n=limit)
+    stops = schedule.get_nearest_stops(lat=lat, lon=lon, n=limit)
     return [StopToTuple(s) for s in stops]
 
   def handle_json_GET_boundboxstops(self, params):
@@ -353,14 +353,14 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     s = float(params.get('s'))
     w = float(params.get('w'))
     limit = int(params.get('limit'))
-    stops = schedule.GetStopsInBoundingBox(north=n, east=e, south=s, west=w, n=limit)
+    stops = schedule.get_gtfs_factor(north=n, east=e, south=s, west=w, n=limit)
     return [StopToTuple(s) for s in stops]
 
   def handle_json_GET_stopsearch(self, params):
     schedule = self.server.schedule
     query = params.get('q', None).lower()
     matches = []
-    for s in schedule.GetStopList():
+    for s in schedule.get_stop_list():
       if s.stop_id.lower().find(query) != -1 or s.stop_name.lower().find(query) != -1:
         matches.append(StopToTuple(s))
     return matches
@@ -369,7 +369,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """Given a stop_id and time in seconds since midnight return the next
     trips to visit the stop."""
     schedule = self.server.schedule
-    stop = schedule.GetStop(params.get('stop', None))
+    stop = schedule.get_stop(params.get('stop', None))
     time = int(params.get('time', 0))
     date = params.get('date', "")
 
@@ -383,7 +383,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     result = []
     for time, (trip, index), tp in time_trips:
       service_id = trip.service_id
-      service_period = schedule.GetServicePeriod(service_id)
+      service_period = schedule.get_service_period(service_id)
       if date and not service_period.IsActiveOn(date):
         continue
       headsign = None
@@ -395,7 +395,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       # If stop_headsign isn't found, look for a trip_headsign
       if not headsign:
         headsign = trip.trip_headsign
-      route = schedule.GetRoute(trip.route_id)
+      route = schedule.get_route(trip.route_id)
       trip_name = ''
       if route.route_short_name:
         trip_name += route.route_short_name
@@ -414,8 +414,8 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     that visit the same sequence of stops)."""
     schedule = self.server.schedule
     marey = MareyGraph()
-    trip = schedule.GetTrip(params.get('trip', None))
-    route = schedule.GetRoute(trip.route_id)
+    trip = schedule.get_trip(params.get('trip', None))
+    route = schedule.get_route(trip.route_id)
     height = int(params.get('height', 300))
 
     if not route:

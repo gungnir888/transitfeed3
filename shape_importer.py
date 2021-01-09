@@ -124,7 +124,7 @@ def AddExtraShapes(extra_shapes_txt, graph):
     shutil.copy(extra_shapes_txt, os.path.join(tmpdir, 'shapes.txt'))
     loader = transitfeed.ShapeLoader(tmpdir)
     schedule = loader.load()
-    for shape in schedule.GetShapeList():
+    for shape in schedule.get_shape_list():
       print("Adding extra shape: %s" % shape.shape_id)
       graph.AddPoly(ShapeToPoly(shape))
   finally:
@@ -212,7 +212,7 @@ def main(key_cols):
   verbosity = options.verbosity
 
   print('Matching shapes to trips...')
-  for route in schedule.GetRouteList():
+  for route in schedule.get_route_list():
     print('Processing route', route.route_short_name)
     patterns = route.get_pattern_id_trip_dict()
     for pattern_id, trips in patterns.items():
@@ -255,17 +255,17 @@ def main(key_cols):
                                            name="shape_%d" % shape_count)
         for trip in trips:
           try:
-            shape = schedule.GetShape(shape_match.GetName())
+            shape = schedule.get_shape(shape_match.GetName())
           except KeyError:
             shape = transitfeed.Shape(shape_match.GetName())
             for point in shape_match.GetPoints():
               (lat, lng) = point.ToLatLng()
               shape.AddPoint(lat, lng)
-            schedule.AddShapeObject(shape)
+            schedule.add_shape_object(shape)
           trip.shape_id = shape.shape_id
 
   print("Matched %d shapes out of %d patterns" % (shape_count, pattern_count))
-  schedule.WriteGoogleTransitFeed(options.dest_gtfs)
+  schedule.write_google_transit_feed(options.dest_gtfs)
 
 
 if __name__ == '__main__':

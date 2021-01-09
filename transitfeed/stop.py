@@ -100,7 +100,7 @@ class Stop(GtfsObjectBase):
     cursor.execute("SELECT trip_id,stop_sequence FROM stop_times "
                    "WHERE stop_id=?",
                    (self.stop_id, ))
-    return [(schedule.GetTrip(row[0]), row[1]) for row in cursor]
+    return [(schedule.get_trip(row[0]), row[1]) for row in cursor]
 
   def _GetTripIndex(self, schedule=None):
     """Return a list of (trip, index).
@@ -270,4 +270,4 @@ class Stop(GtfsObjectBase):
     self.validate_after_add(problems)
 
   def add_to_schedule(self, schedule, problems):
-    schedule.AddStopObject(self, problems)
+    schedule.add_stop_object(self, problems)

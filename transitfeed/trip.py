@@ -242,7 +242,7 @@ class Trip(GtfsObjectBase):
       # ProblemReporter
       problems = problems_module.default_problem_reporter
     for row in cursor.fetchall():
-      stop = self._schedule.GetStop(row[6])
+      stop = self._schedule.get_stop(row[6])
       stop_times.append(stoptime_class(problems=problems,
                                        stop=stop,
                                        arrival_secs=row[0],
@@ -492,7 +492,7 @@ class Trip(GtfsObjectBase):
   def __getattr__(self, name):
     if name == 'service_period':
       assert self._schedule, "Must be in a schedule to get service_period"
-      return self._schedule.GetServicePeriod(self.service_id)
+      return self._schedule.get_service_period(self.service_id)
     elif name == 'pattern_id':
       if '_pattern_id' not in self.__dict__:
         self.__dict__['_pattern_id'] = hash(self.GetPattern())
@@ -603,7 +603,7 @@ class Trip(GtfsObjectBase):
       prev_stop = None
       prev_distance = None
       try:
-        route_type = self._schedule.GetRoute(self.route_id).route_type
+        route_type = self._schedule.get_route(self.route_id).route_type
         max_speed = route_class._ROUTE_TYPES[route_type]['max_speed']
       except KeyError as e:
         # If route_type cannot be found, assume it is 0 (Tram) for checking
@@ -646,7 +646,7 @@ class Trip(GtfsObjectBase):
                                                            stoptimes):
     if stoptimes:
       if self.shape_id and self.shape_id in self._schedule._shapes:
-        shape = self._schedule.GetShape(self.shape_id)
+        shape = self._schedule.get_shape(self.shape_id)
         max_shape_dist = shape.max_distance
         st = stoptimes[-1]
         if (st.shape_dist_traveled and
@@ -663,7 +663,7 @@ class Trip(GtfsObjectBase):
   def ValidateDistanceFromStopToShape(self, problems, stoptimes):
     if stoptimes:
       if self.shape_id and self.shape_id in self._schedule._shapes:
-        shape = self._schedule.GetShape(self.shape_id)
+        shape = self._schedule.get_shape(self.shape_id)
         max_shape_dist = shape.max_distance
         st = stoptimes[-1]
         # shape_dist_traveled is valid in shape if max_shape_dist larger than 0.
@@ -673,7 +673,7 @@ class Trip(GtfsObjectBase):
               continue
             pt = shape.GetPointWithDistanceTraveled(st.shape_dist_traveled)
             if pt:
-              stop = self._schedule.GetStop(st.stop_id)
+              stop = self._schedule.get_stop(st.stop_id)
               if stop.stop_lat and stop.stop_lon:
                 distance = util.approximate_distance(stop.stop_lat,
                                                     stop.stop_lon,
@@ -760,7 +760,7 @@ class Trip(GtfsObjectBase):
                                type=problems_module.TYPE_WARNING)
 
   def add_to_schedule(self, schedule, problems):
-    schedule.AddTripObject(self, problems)
+    schedule.add_trip_object(self, problems)
 
 
 def SortListOfTripByTime(trips):

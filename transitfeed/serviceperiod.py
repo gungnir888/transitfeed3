@@ -75,7 +75,7 @@ class ServicePeriod(object):
     else:
       return False
 
-  def GetDateRange(self):
+  def get_date_range(self):
     """Return the range over which this ServicePeriod is valid.
 
     The range includes exception dates that add service outside of
@@ -219,7 +219,7 @@ class ServicePeriod(object):
 
   def ActiveDates(self):
     """Return dates this service period is active as a list of "YYYYMMDD"."""
-    (earliest, latest) = self.GetDateRange()
+    (earliest, latest) = self.get_date_range()
     if earliest is None:
       return []
     dates = []

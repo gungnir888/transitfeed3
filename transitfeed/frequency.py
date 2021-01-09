@@ -86,7 +86,7 @@ class Frequency(GtfsObjectBase):
         return
       self._schedule = schedule
       try:
-        trip = schedule.GetTrip(self.trip_id)
+        trip = schedule.get_trip(self.trip_id)
       except KeyError:
         problems.InvalidValue('trip_id', self.trip_id)
         return

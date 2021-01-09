@@ -110,5 +110,5 @@ class Agency(GtfsObjectBase):
     self.validate(problems)
 
   def add_to_schedule(self, schedule, problems):
-    schedule.AddAgencyObject(self, problems)
+    schedule.add_agency_object(self, problems)
 

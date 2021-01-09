@@ -66,7 +66,7 @@ def problem_count_text(error_count, warning_count):
 def calendar_summary(schedule):
     today = datetime.date.today()
     summary_end_date = today + datetime.timedelta(days=60)
-    start_date, end_date = schedule.GetDateRange()
+    start_date, end_date = schedule.get_date_range()
 
     if not start_date or not end_date:
         return {}
@@ -79,7 +79,7 @@ def calendar_summary(schedule):
     # Get the list of trips only during the period the feed is active.
     # As such we have to check if it starts in the future and/or if
     # if it ends in less than 60 days.
-    date_trips_departures = schedule.GenerateDateTripsDeparturesList(
+    date_trips_departures = schedule.generate_date_trips_departures_list(
         max(today, start_date_object),
         min(summary_end_date, end_date_object))
 
@@ -390,12 +390,12 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
         feed_path = (feed_location[:feed_location.rfind(basename)], basename)
 
         agencies = ', '.join(['<a href="%s">%s</a>' % (a.agency_url, a.agency_name)
-                              for a in schedule.GetAgencyList()])
+                              for a in schedule.get_agency_list()])
         if not agencies:
             agencies = '?'
 
         dates = "No valid service dates found"
-        (start, end) = schedule.GetDateRange()
+        (start, end) = schedule.get_date_range()
         if start and end:
             def format_date(yyyymmdd):
                 src_format = "%Y%m%d"
@@ -470,10 +470,10 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
             "feed_file": feed_path[1],
             "feed_dir": feed_path[0],
             "agencies": agencies,
-            "routes": len(schedule.GetRouteList()),
-            "stops": len(schedule.GetStopList()),
-            "trips": len(schedule.GetTripList()),
-            "shapes": len(schedule.GetShapeList()),
+            "routes": len(schedule.get_route_list()),
+            "stops": len(schedule.get_stop_list()),
+            "trips": len(schedule.get_trip_list()),
+            "shapes": len(schedule.get_shape_list()),
             "dates": dates,
             "problem_summary": summary,
             "calendar_summary": calendar_summary_html,

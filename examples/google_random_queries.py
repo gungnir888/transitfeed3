@@ -79,7 +79,7 @@ def AddNoiseToLatLng(lat, lng):
 def GetRandomLocationsNearStops(schedule):
   """Return a list of (lat, lng) tuples."""
   locations = []
-  for s in schedule.GetStopList():
+  for s in schedule.get_stop_list():
     locations.append(AddNoiseToLatLng(s.stop_lat, s.stop_lon))
   return locations
 
@@ -220,7 +220,7 @@ https://github.com/google/transitfeed/wiki/GoogleRandomQueries
   schedule = loader.load()
   locations = GetRandomLocationsNearStops(schedule)
   random.shuffle(locations)
-  agencies = ", ".join([a.agency_name for a in schedule.GetAgencyList()])
+  agencies = ", ".join([a.agency_name for a in schedule.get_agency_list()])
   title = "%s (%s)" % (agencies, ParentAndBaseName(feed_path))
 
   write_output(title,

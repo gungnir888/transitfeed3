@@ -84,7 +84,7 @@ class KmlParser(object):
       if p.IsPoint():
         (lon, lat) = p.coordinates[0]
         m = self.stopNameRe.search(p.name)
-        feed.AddStop(lat, lon, m.group(1))
+        feed.add_stop(lat, lon, m.group(1))
       elif p.IsLine():
         self.ConvertPlacemarkToShape(p, feed)
 
@@ -121,7 +121,7 @@ class KmlParser(object):
       shape.AddPoint(lat, lon)
 
     try:
-      existing_shape = feed.GetShape(p.name)
+      existing_shape = feed.get_shape(p.name)
 
       # If the existing shape has the same points, we don't need to add a new
       # shape.
@@ -130,13 +130,13 @@ class KmlParser(object):
 
       # If the shape has different points, we need to modify our shape id so as
       # to avoid duplication.
-      shape.shape_id += '_%d' % len(feed.GetShapeList())
+      shape.shape_id += '_%d' % len(feed.get_shape_list())
 
     except KeyError:
       # No existing shape with that id, so no worries.
       pass
 
-    feed.AddShapeObject(shape)
+    feed.add_shape_object(shape)
 
 def main():
   usage = \
@@ -159,7 +159,7 @@ placemarks in the KML represented as stops.
   feed = transitfeed.Schedule()
   feed.save_all_stops = True
   parser.Parse(args[0], feed)
-  feed.WriteGoogleTransitFeed(args[1])
+  feed.write_google_transit_feed(args[1])
 
   print("Done.")
 

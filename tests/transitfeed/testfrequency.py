@@ -31,7 +31,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
     trip.direction_id = '0'
     trip.block_id = None
     trip.shape_id = None
-    self.schedule.AddTripObject(trip, self.problems, True)
+    self.schedule.add_trip_object(trip, self.problems, True)
     self.trip = trip
 
   def testNonOverlappingPeriods(self):

@@ -40,10 +40,10 @@ class RouteMemoryZipTestCase(util.MemoryZipTestCase):
     loaded_schedule = transitfeed.Loader(schedule_file,
                                          problems=load_problems,
                                          extra_validation=True).load()
-    self.assertEqual("foo", loaded_schedule.GetRoute("t")["t_foo"])
-    self.assertEqual("", loaded_schedule.GetRoute("AB")["t_foo"])
-    self.assertEqual("bar", loaded_schedule.GetRoute("n")["n_foo"])
-    self.assertEqual("", loaded_schedule.GetRoute("AB")["n_foo"])
+    self.assertEqual("foo", loaded_schedule.get_route("t")["t_foo"])
+    self.assertEqual("", loaded_schedule.get_route("AB")["t_foo"])
+    self.assertEqual("bar", loaded_schedule.get_route("n")["n_foo"])
+    self.assertEqual("", loaded_schedule.get_route("AB")["n_foo"])
     # Uncomment the following lines to print the string in testExtraFileColumn
     # print repr(zipfile.ZipFile(schedule_file).read("routes.txt"))
     # self.fail()
@@ -53,14 +53,14 @@ class RouteMemoryZipTestCase(util.MemoryZipTestCase):
     schedule = self.MakeLoaderAndLoad()
     # Add an attribute after AddRouteObject
     route_t = transitfeed.Route(short_name="T", route_type="Bus", route_id="t")
-    schedule.AddRouteObject(route_t)
+    schedule.add_route_object(route_t)
     route_t.t_foo = "foo"
     # Add an attribute before AddRouteObject
     route_n = transitfeed.Route(short_name="N", route_type="Bus", route_id="n")
     route_n.n_foo = "bar"
-    schedule.AddRouteObject(route_n)
+    schedule.add_route_object(route_n)
     saved_schedule_file = StringIO()
-    schedule.WriteGoogleTransitFeed(saved_schedule_file)
+    schedule.write_google_transit_feed(saved_schedule_file)
     self.accumulator.AssertNoMoreExceptions()
 
     self.assertLoadAndCheckExtraValues(saved_schedule_file)
@@ -80,7 +80,7 @@ class RouteMemoryZipTestCase(util.MemoryZipTestCase):
         self, ("ExpirationDate", "UnrecognizedColumn"))
     schedule = self.MakeLoaderAndLoad(problems=load1_problems)
     saved_schedule_file = StringIO()
-    schedule.WriteGoogleTransitFeed(saved_schedule_file)
+    schedule.write_google_transit_feed(saved_schedule_file)
 
     self.assertLoadAndCheckExtraValues(saved_schedule_file)
 

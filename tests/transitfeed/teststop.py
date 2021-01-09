@@ -488,13 +488,13 @@ class StopAttributes(util.ValidationTestCase):
 
     stop = transitfeed.Stop(field_dict={})
     # AddStopObject silently fails for Stop objects without stop_id
-    schedule.AddStopObject(stop)
-    self.assertFalse(schedule.GetStopList())
+    schedule.add_stop_object(stop)
+    self.assertFalse(schedule.get_stop_list())
     self.assertFalse(stop._schedule)
 
     # Okay to add a stop with only stop_id
     stop = transitfeed.Stop(field_dict={"stop_id": "b"})
-    schedule.AddStopObject(stop)
+    schedule.add_stop_object(stop)
     stop.validate(self.problems)
     for name in "stop_name stop_lat stop_lon".split():
       e = self.accumulator.PopException("MissingValue")
@@ -502,9 +502,9 @@ class StopAttributes(util.ValidationTestCase):
     self.accumulator.AssertNoMoreExceptions()
 
     stop.new_column = "val"
-    self.assertTrue("new_column" in schedule.GetTableColumns("stops"))
+    self.assertTrue("new_column" in schedule.get_table_columns("stops"))
 
     # Adding a duplicate stop_id fails
-    schedule.AddStopObject(transitfeed.Stop(field_dict={"stop_id": "b"}))
+    schedule.add_stop_object(transitfeed.Stop(field_dict={"stop_id": "b"}))
     self.accumulator.PopException("DuplicateID")
     self.accumulator.AssertNoMoreExceptions()

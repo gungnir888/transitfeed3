@@ -155,5 +155,5 @@ class FareAttribute(GtfsObjectBase):
 
   def add_to_schedule(self, schedule=None, problems=None):
     if schedule:
-      schedule.AddFareAttributeObject(self, problems)
+      schedule.add_fare_attribute_object(self, problems)
       self._schedule = schedule

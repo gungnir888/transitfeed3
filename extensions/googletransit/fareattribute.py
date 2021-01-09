@@ -27,7 +27,7 @@ class FareAttribute(transitfeed.FareAttribute):
   _FIELD_NAMES = transitfeed.FareAttribute._FIELD_NAMES + [ 'agency_id' ]
 
   def ValidateAgencyId(self, problems):
-    agencies = self._schedule.GetAgencyList()
+    agencies = self._schedule.get_agency_list()
     for agency in agencies:
       if agency.agency_id == self.agency_id:
         return

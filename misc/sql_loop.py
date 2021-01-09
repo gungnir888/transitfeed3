@@ -25,11 +25,8 @@ import os
 import os.path
 import resource
 import pstats
+import sqlite3 as sqlite
 
-try:
-  import sqlite3 as sqlite
-except ImportError:
-  from pysqlite2 import dbapi2 as sqlite
 
 class SqlLoop(cmd.Cmd):
   """Interactive sql shell"""

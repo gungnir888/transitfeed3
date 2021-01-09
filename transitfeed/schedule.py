@@ -19,18 +19,8 @@ import bisect
 import datetime
 import itertools
 import os
-from operator import itemgetter, attrgetter
-
-try:
-  import sqlite3 as sqlite
-  native_sqlite = True
-except ImportError:
-  try:
-    from pysqlite2 import dbapi2 as sqlite
-    native_sqlite = True
-  except ImportError:
-    from com.ziclix.python.sql import zxJDBC as sqlite
-    native_sqlite = False
+from operator import attrgetter
+import sqlite3 as sqlite
 import tempfile
 import time
 import warnings
@@ -47,7 +37,10 @@ from .util import defaultdict
 from . import util
 from .compat import StringIO
 
-class Schedule(object):
+native_sqlite = True
+
+
+class Schedule:
   """Represents a Schedule, a collection of stops, routes, trips and
   an agency.  This is the main class for this module."""
 
@@ -84,14 +77,14 @@ class Schedule(object):
     else:
       self.problem_reporter = problem_reporter
     self._check_duplicate_trips = check_duplicate_trips
-    self.ConnectDb(memory_db)
+    self.connect_db(memory_db)
 
-  def AddTableColumn(self, table, column):
+  def add_table_column(self, table, column):
     """Add column to table if it is not already there."""
     if column not in self._table_columns[table]:
       self._table_columns[table].append(column)
 
-  def AddTableColumns(self, table, columns):
+  def add_table_columns(self, table, columns):
     """Add columns to table if they are not already there.
 
     Args:
@@ -102,7 +95,7 @@ class Schedule(object):
       if attr not in table_columns:
         table_columns.append(attr)
 
-  def GetTableColumns(self, table):
+  def get_table_columns(self, table):
     """Return list of columns in a table."""
     return self._table_columns[table]
 
@@ -112,14 +105,9 @@ class Schedule(object):
     if hasattr(self, '_temp_db_filename'):
       os.remove(self._temp_db_filename)
 
-  def ConnectDb(self, memory_db):
+  def connect_db(self, memory_db):
     def connector(db_file):
-      if native_sqlite:
         return sqlite.connect(db_file)
-      else:
-        return sqlite.connect("jdbc:sqlite:%s" % db_file,
-                              "", "", "org.sqlite.JDBC")
-
     if memory_db:
       self._connection = connector(":memory:")
     else:
@@ -135,34 +123,39 @@ class Schedule(object):
         self._connection = connector(self._temp_db_filename)
 
     cursor = self._connection.cursor()
-    cursor.execute("""CREATE TABLE stop_times (
-                                           trip_id CHAR(50),
-                                           arrival_secs INTEGER,
-                                           departure_secs INTEGER,
-                                           stop_id CHAR(50),
-                                           stop_sequence INTEGER,
-                                           stop_headsign VAR CHAR(100),
-                                           pickup_type INTEGER,
-                                           drop_off_type INTEGER,
-                                           shape_dist_traveled FLOAT,
-                                           timepoint INTEGER);""")
-    cursor.execute("""CREATE INDEX trip_index ON stop_times (trip_id);""")
-    cursor.execute("""CREATE INDEX stop_index ON stop_times (stop_id);""")
+    cursor.execute(
+      """
+      CREATE TABLE stop_times (
+        trip_id CHAR(50),
+        arrival_secs INTEGER,
+        departure_secs INTEGER,
+        stop_id CHAR(50),
+        stop_sequence INTEGER,
+        stop_headsign VAR CHAR(100),
+        pickup_type INTEGER,
+        drop_off_type INTEGER,
+        shape_dist_traveled FLOAT,
+        timepoint INTEGER
+      );
+      """
+    )
+    cursor.execute("CREATE INDEX trip_index ON stop_times (trip_id);")
+    cursor.execute("CREATE INDEX stop_index ON stop_times (stop_id);")
 
-  def GetStopBoundingBox(self):
+  def get_stop_bounding_box(self):
     return (min(s.stop_lat for s in self.stops.values()),
             min(s.stop_lon for s in self.stops.values()),
             max(s.stop_lat for s in self.stops.values()),
             max(s.stop_lon for s in self.stops.values()),
            )
 
-  def AddAgency(self, name, url, timezone, agency_id=None):
+  def add_agency(self, name, url, timezone, agency_id=None):
     """Adds an agency to this schedule."""
     agency = self._gtfs_factory.Agency(name, url, timezone, agency_id)
-    self.AddAgencyObject(agency)
+    self.add_agency_object(agency)
     return agency
 
-  def AddAgencyObject(self, agency, problem_reporter=None, validate=False):
+  def add_agency_object(self, agency, problem_reporter=None, validate=False):
     assert agency._schedule is None
 
     if not problem_reporter:
@@ -172,18 +165,18 @@ class Schedule(object):
       problem_reporter.DuplicateID('agency_id', agency.agency_id)
       return
 
-    self.AddTableColumns('agency', agency._column_names())
+    self.add_table_columns('agency', agency._column_names())
     agency._schedule = weakref.proxy(self)
 
     if validate:
       agency.validate(problem_reporter)
     self._agencies[agency.agency_id] = agency
 
-  def GetAgency(self, agency_id):
+  def get_agency(self, agency_id):
     """Return Agency with agency_id or throw a KeyError"""
     return self._agencies[agency_id]
 
-  def GetDefaultAgency(self):
+  def get_default_agency(self):
     """Return the default Agency. If no default Agency has been set select the
     default depending on how many Agency objects are in the Schedule. If there
     are 0 make a new Agency the default, if there is 1 it becomes the default,
@@ -191,36 +184,36 @@ class Schedule(object):
     """
     if not self._default_agency:
       if len(self._agencies) == 0:
-        self.NewDefaultAgency()
+        self.new_default_agency()
       elif len(self._agencies) == 1:
         self._default_agency = self._agencies.values()[0]
     return self._default_agency
 
-  def NewDefaultAgency(self, **kwargs):
+  def new_default_agency(self, **kwargs):
     """Create a new Agency object and make it the default agency for this Schedule"""
     agency = self._gtfs_factory.Agency(**kwargs)
     if not agency.agency_id:
       agency.agency_id = util.find_unique_id(self._agencies)
     self._default_agency = agency
-    self.SetDefaultAgency(agency, validate=False)  # Blank agency won't validate
+    self.get_default_agency(agency, validate=False)  # Blank agency won't validate
     return agency
 
-  def SetDefaultAgency(self, agency, validate=True):
+  def get_default_agency(self, agency, validate=True):
     """Make agency the default and add it to the schedule if not already added"""
     assert isinstance(agency, self._gtfs_factory.Agency)
     self._default_agency = agency
     if agency.agency_id not in self._agencies:
-      self.AddAgencyObject(agency, validate=validate)
+      self.add_agency_object(agency, validate=validate)
 
-  def GetAgencyList(self):
+  def get_agency_list(self):
     """Returns the list of Agency objects known to this Schedule."""
     return self._agencies.values()
 
-  def GetServicePeriod(self, service_id):
+  def get_service_period(self, service_id):
     """Returns the ServicePeriod object with the given ID."""
     return self.service_periods[service_id]
 
-  def GetDefaultServicePeriod(self):
+  def get_default_service_period(self):
     """Return the default ServicePeriod. If no default ServicePeriod has been
     set select the default depending on how many ServicePeriod objects are in
     the Schedule. If there are 0 make a new ServicePeriod the default, if there
@@ -228,28 +221,28 @@ class Schedule(object):
     """
     if not self._default_service_period:
       if len(self.service_periods) == 0:
-        self.NewDefaultServicePeriod()
+        self.new_default_service_period()
       elif len(self.service_periods) == 1:
         self._default_service_period = self.service_periods.values()[0]
     return self._default_service_period
 
-  def NewDefaultServicePeriod(self):
+  def new_default_service_period(self):
     """Create a new ServicePeriod object, make it the default service period and
     return it. The default service period is used when you create a trip without
     providing an explict service period. """
     service_period = self._gtfs_factory.ServicePeriod()
     service_period.service_id = util.find_unique_id(self.service_periods)
     # blank service won't validate in AddServicePeriodObject
-    self.SetDefaultServicePeriod(service_period, validate=False)
+    self.set_default_service_period(service_period, validate=False)
     return service_period
 
-  def SetDefaultServicePeriod(self, service_period, validate=True):
+  def set_default_service_period(self, service_period, validate=True):
     assert isinstance(service_period, self._gtfs_factory.ServicePeriod)
     self._default_service_period = service_period
     if service_period.service_id not in self.service_periods:
-      self.AddServicePeriodObject(service_period, validate=validate)
+      self.add_service_period_object(service_period, validate=validate)
 
-  def AddServicePeriodObject(self, service_period, problem_reporter=None,
+  def add_service_period_object(self, service_period, problem_reporter=None,
                              validate=True):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
@@ -262,17 +255,17 @@ class Schedule(object):
       service_period.validate(problem_reporter)
     self.service_periods[service_period.service_id] = service_period
 
-  def GetServicePeriodList(self):
+  def get_service_period_list(self):
     return list(self.service_periods.values())
 
-  def GetDateRange(self):
+  def get_date_range(self):
     """Returns a tuple of (earliest, latest) dates on which the service periods
     in the schedule define service, in YYYYMMDD form.
     """
-    (minvalue, maxvalue, minorigin, maxorigin) = self.GetDateRangeWithOrigins()
+    (minvalue, maxvalue, minorigin, maxorigin) = self.get_date_range_with_origins()
     return (minvalue, maxvalue)
 
-  def GetDateRangeWithOrigins(self):
+  def get_date_range_with_origins(self):
     """Returns a tuple of (earliest, latest, earliest_origin, latest_origin)
     dates on which the service periods in the schedule define service, in
     YYYYMMDD form.
@@ -281,8 +274,8 @@ class Schedule(object):
     end_date in calendar.txt, a service exception of type add in
     calendar_dates.txt, or feed start/end date defined in feed_info.txt.
     """
-    period_list = self.GetServicePeriodList()
-    ranges = [period.GetDateRange() for period in period_list]
+    period_list = self.get_service_period_list()
+    ranges = [period.get_date_range() for period in period_list]
     starts = list(filter(lambda x: x, [item[0] for item in ranges]))
     ends = list(filter(lambda x: x, [item[1] for item in ranges]))
 
@@ -311,7 +304,7 @@ class Schedule(object):
 
     return (minvalue, maxvalue, minreason, maxreason)
 
-  def GetServicePeriodsActiveEachDate(self, date_start, date_end):
+  def get_service_periods_active_each_date(self, date_start, date_end):
     """Return a list of tuples (date, [period1, period2, ...]).
 
     For each date in the range [date_start, date_end) make list of each
@@ -331,7 +324,7 @@ class Schedule(object):
     while date_it < date_end:
       periods_today = []
       date_it_string = date_it.strftime("%Y%m%d")
-      for service in self.GetServicePeriodList():
+      for service in self.get_service_period_list():
         if service.IsActiveOn(date_it_string, date_it):
           periods_today.append(service)
       date_service_period_list.append((date_it, periods_today))
@@ -339,7 +332,7 @@ class Schedule(object):
     return date_service_period_list
 
 
-  def AddStop(self, lat, lng, name, stop_id=None):
+  def add_stop(self, lat, lng, name, stop_id=None):
     """Add a stop to this schedule.
 
     Args:
@@ -354,10 +347,10 @@ class Schedule(object):
     if stop_id is None:
       stop_id = util.find_unique_id(self.stops)
     stop = self._gtfs_factory.Stop(stop_id=stop_id, lat=lat, lng=lng, name=name)
-    self.AddStopObject(stop)
+    self.add_stop_object(stop)
     return stop
 
-  def AddStopObject(self, stop, problem_reporter=None):
+  def add_stop_object(self, stop, problem_reporter=None):
     """Add Stop object to this schedule if stop_id is non-blank."""
     assert stop._schedule is None
     if not problem_reporter:
@@ -371,15 +364,15 @@ class Schedule(object):
       return
 
     stop._schedule = weakref.proxy(self)
-    self.AddTableColumns('stops', stop._column_names())
+    self.add_table_columns('stops', stop._column_names())
     self.stops[stop.stop_id] = stop
     if hasattr(stop, 'zone_id') and stop.zone_id:
       self.fare_zones[stop.zone_id] = True
 
-  def GetStopList(self):
+  def get_stop_list(self):
     return self.stops.values()
 
-  def AddRoute(self, short_name, long_name, route_type, route_id=None):
+  def add_route(self, short_name, long_name, route_type, route_id=None):
     """Add a route to this schedule.
 
     Args:
@@ -394,11 +387,11 @@ class Schedule(object):
       route_id = util.find_unique_id(self.routes)
     route = self._gtfs_factory.Route(short_name=short_name, long_name=long_name,
                         route_type=route_type, route_id=route_id)
-    route.agency_id = self.GetDefaultAgency().agency_id
-    self.AddRouteObject(route)
+    route.agency_id = self.get_default_agency().agency_id
+    self.add_route_object(route)
     return route
 
-  def AddRouteObject(self, route, problem_reporter=None):
+  def add_route_object(self, route, problem_reporter=None):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
 
@@ -415,17 +408,17 @@ class Schedule(object):
                                       'Route uses an unknown agency_id.')
         return
 
-    self.AddTableColumns('routes', route._column_names())
+    self.add_table_columns('routes', route._column_names())
     route._schedule = weakref.proxy(self)
     self.routes[route.route_id] = route
 
-  def GetRouteList(self):
+  def get_route_list(self):
     return self.routes.values()
 
-  def GetRoute(self, route_id):
+  def get_route(self, route_id):
     return self.routes[route_id]
 
-  def AddShapeObject(self, shape, problem_reporter=None):
+  def add_shape_object(self, shape, problem_reporter=None):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
 
@@ -437,13 +430,13 @@ class Schedule(object):
 
     self._shapes[shape.shape_id] = shape
 
-  def GetShapeList(self):
+  def get_shape_list(self):
     return self._shapes.values()
 
-  def GetShape(self, shape_id):
+  def get_shape(self, shape_id):
     return self._shapes[shape_id]
 
-  def AddTripObject(self, trip, problem_reporter=None, validate=False):
+  def add_trip_object(self, trip, problem_reporter=None, validate=False):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
 
@@ -451,7 +444,7 @@ class Schedule(object):
       problem_reporter.DuplicateID('trip_id', trip.trip_id)
       return
 
-    self.AddTableColumns('trips', trip._column_names())
+    self.add_table_columns('trips', trip._column_names())
     trip._schedule = weakref.proxy(self)
     self.trips[trip.trip_id] = trip
 
@@ -468,20 +461,20 @@ class Schedule(object):
       # Invalid route_id was reported in the Trip.Validate call above
       pass
 
-  def GetTripList(self):
+  def get_trip_list(self):
     return self.trips.values()
 
-  def GetTrip(self, trip_id):
+  def get_trip(self, trip_id):
     return self.trips[trip_id]
 
-  def AddFareObject(self, fare, problem_reporter=None):
+  def add_fare_object(self, fare, problem_reporter=None):
     """Deprecated. Please use AddFareAttributeObject."""
     warnings.warn("No longer supported. The Fare class was renamed to "
                   "FareAttribute, and all related functions were renamed "
                   "accordingly.", DeprecationWarning)
-    self.AddFareAttributeObject(fare, problem_reporter)
+    self.add_fare_attribute_object(fare, problem_reporter)
 
-  def AddFareAttributeObject(self, fare, problem_reporter=None):
+  def add_fare_attribute_object(self, fare, problem_reporter=None):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
     fare.validate(problem_reporter)
@@ -492,27 +485,27 @@ class Schedule(object):
 
     self.fares[fare.fare_id] = fare
 
-  def GetFareList(self):
+  def get_fare_list(self):
     """Deprecated. Please use GetFareAttributeList instead"""
     warnings.warn("No longer supported. The Fare class was renamed to "
                   "FareAttribute, and all related functions were renamed "
                   "accordingly.", DeprecationWarning)
-    return self.GetFareAttributeList()
+    return self.get_fare_attribute_list()
 
-  def GetFareAttributeList(self):
+  def get_fare_attribute_list(self):
     return self.fares.values()
 
-  def GetFare(self, fare_id):
+  def get_fare(self, fare_id):
     """Deprecated. Please use GetFareAttribute instead"""
     warnings.warn("No longer supported. The Fare class was renamed to "
                   "FareAttribute, and all related functions were renamed "
                   "accordingly.", DeprecationWarning)
-    return self.GetFareAttribute(fare_id)
+    return self.get_fare_attribute(fare_id)
 
-  def GetFareAttribute(self, fare_id):
+  def get_fare_attribute(self, fare_id):
     return self.fares[fare_id]
 
-  def AddFareRuleObject(self, rule, problem_reporter=None):
+  def add_fare_rule_object(self, rule, problem_reporter=None):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
 
@@ -530,14 +523,14 @@ class Schedule(object):
       problem_reporter.InvalidValue('contains_id', rule.contains_id)
 
     if rule.fare_id in self.fares:
-      self.GetFareAttribute(rule.fare_id).rules.append(rule)
+      self.get_fare_attribute(rule.fare_id).rules.append(rule)
     else:
       problem_reporter.InvalidValue('fare_id', rule.fare_id,
                                     '(This fare_id doesn\'t correspond to any '
                                     'of the IDs defined in the '
                                     'fare attributes.)')
 
-  def AddFeedInfoObject(self, feed_info, problem_reporter=None, validate=False):
+  def add_feed_info_object(self, feed_info, problem_reporter=None, validate=False):
     assert feed_info._schedule is None
 
     if not problem_reporter:
@@ -547,10 +540,10 @@ class Schedule(object):
 
     if validate:
       feed_info.validate(problem_reporter)
-    self.AddTableColumns('feed_info', feed_info._column_names())
+    self.add_table_columns('feed_info', feed_info._column_names())
     self.feed_info = feed_info
 
-  def AddTransferObject(self, transfer, problem_reporter=None):
+  def add_transfer_object(self, transfer, problem_reporter=None):
     assert transfer._schedule is None, "only add Transfer to a schedule once"
     if not problem_reporter:
       problem_reporter = self.problem_reporter
@@ -564,26 +557,26 @@ class Schedule(object):
       # Duplicates are still added, while not prohibited by GTFS.
 
     transfer._schedule = weakref.proxy(self)  # See weakref comment at top
-    self.AddTableColumns('transfers', transfer._column_names())
+    self.add_table_columns('transfers', transfer._column_names())
     self._transfers[transfer_id].append(transfer)
 
-  def GetTransferIter(self):
+  def get_transfer_iter(self):
     """Return an iterator for all Transfer objects in this schedule."""
     return itertools.chain(*self._transfers.values())
 
-  def GetTransferList(self):
+  def get_transfer_list(self):
     """Return a list containing all Transfer objects in this schedule."""
-    return list(self.GetTransferIter())
+    return list(self.get_transfer_iter())
 
-  def GetStop(self, id):
+  def get_stop(self, id):
     return self.stops[id]
 
-  def GetFareZones(self):
+  def get_fare_zones(self):
     """Returns the list of all fare zones that have been identified by
     the stops that have been added."""
     return self.fare_zones.keys()
 
-  def GetNearestStops(self, lat, lon, n=1):
+  def get_nearest_stops(self, lat, lon, n=1):
     """Return the n nearest stops to lat,lon"""
     dist_stop_list = []
     for s in self.stops.values():
@@ -596,7 +589,7 @@ class Schedule(object):
         dist_stop_list.pop()  # Remove stop with greatest distance
     return [stop for dist, stop in dist_stop_list]
 
-  def GetStopsInBoundingBox(self, north, east, south, west, n):
+  def get_stops_in_bounding_box(self, north, east, south, west, n):
     """Return a sample of up to n stops in a bounding box"""
     stop_list = []
     for s in self.stops.values():
@@ -613,7 +606,7 @@ class Schedule(object):
                                        extra_validation=extra_validation)
     loader.load()
 
-  def _WriteArchiveString(self, archive, filename, stringio):
+  def _write_archive_string(self, archive, filename, stringio):
     zi = zipfile.ZipInfo(filename)
     # See
     # http://stackoverflow.com/questions/434641/how-do-i-set-permissions-attributes-on-a-file-in-a-zip-file-using-pythons-zipf
@@ -622,7 +615,7 @@ class Schedule(object):
     zi.compress_type = zipfile.ZIP_DEFLATED
     archive.writestr(zi, stringio.getvalue())
 
-  def WriteGoogleTransitFeed(self, file):
+  def write_google_transit_feed(self, file):
     """Output this schedule as a Google Transit Feed in file_name.
 
     Args:
@@ -637,20 +630,20 @@ class Schedule(object):
     if 'agency' in self._table_columns:
       agency_string = StringIO()
       writer = util.CsvUnicodeWriter(agency_string)
-      columns = self.GetTableColumns('agency')
+      columns = self.get_table_columns('agency')
       writer.writerow(columns)
       for a in self._agencies.values():
         writer.writerow([a[c] for c in columns])
-      self._WriteArchiveString(archive, 'agency.txt', agency_string)
+      self._write_archive_string(archive, 'agency.txt', agency_string)
 
 
     if 'feed_info' in self._table_columns:
       feed_info_string = StringIO()
       writer = util.CsvUnicodeWriter(feed_info_string)
-      columns = self.GetTableColumns('feed_info')
+      columns = self.get_table_columns('feed_info')
       writer.writerow(columns)
       writer.writerow([self.feed_info[c] for c in columns])
-      self._WriteArchiveString(archive, 'feed_info.txt', feed_info_string)
+      self._write_archive_string(archive, 'feed_info.txt', feed_info_string)
 
     calendar_dates_string = StringIO()
     writer = util.CsvUnicodeWriter(calendar_dates_string)
@@ -664,7 +657,7 @@ class Schedule(object):
     wrote_calendar_dates = False
     if has_data:
       wrote_calendar_dates = True
-      self._WriteArchiveString(archive, 'calendar_dates.txt',
+      self._write_archive_string(archive, 'calendar_dates.txt',
                                calendar_dates_string)
 
     calendar_string = StringIO()
@@ -677,58 +670,58 @@ class Schedule(object):
         has_data = True
         writer.writerow(row)
     if has_data or not wrote_calendar_dates:
-      self._WriteArchiveString(archive, 'calendar.txt', calendar_string)
+      self._write_archive_string(archive, 'calendar.txt', calendar_string)
 
     if 'stops' in self._table_columns:
       stop_string = StringIO()
       writer = util.CsvUnicodeWriter(stop_string)
-      columns = self.GetTableColumns('stops')
+      columns = self.get_table_columns('stops')
       writer.writerow(columns)
       for s in self.stops.values():
         writer.writerow([s[c] for c in columns])
-      self._WriteArchiveString(archive, 'stops.txt', stop_string)
+      self._write_archive_string(archive, 'stops.txt', stop_string)
 
     if 'routes' in self._table_columns:
       route_string = StringIO()
       writer = util.CsvUnicodeWriter(route_string)
-      columns = self.GetTableColumns('routes')
+      columns = self.get_table_columns('routes')
       writer.writerow(columns)
       for r in self.routes.values():
         writer.writerow([r[c]for c in columns])
-      self._WriteArchiveString(archive, 'routes.txt', route_string)
+      self._write_archive_string(archive, 'routes.txt', route_string)
 
     if 'trips' in self._table_columns:
       trips_string = StringIO()
       writer = util.CsvUnicodeWriter(trips_string)
-      columns = self.GetTableColumns('trips')
+      columns = self.get_table_columns('trips')
       writer.writerow(columns)
       for t in self.trips.values():
         writer.writerow([t[c] for c in columns])
-      self._WriteArchiveString(archive, 'trips.txt', trips_string)
+      self._write_archive_string(archive, 'trips.txt', trips_string)
 
     # write frequencies.txt (if applicable)
     headway_rows = []
-    for trip in self.GetTripList():
+    for trip in self.get_trip_list():
       headway_rows += trip.GetFrequencyOutputTuples()
     if headway_rows:
       headway_string = StringIO()
       writer = util.CsvUnicodeWriter(headway_string)
       writer.writerow(self._gtfs_factory.Frequency._FIELD_NAMES)
       writer.writerows(headway_rows)
-      self._WriteArchiveString(archive, 'frequencies.txt', headway_string)
+      self._write_archive_string(archive, 'frequencies.txt', headway_string)
 
     # write fares (if applicable)
-    if self.GetFareAttributeList():
+    if self.get_fare_attribute_list():
       fare_string = StringIO()
       writer = util.CsvUnicodeWriter(fare_string)
       writer.writerow(self._gtfs_factory.FareAttribute._FIELD_NAMES)
       writer.writerows(
-          f.get_field_values_tuple() for f in self.GetFareAttributeList())
-      self._WriteArchiveString(archive, 'fare_attributes.txt', fare_string)
+          f.get_field_values_tuple() for f in self.get_fare_attribute_list())
+      self._write_archive_string(archive, 'fare_attributes.txt', fare_string)
 
     # write fare rules (if applicable)
     rule_rows = []
-    for fare in self.GetFareAttributeList():
+    for fare in self.get_fare_attribute_list():
       for rule in fare.get_fare_rule_list():
         rule_rows.append(rule.get_field_values_tuple())
     if rule_rows:
@@ -736,17 +729,17 @@ class Schedule(object):
       writer = util.CsvUnicodeWriter(rule_string)
       writer.writerow(self._gtfs_factory.FareRule._FIELD_NAMES)
       writer.writerows(rule_rows)
-      self._WriteArchiveString(archive, 'fare_rules.txt', rule_string)
+      self._write_archive_string(archive, 'fare_rules.txt', rule_string)
     stop_times_string = StringIO()
     writer = util.CsvUnicodeWriter(stop_times_string)
     writer.writerow(self._gtfs_factory.StopTime._FIELD_NAMES)
     for t in self.trips.values():
       writer.writerows(t._GenerateStopTimesTuples())
-    self._WriteArchiveString(archive, 'stop_times.txt', stop_times_string)
+    self._write_archive_string(archive, 'stop_times.txt', stop_times_string)
 
     # write shapes (if applicable)
     shape_rows = []
-    for shape in self.GetShapeList():
+    for shape in self.get_shape_list():
       seq = 1
       for (lat, lon, dist) in shape.points:
         shape_rows.append((shape.shape_id, lat, lon, seq, dist))
@@ -756,20 +749,20 @@ class Schedule(object):
       writer = util.CsvUnicodeWriter(shape_string)
       writer.writerow(self._gtfs_factory.Shape._FIELD_NAMES)
       writer.writerows(shape_rows)
-      self._WriteArchiveString(archive, 'shapes.txt', shape_string)
+      self._write_archive_string(archive, 'shapes.txt', shape_string)
 
     if 'transfers' in self._table_columns:
       transfer_string = StringIO()
       writer = util.CsvUnicodeWriter(transfer_string)
-      columns = self.GetTableColumns('transfers')
+      columns = self.get_table_columns('transfers')
       writer.writerow(columns)
-      for t in self.GetTransferIter():
+      for t in self.get_transfer_iter():
         writer.writerow([t[c] for c in columns])
-      self._WriteArchiveString(archive, 'transfers.txt', transfer_string)
+      self._write_archive_string(archive, 'transfers.txt', transfer_string)
 
     archive.close()
 
-  def GenerateDateTripsDeparturesList(self, date_start, date_end):
+  def generate_date_trips_departures_list(self, date_start, date_end):
     """Return a list of (date object, number of trips, number of departures).
 
     The list is generated for dates in the range [date_start, date_end).
@@ -784,7 +777,7 @@ class Schedule(object):
 
     service_id_to_trips = defaultdict(lambda: 0)
     service_id_to_departures = defaultdict(lambda: 0)
-    for trip in self.GetTripList():
+    for trip in self.get_trip_list():
       headway_start_times = trip.GetFrequencyStartTimes()
       if headway_start_times:
         trip_runs = len(headway_start_times)
@@ -795,7 +788,7 @@ class Schedule(object):
       service_id_to_departures[trip.service_id] += (
           (trip.GetCountStopTimes() - 1) * trip_runs)
 
-    date_services = self.GetServicePeriodsActiveEachDate(date_start, date_end)
+    date_services = self.get_service_periods_active_each_date(date_start, date_end)
     date_trips = []
 
     for date, services in date_services:
@@ -805,21 +798,21 @@ class Schedule(object):
       date_trips.append((date, day_trips, day_departures))
     return date_trips
 
-  def ValidateAgenciesHaveSameAgencyTimezone(self, problems):
+  def validate_agencies_have_same_agency_timezone(self, problems):
     timezones_set = set(map(lambda agency:agency.agency_timezone,
-                            self.GetAgencyList()))
+                            self.get_agency_list()))
     if len(timezones_set) > 1:
       timezones_str = '"%s"' % ('", "'.join(timezones_set))
       problems.invalid_value('agency_timezone', timezones_str,
                             'All agencies should have the same time zone. ' \
                             'Please review agency.txt.')
 
-  def ValidateFeedInfoLangMatchesAgencyLang(self, problems):
+  def validate_feed_info_lang_matches_agency_lang(self, problems):
     if self.feed_info is None:
       return
     if self.feed_info.feed_lang is None:
       return
-    agencies = self.GetAgencyList()
+    agencies = self.get_agency_list()
     for agency in agencies:
       if not util.is_empty(agency.agency_lang) and (
           not self.feed_info.feed_lang == agency.agency_lang):
@@ -828,7 +821,7 @@ class Schedule(object):
                               "agency.txt for agency with ID %s differ." %
                               agency.agency_id)
 
-  def ValidateFeedStartAndExpirationDates(self, problems, first_date, last_date,
+  def validate_feed_start_and_expiration_dates(self, problems, first_date, last_date,
                                           first_date_origin, last_date_origin,
                                           today):
     """Validate the start and expiration dates of the feed.
@@ -853,7 +846,7 @@ class Schedule(object):
       problems.future_service(time.mktime(first_date.timetuple()),
                              first_date_origin)
 
-  def ValidateServiceGaps(self,
+  def validate_service_gaps(self,
                           problems,
                           validation_start_date,
                           validation_end_date,
@@ -878,7 +871,7 @@ class Schedule(object):
     if service_gap_interval is None:
       return
 
-    departures = self.GenerateDateTripsDeparturesList(validation_start_date,
+    departures = self.generate_date_trips_departures_list(validation_start_date,
                                                       validation_end_date)
 
     # The first day without service of the _current_ gap
@@ -908,7 +901,7 @@ class Schedule(object):
                                          last_day_without_service,
                                          consecutive_days_without_service)
 
-  def ValidateServiceExceptions(self,
+  def validate_service_exceptions(self,
                                 problems,
                                 first_service_day,
                                 last_service_day):
@@ -920,7 +913,7 @@ class Schedule(object):
       # active for less than six months
       return
 
-    for period in self.GetServicePeriodList():
+    for period in self.get_service_period_list():
       # If at least one ServicePeriod has service exceptions we don't issue the
       # warning, so we can stop looking at the list of ServicePeriods.
       if period.HasExceptions():
@@ -928,12 +921,12 @@ class Schedule(object):
     problems.no_service_exceptions(start=first_service_day,
                                  end=last_service_day)
 
-  def ValidateServiceRangeAndExceptions(self, problems, today,
+  def validate_service_range_and_exceptions(self, problems, today,
                                         service_gap_interval):
     if today is None:
       today = datetime.date.today()
     (start_date, end_date,
-     start_date_origin, end_date_origin) = self.GetDateRangeWithOrigins()
+     start_date_origin, end_date_origin) = self.get_date_range_with_origins()
     if not end_date or not start_date:
       problems.other_problem('This feed has no effective service dates!',
                             type=problems_module.TYPE_WARNING)
@@ -949,10 +942,10 @@ class Schedule(object):
           pass
 
         else:
-          self.ValidateServiceExceptions(problems,
+          self.validate_service_exceptions(problems,
                                          first_service_day,
                                          last_service_day)
-          self.ValidateFeedStartAndExpirationDates(problems,
+          self.validate_feed_start_and_expiration_dates(problems,
                                                    first_service_day,
                                                    last_service_day,
                                                    start_date_origin,
@@ -971,7 +964,7 @@ class Schedule(object):
             service_gap_timedelta = datetime.timedelta(
                                         days=service_gap_interval - 1)
             one_year = datetime.timedelta(days=365)
-            self.ValidateServiceGaps(
+            self.validate_service_gaps(
                 problems,
                 max(first_service_day,
                     today - service_gap_timedelta),
@@ -979,7 +972,7 @@ class Schedule(object):
                     today + one_year),
                 service_gap_interval)
 
-  def ValidateStops(self, problems, validate_children):
+  def validate_stops(self, problems, validate_children):
     # Check for stops that aren't referenced by any trips and broken
     # parent_station references. Also check that the parent station isn't too
     # far from its child stops.
@@ -1023,7 +1016,7 @@ class Schedule(object):
                   parent_station.stop_name, distance,
                   problems_module.TYPE_WARNING)
 
-  def ValidateNearbyStops(self, problems):
+  def validate_nearby_stops(self, problems):
     # Check for stops that might represent the same location (specifically,
     # stops that are less that 2 meters apart) First filter out stops without a
     # valid lat and lon. Then sort by latitude, then find the distance between
@@ -1031,7 +1024,7 @@ class Schedule(object):
     # doing n^2 comparisons in the average case and doesn't need a spatial
     # index.
     sorted_stops = list(filter(lambda s: s.stop_lat and s.stop_lon,
-                          self.GetStopList()))
+                          self.get_stop_list()))
     sorted_stops.sort(
         key=(lambda x: [x.stop_lat, x.stop_lon, getattr(x, 'stop_id', None)]))
     TWO_METERS_LAT = 0.000018
@@ -1071,7 +1064,7 @@ class Schedule(object):
                   this_station.stop_id, distance)
         index += 1
 
-  def ValidateRouteNames(self, problems, validate_children):
+  def validate_route_names(self, problems, validate_children):
     # Check for multiple routes using same short + long name
     route_names = {}
     for route in self.routes.values():
@@ -1097,7 +1090,7 @@ class Schedule(object):
       else:
         route_names[name] = route
 
-  def ValidateTrips(self, problems):
+  def validate_trips(self, problems):
     stop_types = {} # a dict mapping stop_id to [route_id, route_type, is_match]
     trips = {} # a dict mapping tuple to (route_id, trip_id)
 
@@ -1108,10 +1101,10 @@ class Schedule(object):
     for trip in sorted(self.trips.values(), key=attrgetter('route_id', 'trip_id')):
       if trip.route_id not in self.routes:
         continue
-      route_type = self.GetRoute(trip.route_id).route_type
+      route_type = self.get_route(trip.route_id).route_type
       stop_ids = []
       stop_times = trip.GetStopTimes(problems)
-      self.ValidateStopTimesForTrip(problems, trip, stop_times)
+      self.validate_stop_times_for_trip(problems, trip, stop_times)
       for index, st in enumerate(stop_times):
         stop_id = st.stop.stop_id
         stop_ids.append(stop_id)
@@ -1165,9 +1158,9 @@ class Schedule(object):
 
     # Now that we've generated our block trip intervls, we can check for
     # overlaps in the intervals
-    self.ValidateBlocks(problems, trip_intervals_by_block_id)
+    self.validate_blocks(problems, trip_intervals_by_block_id)
 
-  def ValidateStopTimesForTrip(self, problems, trip, stop_times):
+  def validate_stop_times_for_trip(self, problems, trip, stop_times):
     """Checks for the stop times of a trip.
 
     Ensure that a trip does not have too many consecutive stop times with the
@@ -1176,7 +1169,7 @@ class Schedule(object):
     consecutive_stop_times_with_potentially_same_time = 0
     consecutive_stop_times_with_fully_specified_same_time = 0
 
-    def CheckSameTimeCount():
+    def check_same_time_count():
       # More than five consecutive stop times with the same time?  Seems not
       # very likely (a stop every 10 seconds?).  In practice, this warning
       # affects about 0.5% of current GTFS trips.
@@ -1195,15 +1188,15 @@ class Schedule(object):
         consecutive_stop_times_with_fully_specified_same_time = (
             consecutive_stop_times_with_potentially_same_time)
       else:
-        CheckSameTimeCount()
+        check_same_time_count()
         consecutive_stop_times_with_potentially_same_time = 1
         consecutive_stop_times_with_fully_specified_same_time = 1
       prev_departure_secs = st.departure_secs
 
     # Make sure to check one last time at the end
-    CheckSameTimeCount()
+    check_same_time_count()
 
-  def ValidateBlocks(self, problems, trip_intervals_by_block_id):
+  def validate_blocks(self, problems, trip_intervals_by_block_id):
     # Expects trip_intervals_by_block_id to be a dict with a key of block ids
     # and a value of lists of tuples
     # (trip, min_arrival_secs, max_departure_secs)
@@ -1259,8 +1252,8 @@ class Schedule(object):
               if trip_b.service_id not in self.service_periods:
                 return
 
-              service_period_a = self.GetServicePeriod(trip_a.service_id)
-              service_period_b = self.GetServicePeriod(trip_b.service_id)
+              service_period_a = self.get_service_period(trip_a.service_id)
+              service_period_b = self.get_service_period(trip_b.service_id)
 
               dates_a = service_period_a.ActiveDates()
               dates_b = service_period_b.ActiveDates()
@@ -1279,7 +1272,7 @@ class Schedule(object):
                                                    trip_b.trip_id,
                                                    block_id)
 
-  def ValidateIdlessAgency(self, problems):
+  def validate_idless_agency(self, problems):
     # Check that only one agency is IDless
     if len(self._agencies) > 1:
       for agency in self._agencies.values():
@@ -1288,7 +1281,7 @@ class Schedule(object):
                                 'This is only allowed if a single agency is defined, '
                                 'whereas there are %d in total.' % (agency.agency_name, len(self._agencies)))
 
-  def ValidateRouteAgencyId(self, problems):
+  def validate_route_agency_id(self, problems):
     # Check that routes' agency IDs are valid, if set
     for route in self.routes.values():
       if (not util.is_empty(route.agency_id) and
@@ -1296,7 +1289,7 @@ class Schedule(object):
         problems.invalid_agency_id('agency_id', route.agency_id,
                                  'route', route.route_id)
 
-  def ValidateTripStopTimes(self, problems):
+  def validate_trip_stop_times(self, problems):
     # Make sure all trips have stop_times
     # We're doing this here instead of in Trip.validate() so that
     # Trips can be validated without error during the reading of trips.txt
@@ -1321,11 +1314,11 @@ class Schedule(object):
         trip.GetStartTime(problems=problems)
         trip.GetEndTime(problems=problems)
 
-  def ValidateUnusedShapes(self, problems):
+  def validate_unused_shapes(self, problems):
     # Check for unused shapes
     known_shape_ids = set(self._shapes.keys())
     used_shape_ids = set()
-    for trip in self.GetTripList():
+    for trip in self.get_trip_list():
       used_shape_ids.add(trip.shape_id)
     unused_shape_ids = known_shape_ids - used_shape_ids
     if unused_shape_ids:
@@ -1345,18 +1338,18 @@ class Schedule(object):
     if not problems:
       problems = self.problem_reporter
 
-    self.ValidateAgenciesHaveSameAgencyTimezone(problems)
-    self.ValidateFeedInfoLangMatchesAgencyLang(problems)
-    self.ValidateServiceRangeAndExceptions(problems, today,
+    self.validate_agencies_have_same_agency_timezone(problems)
+    self.validate_feed_info_lang_matches_agency_lang(problems)
+    self.validate_service_range_and_exceptions(problems, today,
                                            service_gap_interval)
     # TODO: Check Trip fields against valid values
-    self.ValidateStops(problems, validate_children)
+    self.validate_stops(problems, validate_children)
     #TODO: check that every station is used.
     # Then uncomment testStationWithoutReference.
-    self.ValidateNearbyStops(problems)
-    self.ValidateRouteNames(problems, validate_children)
-    self.ValidateTrips(problems)
-    self.ValidateIdlessAgency(problems)
-    self.ValidateRouteAgencyId(problems)
-    self.ValidateTripStopTimes(problems)
-    self.ValidateUnusedShapes(problems)
+    self.validate_nearby_stops(problems)
+    self.validate_route_names(problems, validate_children)
+    self.validate_trips(problems)
+    self.validate_idless_agency(problems)
+    self.validate_route_agency_id(problems)
+    self.validate_trip_stop_times(problems)
+    self.validate_unused_shapes(problems)

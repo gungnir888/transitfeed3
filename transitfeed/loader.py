@@ -487,7 +487,7 @@ class Loader:
     # validated with both calendar and calendar_dates info present
     for period, context in periods.values():
       self._problems.set_file_context(*context)
-      self._schedule.AddServicePeriodObject(period, self._problems)
+      self._schedule.add_service_period_object(period, self._problems)
       self._problems.clear_context()
 
   def _load_shapes(self):
@@ -521,7 +521,7 @@ class Loader:
       self._problems.clear_context()
 
     for shape_id, shape in list(shapes.items()):
-      self._schedule.AddShapeObject(shape, self._problems)
+      self._schedule.add_shape_object(shape, self._problems)
       del shapes[shape_id]
 
   def _load_stop_times(self):

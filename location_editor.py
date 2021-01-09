@@ -32,7 +32,7 @@ class LocationEditorRequestHandler(schedule_viewer.ScheduleRequestHandler):
     stop_id = params.get('id', None)
     lat = params.get('lat', -1)
     lon = params.get('lng', -1)
-    stop = schedule.GetStop(stop_id)
+    stop = schedule.get_stop(stop_id)
     if (stop is None):
       msg = 'Stop with id=' + stop_id + 'not found.'
     else:
@@ -48,7 +48,7 @@ class LocationEditorRequestHandler(schedule_viewer.ScheduleRequestHandler):
     if not self.server.feed_path:
       msg = 'Feed path not defined'
     else:
-      schedule.WriteGoogleTransitFeed(self.server.feed_path)
+      schedule.write_google_transit_feed(self.server.feed_path)
       msg = 'Data saved to ' + self.server.feed_path
     print(msg)
     return msg

@@ -32,20 +32,20 @@ class TransitFeedSampleCodeTestCase(util.TestCase):
     import transitfeed
 
     schedule = transitfeed.Schedule()
-    schedule.AddAgency("Sample Agency", "http://example.com",
+    schedule.add_agency("Sample Agency", "http://example.com",
                        "America/Los_Angeles")
     route = transitfeed.Route()
     route.route_id = "SAMPLE_ID"
     route.route_type = 3
     route.route_short_name = "66"
     route.route_long_name = "Sample Route"
-    schedule.AddRouteObject(route)
+    schedule.add_route_object(route)
 
     service_period = transitfeed.ServicePeriod("WEEK")
     service_period.SetStartDate("20070101")
     service_period.SetEndDate("20071231")
     service_period.SetWeekdayService(True)
-    schedule.AddServicePeriodObject(service_period)
+    schedule.add_service_period_object(service_period)
 
     trip = transitfeed.Trip()
     trip.route_id = "SAMPLE_ID"
@@ -53,14 +53,14 @@ class TransitFeedSampleCodeTestCase(util.TestCase):
     trip.trip_id = "SAMPLE_TRIP"
     trip.direction_id = "0"
     trip.block_id = None
-    schedule.AddTripObject(trip)
+    schedule.add_trip_object(trip)
 
     stop1 = transitfeed.Stop()
     stop1.stop_id = "STOP1"
     stop1.stop_name = "Stop 1"
     stop1.stop_lat = 78.243587
     stop1.stop_lon = 32.258937
-    schedule.AddStopObject(stop1)
+    schedule.add_stop_object(stop1)
     trip.AddStopTime(stop1, arrival_time="12:00:00", departure_time="12:00:00")
 
     stop2 = transitfeed.Stop()
@@ -68,11 +68,11 @@ class TransitFeedSampleCodeTestCase(util.TestCase):
     stop2.stop_name = "Stop 2"
     stop2.stop_lat = 78.253587
     stop2.stop_lon = 32.258937
-    schedule.AddStopObject(stop2)
+    schedule.add_stop_object(stop2)
     trip.AddStopTime(stop2, arrival_time="12:05:00", departure_time="12:05:00")
 
     schedule.validate()  # not necessary, but helpful for finding problems
-    schedule.WriteGoogleTransitFeed("new_feed.zip")
+    schedule.write_google_transit_feed("new_feed.zip")
 
 
 class DeprecatedFieldNamesTestCase(util.MemoryZipTestCase):

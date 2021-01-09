@@ -76,7 +76,7 @@ class Route(GtfsObjectBase):
         the schedule of this route.
       headsign: headsign of the trip as a string
       service_period: a ServicePeriod object or None to use
-        schedule.GetDefaultServicePeriod()
+        schedule.get_default_service_period()
       trip_id: optional trip_id for the new trip
 
     Returns:
@@ -88,11 +88,11 @@ class Route(GtfsObjectBase):
     if trip_id is None:
       trip_id = util.find_unique_id(schedule.trips)
     if service_period is None:
-      service_period = schedule.GetDefaultServicePeriod()
+      service_period = schedule.get_default_service_period()
     trip_class = self.get_gtfs_factory().Trip
     trip_obj = trip_class(route=self, headsign=headsign,
                 service_period=service_period, trip_id=trip_id)
-    schedule.AddTripObject(trip_obj)
+    schedule.add_trip_object(trip_obj)
     return trip_obj
 
   def _add_trip_object(self, trip):
@@ -273,7 +273,7 @@ class Route(GtfsObjectBase):
     return
 
   def add_to_schedule(self, schedule, problems):
-    schedule.AddRouteObject(self, problems)
+    schedule.add_route_object(self, problems)
 
   def validate(self, problems=problems_module.default_problem_reporter):
     self.validate_before_add(problems)

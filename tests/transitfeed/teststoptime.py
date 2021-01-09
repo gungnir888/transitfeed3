@@ -135,17 +135,17 @@ class TooFastTravelTestCase(util.ValidationTestCase):
   def setUp(self):
     super(TooFastTravelTestCase, self).setUp()
     self.schedule = self.SimpleSchedule()
-    self.route = self.schedule.GetRoute("054C")
+    self.route = self.schedule.get_route("054C")
     self.trip = self.route.add_trip()
 
   def AddStopDistanceTime(self, dist_time_list):
     # latitude where each 0.01 degrees longitude is 1km
     magic_lat = 26.062468289
-    stop = self.schedule.AddStop(magic_lat, 0, "Demo Stop 0")
+    stop = self.schedule.add_stop(magic_lat, 0, "Demo Stop 0")
     time = 0
     self.trip.AddStopTime(stop, arrival_secs=time, departure_secs=time)
     for i, (dist_delta, time_delta) in enumerate(dist_time_list):
-      stop = self.schedule.AddStop(
+      stop = self.schedule.add_stop(
           magic_lat, stop.stop_lon + dist_delta * 0.00001,
           "Demo Stop %d" % (i + 1))
       time += time_delta
@@ -260,20 +260,20 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
     self.problems = transitfeed.ProblemReporter(self.accumulator)
 
     self.schedule = transitfeed.Schedule(problem_reporter=self.problems)
-    self.schedule.AddAgency("Demo Transit Authority", "http://dta.org",
+    self.schedule.add_agency("Demo Transit Authority", "http://dta.org",
                             "America/Los_Angeles")
 
-    self.stop1 = self.schedule.AddStop(lng=-116.75167,
+    self.stop1 = self.schedule.add_stop(lng=-116.75167,
                                        lat=36.915682,
                                        name="Stagecoach Hotel & Casino",
                                        stop_id="S1")
 
-    self.stop2 = self.schedule.AddStop(lng=-116.76218,
+    self.stop2 = self.schedule.add_stop(lng=-116.76218,
                                        lat=36.905697,
                                        name="E Main St / S Irving St",
                                        stop_id="S2")
 
-    route = self.schedule.AddRoute("", "City", "Bus", route_id="CITY")
+    route = self.schedule.add_route("", "City", "Bus", route_id="CITY")
 
     self.trip = route.add_trip(self.schedule, trip_id="CITY1")
 

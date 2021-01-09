@@ -47,7 +47,7 @@ stops = {}
 #   ... ]
 def AddRouteToSchedule(schedule, table):
   if len(table) >= 2:
-    r = schedule.AddRoute(short_name=table[0][0], long_name=table[0][1], route_type='Bus')
+    r = schedule.add_route(short_name=table[0][0], long_name=table[0][1], route_type='Bus')
     for trip in table[2:]:
       if len(trip) > len(table[1]):
         print("ignoring %s" % trip[len(table[1]):])
@@ -90,7 +90,7 @@ def TransposeTable(table):
   return transposed
 
 def ProcessOptions(schedule, table):
-  service_period = schedule.GetDefaultServicePeriod()
+  service_period = schedule.get_default_service_period()
   agency_name, agency_url, agency_timezone = (None, None, None)
 
   for row in table[1:]:
@@ -115,13 +115,13 @@ def ProcessOptions(schedule, table):
   if not (agency_name and agency_url and agency_timezone):
     print("You must provide agency information")
 
-  schedule.NewDefaultAgency(agency_name=agency_name, agency_url=agency_url,
+  schedule.new_default_agency(agency_name=agency_name, agency_url=agency_url,
                             agency_timezone=agency_timezone)
 
 
 def AddStops(schedule, table):
   for name, lat_str, lng_str in table[1:]:
-    stop = schedule.AddStop(lat=float(lat_str), lng=float(lng_str), name=name)
+    stop = schedule.add_stop(lat=float(lat_str), lng=float(lng_str), name=name)
     stops[name.lower()] = stop
 
 
@@ -170,7 +170,7 @@ def main():
 
   ProcessTable(schedule, table)
 
-  schedule.WriteGoogleTransitFeed(options.output)
+  schedule.write_google_transit_feed(options.output)
 
 
 if __name__ == '__main__':

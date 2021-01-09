@@ -57,7 +57,7 @@ class Transfer(GtfsObjectBase):
       # Note from Tom, Nov 25, 2009: Maybe calling __init__ with a schedule
       # should output a DeprecationWarning. A schedule factory probably won't
       # use it and other GenericGTFSObject subclasses don't support it.
-      schedule.AddTransferObject(self)
+      schedule.add_transfer_object(self)
 
   def ValidateFromStopIdIsPresent(self, problems):
     if util.is_empty(self.from_stop_id):
@@ -193,4 +193,4 @@ class Transfer(GtfsObjectBase):
     return tuple(self[i] for i in self._ID_COLUMNS)
 
   def add_to_schedule(self, schedule, problems):
-    schedule.AddTransferObject(self, problems)
+    schedule.add_transfer_object(self, problems)

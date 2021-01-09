@@ -215,7 +215,7 @@ class CalendarSummaryTestCase(util.TestCase):
       end_date = today + datetime.timedelta(days=80)
 
       schedule = transitfeed.Schedule()
-      service_period = schedule.GetDefaultServicePeriod()
+      service_period = schedule.get_default_service_period()
 
       service_period.SetStartDate(start_date.strftime("%Y%m%d"))
       service_period.SetEndDate(end_date.strftime("%Y%m%d"))
@@ -233,7 +233,7 @@ class CalendarSummaryTestCase(util.TestCase):
       end_date = start_date + datetime.timedelta(days=15)
 
       schedule = transitfeed.Schedule()
-      service_period = schedule.GetDefaultServicePeriod()
+      service_period = schedule.get_default_service_period()
 
       service_period.SetStartDate(start_date.strftime("%Y%m%d"))
       service_period.SetEndDate(end_date.strftime("%Y%m%d"))
@@ -252,7 +252,7 @@ class CalendarSummaryTestCase(util.TestCase):
       end_date = today + datetime.timedelta(days=3)
 
       schedule = transitfeed.Schedule()
-      service_period = schedule.GetDefaultServicePeriod()
+      service_period = schedule.get_default_service_period()
 
       service_period.SetStartDate(start_date.strftime("%Y%m%d"))
       service_period.SetEndDate(end_date.strftime("%Y%m%d"))

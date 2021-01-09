@@ -31,20 +31,20 @@ class TestStopsParsing(util.GetPathTestCase):
     feed = transitfeed.Schedule()
     kmlFile = self.GetTestDataPath('one_stop.kml')
     kmlparser.KmlParser().Parse(kmlFile, feed)
-    stops = feed.GetStopList()
+    stops = feed.get_stop_list()
     self.assertEqual(1, len(stops))
     stop = stops[0]
     self.assertEqual(u'Stop Name', stop.stop_name)
     self.assertAlmostEqual(-93.239037, stop.stop_lon)
     self.assertAlmostEqual(44.854164, stop.stop_lat)
     write_output = StringIO()
-    feed.WriteGoogleTransitFeed(write_output)
+    feed.write_google_transit_feed(write_output)
 
   def testSingleShape(self):
     feed = transitfeed.Schedule()
     kmlFile = self.GetTestDataPath('one_line.kml')
     kmlparser.KmlParser().Parse(kmlFile, feed)
-    shapes = feed.GetShapeList()
+    shapes = feed.get_shape_list()
     self.assertEqual(1, len(shapes))
     shape = shapes[0]
     self.assertEqual(3, len(shape.points))
@@ -55,7 +55,7 @@ class TestStopsParsing(util.GetPathTestCase):
     self.assertAlmostEqual(44.852638, shape.points[2][0])
     self.assertAlmostEqual(-93.237923, shape.points[2][1])
     write_output = StringIO()
-    feed.WriteGoogleTransitFeed(write_output)
+    feed.write_google_transit_feed(write_output)
 
 
 class FullTests(util.TempDirTestCaseBase):
@@ -67,7 +67,7 @@ class FullTests(util.TempDirTestCaseBase):
     accumulator = util.RecordingProblemAccumulator(self)
     problems = transitfeed.ProblemReporter(accumulator)
     schedule = transitfeed.Loader('one_stop.zip', problems=problems).load()
-    self.assertEquals(len(schedule.GetStopList()), 1)
+    self.assertEquals(len(schedule.get_stop_list()), 1)
     self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
   def testCommandLineError(self):
