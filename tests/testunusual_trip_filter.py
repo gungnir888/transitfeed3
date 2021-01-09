@@ -36,7 +36,7 @@ class UnusualTripFilterTestCase(util.TempDirTestCaseBase):
     filter = unusual_trip_filter.UnusualTripFilter(0.1, quiet=True)
     input = self.GetPath('tests', 'data', 'filter_unusual_trips')
     loader = transitfeed.Loader(input, extra_validation=True)
-    schedule = loader.Load()
+    schedule = loader.load()
     filter.filter(schedule)
     for trip_id, expected_trip_type in expected_values.items():
       actual_trip_type = schedule.trips[trip_id]['trip_type']
@@ -50,7 +50,7 @@ class UnusualTripFilterTestCase(util.TempDirTestCaseBase):
     filter = unusual_trip_filter.UnusualTripFilter(0.1, force=False, quiet=True)
     input = self.GetPath('tests', 'data', 'filter_unusual_trips')
     loader = transitfeed.Loader(input, extra_validation=True)
-    schedule = loader.Load()
+    schedule = loader.load()
     schedule.trips['CITY2'].trip_type = 'odd-trip'
     filter.filter(schedule)
     trip1 = schedule.trips['CITY1']
@@ -63,7 +63,7 @@ class UnusualTripFilterTestCase(util.TempDirTestCaseBase):
     filter = unusual_trip_filter.UnusualTripFilter(0.1, force=True, quiet=False)
     input = self.GetPath('tests', 'data', 'filter_unusual_trips')
     loader = transitfeed.Loader(input, extra_validation=True)
-    schedule = loader.Load()
+    schedule = loader.load()
     schedule.trips['CITY2'].trip_type = 'odd-trip'
     filter.filter(schedule)
     trip1 = schedule.trips['CITY1']
@@ -77,7 +77,7 @@ class UnusualTripFilterTestCase(util.TempDirTestCaseBase):
                                                    route_type=3)
     input = self.GetPath('tests', 'data', 'filter_unusual_trips')
     loader = transitfeed.Loader(input, extra_validation=True)
-    schedule = loader.Load()
+    schedule = loader.load()
     filter.filter(schedule)
     actual_trip_type = schedule.trips['CITY11']['trip_type']
     self.assertEquals(actual_trip_type, '1')
@@ -88,7 +88,7 @@ class UnusualTripFilterTestCase(util.TempDirTestCaseBase):
                                                    route_type=2)
     input = self.GetPath('tests', 'data', 'filter_unusual_trips')
     loader = transitfeed.Loader(input, extra_validation=True)
-    schedule = loader.Load()
+    schedule = loader.load()
     filter.filter(schedule)
     actual_trip_type = schedule.trips['CITY11']['trip_type']
     self.assertEquals(actual_trip_type, '')
@@ -99,7 +99,7 @@ class UnusualTripFilterTestCase(util.TempDirTestCaseBase):
                                                    route_type='Bus')
     input = self.GetPath('tests', 'data', 'filter_unusual_trips')
     loader = transitfeed.Loader(input, extra_validation=True)
-    schedule = loader.Load()
+    schedule = loader.load()
     filter.filter(schedule)
     actual_trip_type = schedule.trips['CITY11']['trip_type']
     self.assertEquals(actual_trip_type, '1')
@@ -110,7 +110,7 @@ class UnusualTripFilterTestCase(util.TempDirTestCaseBase):
                                                    route_type='Ferry')
     input = self.GetPath('tests', 'data', 'filter_unusual_trips')
     loader = transitfeed.Loader(input, extra_validation=True)
-    schedule = loader.Load()
+    schedule = loader.load()
     filter.filter(schedule)
     actual_trip_type = schedule.trips['CITY11']['trip_type']
     self.assertEquals(actual_trip_type, '')

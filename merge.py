@@ -358,7 +358,7 @@ def LoadWithoutErrors(path, memory_db):
     schedule = transitfeed.Loader(path,
                                   memory_db=memory_db,
                                   problems=loading_problem_handler,
-                                  extra_validation=True).Load()
+                                  extra_validation=True).load()
   except transitfeed.ExceptionWithContext as e:
     print((
         "\n\nFeeds to merge must load without any errors.\n"

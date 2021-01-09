@@ -39,7 +39,7 @@ class RouteMemoryZipTestCase(util.MemoryZipTestCase):
         self, ("ExpirationDate", "UnrecognizedColumn"))
     loaded_schedule = transitfeed.Loader(schedule_file,
                                          problems=load_problems,
-                                         extra_validation=True).Load()
+                                         extra_validation=True).load()
     self.assertEqual("foo", loaded_schedule.GetRoute("t")["t_foo"])
     self.assertEqual("", loaded_schedule.GetRoute("AB")["t_foo"])
     self.assertEqual("bar", loaded_schedule.GetRoute("n")["n_foo"])

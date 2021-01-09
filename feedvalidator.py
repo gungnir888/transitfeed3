@@ -585,7 +585,7 @@ def run_validation(feed, options, problems):
                   "Python module." % options.extension)
             exit(2)
 
-    gtfs_factory = extension_module.GetGtfsFactory()
+    gtfs_factory = extension_module.get_gtfs_factory()
 
     print('validating %s' % feed)
     print('FeedValidator extension used: %s' % options.extension)
@@ -595,7 +595,7 @@ def run_validation(feed, options, problems):
         check_duplicate_trips=options.check_duplicate_trips,
         gtfs_factory=gtfs_factory
     )
-    schedule = loader.Load()
+    schedule = loader.load()
     # Start validation: children are already validated by the loader.
     schedule.validate(service_gap_interval=options.service_gap_interval,
                       validate_children=False)

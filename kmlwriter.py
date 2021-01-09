@@ -790,7 +790,7 @@ https://github.com/google/transitfeed/wiki/KMLWriter
   feed = None
   try:
     loader = transitfeed.Loader(input_path)
-    feed = loader.Load()
+    feed = loader.load()
   except transitfeed.ExceptionWithContext as e:
     print((
         "\n\nGTFS feed must load without any errors.\n"

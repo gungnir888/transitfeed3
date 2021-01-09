@@ -22,46 +22,46 @@ import types
 class TestGtfsFactory(util.TestCase):
 
   def setUp(self):
-    self._factory = transitfeed.GetGtfsFactory()
+    self._factory = transitfeed.get_gtfs_factory()
 
   def testCanUpdateMapping(self):
-    self._factory.UpdateMapping("agency.txt",
+    self._factory.update_mapping("agency.txt",
                                 {"required": False,
                                  "classes": ["Foo"]})
-    self._factory.RemoveClass("Agency")
-    self._factory.AddClass("Foo", transitfeed.Stop)
-    self._factory.UpdateMapping("calendar.txt",
+    self._factory.remove_class("Agency")
+    self._factory.add_class("Foo", transitfeed.Stop)
+    self._factory.update_mapping("calendar.txt",
                                 {"loading_order":-4, "classes": ["Bar"]})
-    self._factory.AddClass("Bar", transitfeed.ServicePeriod)
-    self.assertFalse(self._factory.IsFileRequired("agency.txt"))
-    self.assertFalse(self._factory.IsFileRequired("calendar.txt"))
-    self.assertTrue(self._factory.GetLoadingOrder()[0] == "calendar.txt")
+    self._factory.add_class("Bar", transitfeed.ServicePeriod)
+    self.assertFalse(self._factory.is_file_required("agency.txt"))
+    self.assertFalse(self._factory.is_file_required("calendar.txt"))
+    self.assertTrue(self._factory.get_loading_order()[0] == "calendar.txt")
     self.assertEqual(self._factory.Foo, transitfeed.Stop)
     self.assertEqual(self._factory.Bar, transitfeed.ServicePeriod)
-    self.assertEqual(self._factory.GetGtfsClassByFileName("agency.txt"),
+    self.assertEqual(self._factory.get_gtfs_class_by_file_name("agency.txt"),
                      transitfeed.Stop)
-    self.assertFalse(self._factory.IsFileRequired("agency.txt"))
-    known_filenames = self._factory.GetKnownFilenames()
+    self.assertFalse(self._factory.is_file_required("agency.txt"))
+    known_filenames = self._factory.get_known_filenames()
     self.assertTrue("agency.txt" in known_filenames)
     self.assertTrue("calendar.txt" in known_filenames)
 
   def testCanAddMapping(self):
-    self._factory.AddMapping("newrequiredfile.txt",
+    self._factory.add_mapping("newrequiredfile.txt",
                              { "required":True, "classes": ["NewRequiredClass"],
                                "loading_order":-20})
-    self._factory.AddClass("NewRequiredClass", transitfeed.Stop)
-    self._factory.AddMapping("newfile.txt",
+    self._factory.add_class("NewRequiredClass", transitfeed.Stop)
+    self._factory.add_mapping("newfile.txt",
                              { "required": False, "classes": ["NewClass"],
                                "loading_order":-10})
-    self._factory.AddClass("NewClass", transitfeed.FareAttribute)
+    self._factory.add_class("NewClass", transitfeed.FareAttribute)
     self.assertEqual(self._factory.NewClass, transitfeed.FareAttribute)
     self.assertEqual(self._factory.NewRequiredClass, transitfeed.Stop)
-    self.assertTrue(self._factory.IsFileRequired("newrequiredfile.txt"))
-    self.assertFalse(self._factory.IsFileRequired("newfile.txt"))
-    known_filenames = self._factory.GetKnownFilenames()
+    self.assertTrue(self._factory.is_file_required("newrequiredfile.txt"))
+    self.assertFalse(self._factory.is_file_required("newfile.txt"))
+    known_filenames = self._factory.get_known_filenames()
     self.assertTrue("newfile.txt" in known_filenames)
     self.assertTrue("newrequiredfile.txt" in known_filenames)
-    loading_order = self._factory.GetLoadingOrder()
+    loading_order = self._factory.get_loading_order()
     self.assertTrue(loading_order[0] == "newrequiredfile.txt")
     self.assertTrue(loading_order[1] == "newfile.txt")
 
@@ -87,42 +87,42 @@ class TestGtfsFactory(util.TestCase):
 
 
   def testCanRemoveFileFromLoadingOrder(self):
-    self._factory.UpdateMapping("agency.txt",
+    self._factory.update_mapping("agency.txt",
                                 {"loading_order": None})
-    self.assertTrue("agency.txt" not in self._factory.GetLoadingOrder())
+    self.assertTrue("agency.txt" not in self._factory.get_loading_order())
 
   def testCanRemoveMapping(self):
-    self._factory.RemoveMapping("agency.txt")
-    self.assertFalse("agency.txt" in self._factory.GetKnownFilenames())
-    self.assertFalse("agency.txt" in self._factory.GetLoadingOrder())
-    self.assertEqual(self._factory.GetGtfsClassByFileName("agency.txt"),
+    self._factory.remove_mapping("agency.txt")
+    self.assertFalse("agency.txt" in self._factory.get_known_filenames())
+    self.assertFalse("agency.txt" in self._factory.get_loading_order())
+    self.assertEqual(self._factory.get_gtfs_class_by_file_name("agency.txt"),
                      None)
-    self.assertFalse(self._factory.IsFileRequired("agency.txt"))
+    self.assertFalse(self._factory.is_file_required("agency.txt"))
 
   def testIsFileRequired(self):
-    self.assertTrue(self._factory.IsFileRequired("agency.txt"))
-    self.assertTrue(self._factory.IsFileRequired("stops.txt"))
-    self.assertTrue(self._factory.IsFileRequired("routes.txt"))
-    self.assertTrue(self._factory.IsFileRequired("trips.txt"))
-    self.assertTrue(self._factory.IsFileRequired("stop_times.txt"))
+    self.assertTrue(self._factory.is_file_required("agency.txt"))
+    self.assertTrue(self._factory.is_file_required("stops.txt"))
+    self.assertTrue(self._factory.is_file_required("routes.txt"))
+    self.assertTrue(self._factory.is_file_required("trips.txt"))
+    self.assertTrue(self._factory.is_file_required("stop_times.txt"))
 
     # We don't have yet a way to specify that one or the other (or both
     # simultaneously) might be provided, so we don't consider them as required
     # for now
-    self.assertFalse(self._factory.IsFileRequired("calendar.txt"))
-    self.assertFalse(self._factory.IsFileRequired("calendar_dates.txt"))
+    self.assertFalse(self._factory.is_file_required("calendar.txt"))
+    self.assertFalse(self._factory.is_file_required("calendar_dates.txt"))
 
-    self.assertFalse(self._factory.IsFileRequired("fare_attributes.txt"))
-    self.assertFalse(self._factory.IsFileRequired("fare_rules.txt"))
-    self.assertFalse(self._factory.IsFileRequired("shapes.txt"))
-    self.assertFalse(self._factory.IsFileRequired("frequencies.txt"))
-    self.assertFalse(self._factory.IsFileRequired("transfers.txt"))
+    self.assertFalse(self._factory.is_file_required("fare_attributes.txt"))
+    self.assertFalse(self._factory.is_file_required("fare_rules.txt"))
+    self.assertFalse(self._factory.is_file_required("shapes.txt"))
+    self.assertFalse(self._factory.is_file_required("frequencies.txt"))
+    self.assertFalse(self._factory.is_file_required("transfers.txt"))
 
   def testFactoryReturnsClassesAndNotInstances(self):
     for filename in ("agency.txt", "fare_attributes.txt",
         "fare_rules.txt", "frequencies.txt", "stops.txt", "stop_times.txt",
         "transfers.txt", "routes.txt", "trips.txt"):
-      class_object = self._factory.GetGtfsClassByFileName(filename)
+      class_object = self._factory.get_gtfs_class_by_file_name(filename)
       self.assertTrue(isinstance(class_object,
                                  (types.TypeType, types.ClassType)),
                       "The mapping from filenames to classes must return "
@@ -145,28 +145,28 @@ class TestGtfsFactory(util.TestCase):
 
   def testCanFindClassByFileName(self):
     self.assertEqual(transitfeed.Agency,
-                     self._factory.GetGtfsClassByFileName('agency.txt'))
+                     self._factory.get_gtfs_class_by_file_name('agency.txt'))
     self.assertEqual(transitfeed.FareAttribute,
-                     self._factory.GetGtfsClassByFileName(
+                     self._factory.get_gtfs_class_by_file_name(
                          'fare_attributes.txt'))
     self.assertEqual(transitfeed.FareRule,
-                     self._factory.GetGtfsClassByFileName('fare_rules.txt'))
+                     self._factory.get_gtfs_class_by_file_name('fare_rules.txt'))
     self.assertEqual(transitfeed.Frequency,
-                     self._factory.GetGtfsClassByFileName('frequencies.txt'))
+                     self._factory.get_gtfs_class_by_file_name('frequencies.txt'))
     self.assertEqual(transitfeed.Route,
-                     self._factory.GetGtfsClassByFileName('routes.txt'))
+                     self._factory.get_gtfs_class_by_file_name('routes.txt'))
     self.assertEqual(transitfeed.ServicePeriod,
-                     self._factory.GetGtfsClassByFileName('calendar.txt'))
+                     self._factory.get_gtfs_class_by_file_name('calendar.txt'))
     self.assertEqual(transitfeed.ServicePeriod,
-                     self._factory.GetGtfsClassByFileName('calendar_dates.txt'))
+                     self._factory.get_gtfs_class_by_file_name('calendar_dates.txt'))
     self.assertEqual(transitfeed.Stop,
-                     self._factory.GetGtfsClassByFileName('stops.txt'))
+                     self._factory.get_gtfs_class_by_file_name('stops.txt'))
     self.assertEqual(transitfeed.StopTime,
-                     self._factory.GetGtfsClassByFileName('stop_times.txt'))
+                     self._factory.get_gtfs_class_by_file_name('stop_times.txt'))
     self.assertEqual(transitfeed.Transfer,
-                     self._factory.GetGtfsClassByFileName('transfers.txt'))
+                     self._factory.get_gtfs_class_by_file_name('transfers.txt'))
     self.assertEqual(transitfeed.Trip,
-                     self._factory.GetGtfsClassByFileName('trips.txt'))
+                     self._factory.get_gtfs_class_by_file_name('trips.txt'))
 
   def testClassFunctionsRaiseExceptions(self):
     self.assertRaises(transitfeed.NonexistentMapping,
@@ -185,24 +185,24 @@ class TestGtfsFactory(util.TestCase):
 
 class TestGtfsFactoryUser(util.TestCase):
   def AssertDefaultFactoryIsReturnedIfNoneIsSet(self, instance):
-    self.assertTrue(isinstance(instance.GetGtfsFactory(),
+    self.assertTrue(isinstance(instance.get_gtfs_factory(),
                                transitfeed.GtfsFactory))
 
   def AssertFactoryIsSavedAndReturned(self, instance, factory):
-    instance.SetGtfsFactory(factory)
-    self.assertEquals(factory, instance.GetGtfsFactory())
+    instance.set_gtfs_factory(factory)
+    self.assertEquals(factory, instance.get_gtfs_factory())
 
   def testClasses(self):
     class FakeGtfsFactory(object):
       pass
 
-    factory = transitfeed.GetGtfsFactory()
+    factory = transitfeed.get_gtfs_factory()
     gtfs_class_instances = [
         factory.Shape("id"),
         factory.ShapePoint(),
     ]
-    gtfs_class_instances += [factory.GetGtfsClassByFileName(filename)() for
-                             filename in factory.GetLoadingOrder()]
+    gtfs_class_instances += [factory.get_gtfs_class_by_file_name(filename)() for
+                             filename in factory.get_loading_order()]
 
     for instance in gtfs_class_instances:
       self.AssertDefaultFactoryIsReturnedIfNoneIsSet(instance)

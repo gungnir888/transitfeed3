@@ -64,7 +64,7 @@ class ExtensionMemoryZipTestCase(MemoryZipTestCase):
 
 
 class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
-  gtfs_factory = extensions.googletransit.GetGtfsFactory()
+  gtfs_factory = extensions.googletransit.get_gtfs_factory()
 
   def testNoErrorsWithOneAgencyAndNoIdAndAgencyIdColumnNotPresent(self):
     self.SetArchiveContents(
@@ -163,7 +163,7 @@ class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
 
 
 class StopExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
-  gtfs_factory = extensions.googletransit.GetGtfsFactory()
+  gtfs_factory = extensions.googletransit.get_gtfs_factory()
 
   def testNoErrors(self):
     self.SetArchiveContents("stops.txt",
@@ -192,7 +192,7 @@ class StopExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
 
 
 class StopExtensionTestCase(ValidationTestCase):
-  gtfs_factory = extensions.googletransit.GetGtfsFactory()
+  gtfs_factory = extensions.googletransit.get_gtfs_factory()
 
   def setUp(self):
     super(StopExtensionTestCase, self).setUp()
@@ -298,7 +298,7 @@ class StopExtensionTestCase(ValidationTestCase):
 
 
 class RouteExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
-  gtfs_factory = extensions.googletransit.GetGtfsFactory()
+  gtfs_factory = extensions.googletransit.get_gtfs_factory()
 
   def testNoErrors(self):
     self.SetArchiveContents(
@@ -329,7 +329,7 @@ class RouteExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
 
 
 class AgencyLangTestCase(ExtensionMemoryZipTestCase):
-  gtfs_factory = extensions.googletransit.GetGtfsFactory()
+  gtfs_factory = extensions.googletransit.get_gtfs_factory()
 
   def testNotWellFormedAgencyLang(self):
     self.SetArchiveContents(

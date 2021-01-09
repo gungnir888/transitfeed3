@@ -98,7 +98,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     schedule.WriteGoogleTransitFeed(self.tempfilepath)
     read_schedule = \
         transitfeed.Loader(self.tempfilepath, problems=problems,
-                           extra_validation=True).Load()
+                           extra_validation=True).load()
     self.assertEquals(u'\u020b Fly Agency',
                       read_schedule.GetDefaultAgency().agency_name)
     self.assertEquals(u'\u03b2',
@@ -153,7 +153,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     schedule.WriteGoogleTransitFeed(self.tempfilepath)
     read_schedule = \
         transitfeed.Loader(self.tempfilepath, problems=problems,
-                           extra_validation=True).Load()
+                           extra_validation=True).load()
     self.assertEqual(4, len(read_schedule.GetTrip(trip_id).GetTimeStops()))
     self.assertEqual(1, len(read_schedule.GetRouteList()))
     self.assertEqual(4, len(read_schedule.GetStopList()))
@@ -452,7 +452,7 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
 
     read_schedule = \
         transitfeed.Loader(self.tempfilepath, problems=problems,
-                           extra_validation=True).Load()
+                           extra_validation=True).load()
     e = accumulator.PopException("UnrecognizedColumn")
     self.assertEqual(e.file_name, "agency.txt")
     self.assertEqual(e.column_name, "agency_mission")

@@ -27,6 +27,6 @@ class ShapeLoader(Loader):
     """
     Loader.__init__(self, *args, **kwargs)
 
-  def Load(self):
-    self._LoadShapes()
+  def load(self):
+    self._load_shapes()
     return self._schedule

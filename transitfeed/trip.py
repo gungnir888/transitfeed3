@@ -70,7 +70,7 @@ class Trip(GtfsObjectBase):
       # TODO: delete this branch when StopTime.__init__ doesn't need a
       # ProblemReporter
       problems = problems_module.default_problem_reporter
-    stoptime = self.GetGtfsFactory().StopTime(
+    stoptime = self.get_gtfs_factory().StopTime(
         problems=problems, stop=stop, **kwargs)
     self.AddStopTimeObject(stoptime, schedule)
 
@@ -79,7 +79,7 @@ class Trip(GtfsObjectBase):
 
     The trip isn't checked for duplicate sequence numbers so it must be
     validated later."""
-    stop_time_class = self.GetGtfsFactory().StopTime
+    stop_time_class = self.get_gtfs_factory().StopTime
     cursor = schedule._connection.cursor()
     insert_query = "INSERT INTO stop_times (%s) VALUES (%s);" % (
        ','.join(stop_time_class._SQL_FIELD_NAMES),
@@ -236,7 +236,7 @@ class Trip(GtfsObjectBase):
         'WHERE trip_id=? '
         'ORDER BY stop_sequence', (self.trip_id,))
     stop_times = []
-    stoptime_class = self.GetGtfsFactory().StopTime
+    stoptime_class = self.get_gtfs_factory().StopTime
     if problems is None:
       # TODO: delete this branch when StopTime.__init__ doesn't need a
       # ProblemReporter
@@ -273,7 +273,7 @@ class Trip(GtfsObjectBase):
     stoptimes_list = [] # list of stoptime lists to be returned
     stoptime_pattern = self.GetStopTimes()
     first_secs = stoptime_pattern[0].arrival_secs # first time of the trip
-    stoptime_class = self.GetGtfsFactory().StopTime
+    stoptime_class = self.get_gtfs_factory().StopTime
     # for each start time of a headway run
     for run_secs in self.GetFrequencyStartTimes():
       # stop time list for a headway run
@@ -596,7 +596,7 @@ class Trip(GtfsObjectBase):
                                                             problems,
                                                             stoptimes):
     if stoptimes:
-      route_class = self.GetGtfsFactory().Route
+      route_class = self.get_gtfs_factory().Route
       # Checks that the arrival time for each time point is after the departure
       # time of the previous. Assumes a stoptimes sorted by sequence
       prev_departure = 0

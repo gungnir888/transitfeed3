@@ -27,7 +27,7 @@ class DuplicateStopTestCase(util.TestCase):
     schedule = transitfeed.Schedule(
         problem_reporter=util.ExceptionProblemReporterNoExpiration())
     try:
-      schedule.Load(util.DataPath('duplicate_stop'), extra_validation=True)
+      schedule.load(util.DataPath('duplicate_stop'), extra_validation=True)
       self.fail('OtherProblem exception expected')
     except transitfeed.OtherProblem:
       pass
@@ -38,7 +38,7 @@ class DuplicateScheduleIDTestCase(util.TestCase):
     schedule = transitfeed.Schedule(
         problem_reporter=util.ExceptionProblemReporterNoExpiration())
     try:
-      schedule.Load(util.DataPath('duplicate_schedule_id'),
+      schedule.load(util.DataPath('duplicate_schedule_id'),
                     extra_validation=True)
       self.fail('DuplicateID exception expected')
     except transitfeed.DuplicateID:
@@ -490,7 +490,7 @@ class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
 
 class UnusedStopAgencyTestCase(util.LoadTestCase):
   def runTest(self):
-    self.Load('unused_stop'),
+    self.load('unused_stop'),
     e = self.accumulator.PopException("UnusedStop")
     self.assertEqual("Bogus Stop (Demo)", e.stop_name)
     self.assertEqual("BOGUS", e.stop_id)

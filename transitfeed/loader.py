@@ -52,7 +52,7 @@ class Loader:
       zip: a zipfile.ZipFile object, optionally used instead of path
     """
     if gtfs_factory is None:
-      gtfs_factory = gtfsfactoryuser.GtfsFactoryUser().GetGtfsFactory()
+      gtfs_factory = gtfsfactoryuser.GtfsFactoryUser().get_gtfs_factory()
 
     if not schedule:
       schedule = gtfs_factory.Schedule(problem_reporter=problems,
@@ -63,10 +63,10 @@ class Loader:
     self._problems = problems
     self._path = feed_path
     self._zip = zip
-    self._load_stop_times = load_stop_times
+    self._loaded_stop_times = load_stop_times
     self._gtfs_factory = gtfs_factory
 
-  def _DetermineFormat(self):
+  def _determine_format(self):
     """Determines whether the feed is in a form that we understand, and
        if so, returns True."""
     if self._zip:
@@ -98,16 +98,16 @@ class Loader:
 
     return True
 
-  def _GetFileNames(self):
+  def _get_file_names(self):
     """Returns a list of file names in the feed."""
     if self._zip:
       return self._zip.namelist()
     else:
       return os.listdir(self._path)
 
-  def _CheckFileNames(self):
-    filenames = self._GetFileNames()
-    known_filenames = self._gtfs_factory.GetKnownFilenames()
+  def _check_file_names(self):
+    filenames = self._get_file_names()
+    known_filenames = self._gtfs_factory.get_known_filenames()
     for feed_file in filenames:
       if feed_file not in known_filenames:
         if not feed_file.startswith('.'):
@@ -115,9 +115,9 @@ class Loader:
           # as this will break the tests.
           self._problems.unknown_file(feed_file)
 
-  def _GetUtf8Contents(self, file_name):
+  def _get_utf8_contents(self, file_name):
     """Check for errors in file_name and return a string for csv reader."""
-    contents = self._FileContents(file_name)
+    contents = self._file_contents(file_name)
     if not contents:  # Missing file
       return
 
@@ -144,11 +144,11 @@ class Loader:
     contents = contents.lstrip(codecs.BOM_UTF8)
     return contents
 
-  def _ReadCsvDict(self, file_name, cols, required, deprecated):
+  def _read_csv_dict(self, file_name, cols, required, deprecated):
     """Reads lines from file_name, yielding a dict of unicode values."""
     assert file_name.endswith(".txt")
     table_name = file_name[0:-4]
-    contents = self._GetUtf8Contents(file_name)
+    contents = self._get_utf8_contents(file_name)
     if not contents:
       return
 
@@ -280,10 +280,10 @@ class Loader:
       yield (d, line_num, header, valid_values)
 
   # TODO: Add testing for this specific function
-  def _ReadCSV(self, file_name, cols, required, deprecated):
+  def _read_csv(self, file_name, cols, required, deprecated):
     """Reads lines from file_name, yielding a list of unicode values
     corresponding to the column names in cols."""
-    contents = self._GetUtf8Contents(file_name)
+    contents = self._get_utf8_contents(file_name)
     if not contents:
       return
 
@@ -372,7 +372,7 @@ class Loader:
                                     (file_name, row_num, result, cols))
       yield (result, row_num, cols)
 
-  def _HasFile(self, file_name):
+  def _has_file(self, file_name):
     """Returns True if there's a file in the current feed with the
        given file_name in the current feed."""
     if self._zip:
@@ -381,7 +381,7 @@ class Loader:
       file_path = os.path.join(self._path, file_name)
       return os.path.exists(file_path) and os.path.isfile(file_path)
 
-  def _FileContents(self, file_name):
+  def _file_contents(self, file_name):
     results = None
     if self._zip:
       try:
@@ -401,32 +401,32 @@ class Loader:
       self._problems.empty_file(file_name)
     return results
 
-  def _LoadFeed(self):
-    loading_order = self._gtfs_factory.GetLoadingOrder()
+  def _load_feed(self):
+    loading_order = self._gtfs_factory.get_loading_order()
     for filename in loading_order:
-      if not self._gtfs_factory.IsFileRequired(filename) and \
-         not self._HasFile(filename):
+      if not self._gtfs_factory.is_file_required(filename) and \
+         not self._has_file(filename):
         pass # File is not required, and feed does not have it.
       else:
-        object_class = self._gtfs_factory.GetGtfsClassByFileName(filename)
-        for (d, row_num, header, row) in self._ReadCsvDict(
+        object_class = self._gtfs_factory.get_gtfs_class_by_file_name(filename)
+        for (d, row_num, header, row) in self._read_csv_dict(
                                        filename,
                                        object_class._FIELD_NAMES,
                                        object_class._REQUIRED_FIELD_NAMES,
                                        object_class._DEPRECATED_FIELD_NAMES):
           self._problems.set_file_context(filename, row_num, row, header)
           instance = object_class(field_dict=d)
-          instance.SetGtfsFactory(self._gtfs_factory)
+          instance.set_gtfs_factory(self._gtfs_factory)
           if not instance.validate_before_add(self._problems):
             continue
           instance.add_to_schedule(self._schedule, self._problems)
           instance.validate_after_add(self._problems)
           self._problems.clear_context()
 
-  def _LoadCalendar(self):
+  def _load_calendar(self):
     file_name = 'calendar.txt'
     file_name_dates = 'calendar_dates.txt'
-    if not self._HasFile(file_name) and not self._HasFile(file_name_dates):
+    if not self._has_file(file_name) and not self._has_file(file_name_dates):
       self._problems.missing_file(file_name)
       return
 
@@ -436,10 +436,10 @@ class Loader:
     service_period_class = self._gtfs_factory.ServicePeriod
 
     # process calendar.txt
-    if self._HasFile(file_name):
+    if self._has_file(file_name):
       has_useful_contents = False
       for (row, row_num, cols) in \
-          self._ReadCSV(file_name,
+          self._read_csv(file_name,
                         service_period_class._FIELD_NAMES,
                         service_period_class._REQUIRED_FIELD_NAMES,
                         service_period_class._DEPRECATED_FIELD_NAMES):
@@ -455,10 +455,10 @@ class Loader:
         self._problems.clear_context()
 
     # process calendar_dates.txt
-    if self._HasFile(file_name_dates):
+    if self._has_file(file_name_dates):
       # ['service_id', 'date', 'exception_type']
       for (row, row_num, cols) in \
-          self._ReadCSV(file_name_dates,
+          self._read_csv(file_name_dates,
               service_period_class._FIELD_NAMES_CALENDAR_DATES,
               service_period_class._REQUIRED_FIELD_NAMES_CALENDAR_DATES,
               service_period_class._DEPRECATED_FIELD_NAMES_CALENDAR_DATES):
@@ -490,15 +490,15 @@ class Loader:
       self._schedule.AddServicePeriodObject(period, self._problems)
       self._problems.clear_context()
 
-  def _LoadShapes(self):
+  def _load_shapes(self):
     file_name = 'shapes.txt'
-    if not self._HasFile(file_name):
+    if not self._has_file(file_name):
       return
     shapes = {}  # shape_id to shape object
 
     shape_class = self._gtfs_factory.Shape
 
-    for (d, row_num, header, row) in self._ReadCsvDict(
+    for (d, row_num, header, row) in self._read_csv_dict(
         file_name,
         shape_class._FIELD_NAMES,
         shape_class._REQUIRED_FIELD_NAMES,
@@ -514,7 +514,7 @@ class Loader:
         shape = shapes[shapepoint.shape_id]
       else:
         shape = shape_class(shapepoint.shape_id)
-        shape.SetGtfsFactory(self._gtfs_factory)
+        shape.set_gtfs_factory(self._gtfs_factory)
         shapes[shapepoint.shape_id] = shape
 
       shape.AddShapePointObjectUnsorted(shapepoint, self._problems)
@@ -524,10 +524,10 @@ class Loader:
       self._schedule.AddShapeObject(shape, self._problems)
       del shapes[shape_id]
 
-  def _LoadStopTimes(self):
+  def _load_stop_times(self):
     stop_time_class = self._gtfs_factory.StopTime
 
-    for (row, row_num, cols) in self._ReadCSV('stop_times.txt',
+    for (row, row_num, cols) in self._read_csv('stop_times.txt',
         stop_time_class._FIELD_NAMES,
         stop_time_class._REQUIRED_FIELD_NAMES,
         stop_time_class._DEPRECATED_FIELD_NAMES):
@@ -577,18 +577,18 @@ class Loader:
     # stop_times are validated in Trip.ValidateChildren, called by
     # Schedule.Validate
 
-  def Load(self):
+  def load(self):
     self._problems.clear_context()
-    if not self._DetermineFormat():
+    if not self._determine_format():
       return self._schedule
 
-    self._CheckFileNames()
-    self._LoadCalendar()
-    self._LoadShapes()
-    self._LoadFeed()
+    self._check_file_names()
+    self._load_calendar()
+    self._load_shapes()
+    self._load_feed()
 
-    if self._load_stop_times:
-      self._LoadStopTimes()
+    if self._loaded_stop_times:
+      self._load_stop_times()
 
     if self._zip:
       self._zip.close()

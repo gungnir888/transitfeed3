@@ -72,6 +72,6 @@ class BadProblemReporterTestCase(util.RedirectStdOutTestCaseBase):
       util.DataPath('bad_utf8'),
       problems=transitfeed.ProblemReporter(),
       extra_validation=True)
-    loader.Load()
+    loader.load()
     # raises exception if not found
     self.this_stdout.getvalue().index('Invalid value')

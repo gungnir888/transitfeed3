@@ -317,7 +317,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         self, ("ExpirationDate", "UnrecognizedColumn", "NoServiceExceptions"))
     loaded_schedule = transitfeed.Loader(saved_schedule_file,
                                          problems=load_problems,
-                                         extra_validation=True).Load()
+                                         extra_validation=True).load()
     transfers = loaded_schedule.GetTransferList()
     self.assertEquals(1, len(transfers))
     self.assertEquals("foo1", transfers[0].attr1)
@@ -421,7 +421,7 @@ class TransferValidationTestCase(util.MemoryZipTestCase):
         self, ("ExpirationDate", "DuplicateID"))
     loaded_schedule = transitfeed.Loader(saved_schedule_file,
                                          problems=load_problems,
-                                         extra_validation=True).Load()
+                                         extra_validation=True).load()
     self.assertEquals(
         [0, 3],
         [int(t.transfer_type) for t in loaded_schedule.GetTransferIter()])

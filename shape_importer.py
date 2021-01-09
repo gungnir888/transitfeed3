@@ -123,7 +123,7 @@ def AddExtraShapes(extra_shapes_txt, graph):
     tmpdir = tempfile.mkdtemp()
     shutil.copy(extra_shapes_txt, os.path.join(tmpdir, 'shapes.txt'))
     loader = transitfeed.ShapeLoader(tmpdir)
-    schedule = loader.Load()
+    schedule = loader.load()
     for shape in schedule.GetShapeList():
       print("Adding extra shape: %s" % shape.shape_id)
       graph.AddPoly(ShapeToPoly(shape))
@@ -205,7 +205,7 @@ def main(key_cols):
     AddExtraShapes(options.extra_shapes, graph)
 
   print('Loading GTFS from %s...' % options.source_gtfs)
-  schedule = transitfeed.Loader(options.source_gtfs).Load()
+  schedule = transitfeed.Loader(options.source_gtfs).load()
   shape_count = 0
   pattern_count = 0
 

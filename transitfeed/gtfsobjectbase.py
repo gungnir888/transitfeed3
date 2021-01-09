@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from .gtfsfactoryuser import GtfsFactoryUser
 
+
 class GtfsObjectBase(GtfsFactoryUser):
   """Object with arbitrary attributes which may be added to a schedule.
 
@@ -67,7 +68,7 @@ class GtfsObjectBase(GtfsFactoryUser):
     else:
       raise AttributeError(name)
 
-  def iteritems(self):
+  def items(self):
     """Return a iterable for (name, value) pairs of public attributes."""
     for name, value in self.__dict__.items():
       if (not name) or name[0] == "_":
@@ -114,7 +115,7 @@ class GtfsObjectBase(GtfsFactoryUser):
       columns.add(name)
     return columns
 
-  def _ColumnNames(self):
+  def _column_names(self):
     return self.keys()
 
   def add_to_schedule(self, schedule, problems):

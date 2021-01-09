@@ -541,7 +541,7 @@ https://github.com/google/transitfeed/wiki/ScheduleViewer
   schedule = transitfeed.Schedule(problem_reporter=transitfeed.ProblemReporter())
   print('Loading data from feed "%s"...' % options.feed_filename)
   print('(this may take a few minutes for larger cities)')
-  schedule.Load(options.feed_filename)
+  schedule.load(options.feed_filename)
 
   server = StoppableHTTPServer(server_address=('', options.port),
                                RequestHandlerClass=RequestHandlerClass)

@@ -276,7 +276,7 @@ class MemoryZipTestCase(TestCase):
     """Returns a Schedule loaded with the contents of the file dict."""
 
     if gtfs_factory is None:
-      gtfs_factory = transitfeed.GetGtfsFactory()
+      gtfs_factory = transitfeed.get_gtfs_factory()
     if problems is None:
       problems = self.problems
     self.CreateZip()
@@ -285,7 +285,7 @@ class MemoryZipTestCase(TestCase):
         extra_validation=extra_validation,
         zip=self.zip,
         gtfs_factory=gtfs_factory)
-    return self.loader.Load()
+    return self.loader.load()
 
   def AppendToArchiveContents(self, arcname, s):
     """Append string s to file arcname in the file dict.
@@ -337,18 +337,18 @@ class LoadTestCase(TestCase):
     self.accumulator = RecordingProblemAccumulator(self, ("ExpirationDate",))
     self.problems = transitfeed.ProblemReporter(self.accumulator)
 
-  def Load(self, feed_name):
+  def load(self, feed_name):
     loader = transitfeed.Loader(
       DataPath(feed_name), problems=self.problems, extra_validation=True)
-    loader.Load()
+    loader.load()
 
   def ExpectInvalidValue(self, feed_name, column_name):
-    self.Load(feed_name)
+    self.load(feed_name)
     self.accumulator.PopInvalidValue(column_name)
     self.accumulator.AssertNoMoreExceptions()
 
   def ExpectMissingFile(self, feed_name, file_name):
-    self.Load(feed_name)
+    self.load(feed_name)
     e = self.accumulator.PopException("MissingFile")
     self.assertEqual(file_name, e.file_name)
     # Don't call AssertNoMoreExceptions() because a missing file causes

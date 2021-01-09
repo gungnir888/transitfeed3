@@ -40,7 +40,7 @@ def main():
   output_path = args[1]
 
   loader = transitfeed.Loader(input_path)
-  schedule = loader.Load()
+  schedule = loader.load()
 
   print("Removing unused stops...")
   removed = 0

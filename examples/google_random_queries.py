@@ -217,7 +217,7 @@ https://github.com/google/transitfeed/wiki/GoogleRandomQueries
   # ProblemReporter prints problems on console.
   loader = transitfeed.Loader(feed_path, problems=transitfeed.ProblemReporter(),
                               load_stop_times=False)
-  schedule = loader.Load()
+  schedule = loader.load()
   locations = GetRandomLocationsNearStops(schedule)
   random.shuffle(locations)
   agencies = ", ".join([a.agency_name for a in schedule.GetAgencyList()])

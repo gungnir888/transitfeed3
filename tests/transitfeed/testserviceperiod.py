@@ -298,7 +298,7 @@ class ServicePeriodTestCase(util.TestCase):
 
 class OnlyCalendarDatesTestCase(util.LoadTestCase):
   def runTest(self):
-    self.Load('only_calendar_dates'),
+    self.load('only_calendar_dates'),
     self.accumulator.AssertNoMoreExceptions()
 
 

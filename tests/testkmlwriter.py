@@ -72,7 +72,7 @@ class TestKMLStopsRoundtrip(util.TestCase):
 
   def runTest(self):
     gtfs_input = DataPath('good_feed.zip')
-    feed1 = transitfeed.Loader(gtfs_input).Load()
+    feed1 = transitfeed.Loader(gtfs_input).load()
     kmlwriter.KMLWriter().Write(feed1, self.kml_output)
     feed2 = transitfeed.Schedule()
     kmlparser.KmlParser().Parse(self.kml_output, feed2)
@@ -171,7 +171,7 @@ class TestRouteKML(util.TestCase):
   """Tests the routes folder KML generation methods of KMLWriter."""
 
   def setUp(self):
-    self.feed = transitfeed.Loader(DataPath('flatten_feed')).Load()
+    self.feed = transitfeed.Loader(DataPath('flatten_feed')).load()
     self.kmlwriter = kmlwriter.KMLWriter()
     self.parent = ET.Element('parent')
 
@@ -310,8 +310,8 @@ class TestShapesKML(util.TestCase):
   """Tests the shapes folder KML generation methods of KMLWriter."""
 
   def setUp(self):
-    self.flatten_feed = transitfeed.Loader(DataPath('flatten_feed')).Load()
-    self.good_feed = transitfeed.Loader(DataPath('good_feed.zip')).Load()
+    self.flatten_feed = transitfeed.Loader(DataPath('flatten_feed')).load()
+    self.good_feed = transitfeed.Loader(DataPath('good_feed.zip')).load()
     self.kmlwriter = kmlwriter.KMLWriter()
     self.parent = ET.Element('parent')
 
@@ -331,7 +331,7 @@ class TestStopsKML(util.TestCase):
   """Tests the stops folder KML generation methods of KMLWriter."""
 
   def setUp(self):
-    self.feed = transitfeed.Loader(DataPath('flatten_feed')).Load()
+    self.feed = transitfeed.Loader(DataPath('flatten_feed')).load()
     self.kmlwriter = kmlwriter.KMLWriter()
     self.parent = ET.Element('parent')
 
@@ -350,7 +350,7 @@ class TestShapePointsKML(util.TestCase):
   """Tests the shape points folder KML generation methods of KMLWriter."""
 
   def setUp(self):
-    self.flatten_feed = transitfeed.Loader(DataPath('flatten_feed')).Load()
+    self.flatten_feed = transitfeed.Loader(DataPath('flatten_feed')).load()
     self.kmlwriter = kmlwriter.KMLWriter()
     self.kmlwriter.shape_points = True
     self.parent = ET.Element('parent')

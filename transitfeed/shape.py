@@ -45,7 +45,7 @@ class Shape(GtfsFactoryUser):
 
   def AddPoint(self, lat, lon, distance=None,
                problems=problems_module.default_problem_reporter):
-    shapepoint_class = self.GetGtfsFactory().ShapePoint
+    shapepoint_class = self.get_gtfs_factory().ShapePoint
     shapepoint = shapepoint_class(
         self.shape_id, lat, lon, len(self.sequence), distance)
     if shapepoint.ParseAttributes(problems):

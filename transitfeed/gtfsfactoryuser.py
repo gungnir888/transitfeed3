@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from __future__ import absolute_import
 class GtfsFactoryUser(object):
   """Base class for objects that must store a GtfsFactory in order to
@@ -23,7 +24,7 @@ class GtfsFactoryUser(object):
 
   _gtfs_factory = None
 
-  def GetGtfsFactory(self):
+  def get_gtfs_factory(self):
     """Return the object's GTFS Factory.
 
     Returns:
@@ -40,8 +41,8 @@ class GtfsFactoryUser(object):
       #            When this runs, gtfsfactory should have already been loaded
       #            by other modules, avoiding the circular imports.
       from . import gtfsfactory
-      self._gtfs_factory = gtfsfactory.GetGtfsFactory()
+      self._gtfs_factory = gtfsfactory.get_gtfs_factory()
     return self._gtfs_factory
 
-  def SetGtfsFactory(self, factory):
+  def set_gtfs_factory(self, factory):
     self._gtfs_factory = factory

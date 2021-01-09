@@ -26,7 +26,7 @@ class DuplicateStopSequenceTestCase(util.TestCase):
       self, ("ExpirationDate", "NoServiceExceptions"))
     problems = transitfeed.ProblemReporter(accumulator)
     schedule = transitfeed.Schedule(problem_reporter=problems)
-    schedule.Load(util.DataPath('duplicate_stop_sequence'),
+    schedule.load(util.DataPath('duplicate_stop_sequence'),
                   extra_validation=True)
     e = accumulator.PopException('InvalidValue')
     self.assertEqual('stop_sequence', e.column_name)
@@ -40,7 +40,7 @@ class MissingEndpointTimesTestCase(util.TestCase):
       self, ('ExpirationDate', 'NoServiceExceptions'))
     problems = transitfeed.ProblemReporter(accumulator)
     schedule = transitfeed.Schedule(problem_reporter=problems)
-    schedule.Load(util.DataPath('missing_endpoint_times'),
+    schedule.load(util.DataPath('missing_endpoint_times'),
                   extra_validation=True)
     e = accumulator.PopInvalidValue('arrival_time')
     self.assertEqual('', e.value)
@@ -55,7 +55,7 @@ class TripMemoryZipTestCase(util.MemoryZipTestCase):
         self, ("ExpirationDate", "UnrecognizedColumn"))
     loaded_schedule = transitfeed.Loader(schedule_file,
                                          problems=load_problems,
-                                         extra_validation=True).Load()
+                                         extra_validation=True).load()
     self.assertEqual("foo", loaded_schedule.GetTrip("AB1")["t_foo"])
     self.assertEqual("", loaded_schedule.GetTrip("AB2")["t_foo"])
     self.assertEqual("", loaded_schedule.GetTrip("AB1")["n_foo"])
@@ -609,7 +609,7 @@ class TripClearStopTimesTestCase(util.TestCase):
 
 class InvalidRouteAgencyTestCase(util.LoadTestCase):
   def runTest(self):
-    self.Load('invalid_route_agency')
+    self.load('invalid_route_agency')
     self.accumulator.PopInvalidValue("agency_id", "routes.txt")
     self.accumulator.PopInvalidValue("route_id", "trips.txt")
     self.accumulator.AssertNoMoreExceptions()
@@ -617,7 +617,7 @@ class InvalidRouteAgencyTestCase(util.LoadTestCase):
 
 class InvalidAgencyIdsTestCase(util.LoadTestCase):
   def runTest(self):
-    self.Load('invalid_agency_ids')
+    self.load('invalid_agency_ids')
     self.accumulator.PopException('OtherProblem')
     self.accumulator.AssertNoMoreExceptions()
 

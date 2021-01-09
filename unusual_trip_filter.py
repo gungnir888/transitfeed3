@@ -145,7 +145,7 @@ https://github.com/google/transitfeed/wiki/UnusualTripFilter
   filter.info('Loading %s' % feed_name)
   loader = transitfeed.Loader(feed_name, extra_validation=True,
                               memory_db=options.memory_db)
-  data = loader.Load()
+  data = loader.load()
   filter.filter(data)
   print('Saving data')
 

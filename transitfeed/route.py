@@ -88,7 +88,7 @@ class Route(GtfsObjectBase):
       trip_id = util.find_unique_id(schedule.trips)
     if service_period is None:
       service_period = schedule.GetDefaultServicePeriod()
-    trip_class = self.GetGtfsFactory().Trip
+    trip_class = self.get_gtfs_factory().Trip
     trip_obj = trip_class(route=self, headsign=headsign,
                 service_period=service_period, trip_id=trip_id)
     schedule.AddTripObject(trip_obj)

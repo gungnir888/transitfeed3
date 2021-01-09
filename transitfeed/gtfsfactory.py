@@ -32,7 +32,8 @@ from .stoptime import StopTime
 from .transfer import Transfer
 from .trip import Trip
 
-class GtfsFactory(object):
+
+class GtfsFactory:
   """A factory for the default GTFS objects"""
 
   _REQUIRED_MAPPING_FIELDS = ['classes', 'required', 'loading_order']
@@ -105,7 +106,7 @@ class GtfsFactory(object):
 
     raise AttributeError(name)
 
-  def GetGtfsClassByFileName(self, filename):
+  def get_gtfs_class_by_file_name(self, filename):
     """Returns the transitfeed class corresponding to a GTFS file.
 
     Args:
@@ -124,7 +125,7 @@ class GtfsFactory(object):
     else:
       return self._class_mapping[class_list[0]]
 
-  def GetLoadingOrder(self):
+  def get_loading_order(self):
     """Returns a list of filenames sorted by loading order.
     Only includes files that Loader's standardized loading knows how to load"""
     result = {}
@@ -134,7 +135,7 @@ class GtfsFactory(object):
         result[loading_order] = filename
     return list(result[key] for key in sorted(result))
 
-  def IsFileRequired(self, filename):
+  def is_file_required(self, filename):
     """Returns true if a file is required by GTFS, false otherwise.
     Unknown files are, by definition, not required"""
     if filename not in self._file_mapping:
@@ -142,11 +143,11 @@ class GtfsFactory(object):
     mapping = self._file_mapping[filename]
     return mapping['required']
 
-  def GetKnownFilenames(self):
+  def get_known_filenames(self):
     """Returns a list of all known filenames"""
     return self._file_mapping.keys()
 
-  def RemoveMapping(self, filename):
+  def remove_mapping(self, filename):
     """Removes an entry from the list of known filenames.
        An entry is identified by its filename.
 
@@ -155,7 +156,7 @@ class GtfsFactory(object):
     if filename in self._file_mapping:
       del self._file_mapping[filename]
 
-  def AddMapping(self, filename, new_mapping):
+  def add_mapping(self, filename, new_mapping):
     """Adds an entry to the list of known filenames.
 
     Args:
@@ -169,11 +170,11 @@ class GtfsFactory(object):
     for field in self._REQUIRED_MAPPING_FIELDS:
       if field not in new_mapping:
         raise problems.InvalidMapping(field)
-    if filename in self.GetKnownFilenames():
+    if filename in self.get_known_filenames():
       raise problems.DuplicateMapping(filename)
     self._file_mapping[filename] = new_mapping
 
-  def UpdateMapping(self, filename, mapping_update):
+  def update_mapping(self, filename, mapping_update):
     """Updates an entry in the list of known filenames.
        An entry is identified by its filename.
 
@@ -189,7 +190,7 @@ class GtfsFactory(object):
     mapping = self._file_mapping[filename]
     mapping.update(mapping_update)
 
-  def AddClass(self, class_name, gtfs_class):
+  def add_class(self, class_name, gtfs_class):
     """Adds an entry to the list of known classes.
 
     Args:
@@ -203,7 +204,7 @@ class GtfsFactory(object):
       raise problems.DuplicateMapping(class_name)
     self._class_mapping[class_name] = gtfs_class
 
-  def UpdateClass(self, class_name, gtfs_class):
+  def update_class(self, class_name, gtfs_class):
     """Updates an entry in the list of known classes.
 
     Args:
@@ -216,7 +217,7 @@ class GtfsFactory(object):
       raise problems.NonexistentMapping(class_name)
     self._class_mapping[class_name] = gtfs_class
 
-  def RemoveClass(self, class_name):
+  def remove_class(self, class_name):
     """Removes an entry from the list of known classes.
 
     Args:
@@ -228,10 +229,10 @@ class GtfsFactory(object):
       raise problems.NonexistentMapping(class_name)
     del self._class_mapping[class_name]
 
-  def GetProblemReporter(self):
+  def get_problem_reporter(self):
     return problems.ProblemReporter()
 
-def GetGtfsFactory():
+def get_gtfs_factory():
   """Called by FeedValidator to retrieve this extension's GtfsFactory.
      Extensions will most likely only need to create an instance of
      transitfeed.GtfsFactory, call {Remove,Add,Update}Mapping as needed, and

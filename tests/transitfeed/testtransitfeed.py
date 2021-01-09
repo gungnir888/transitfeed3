@@ -95,9 +95,9 @@ class DeprecatedFieldNamesTestCase(util.MemoryZipTestCase):
   def setUp(self):
     super(DeprecatedFieldNamesTestCase, self).setUp()
     # init a new gtfs_factory instance and update its class mappings
-    self.gtfs_factory = transitfeed.GetGtfsFactory()
-    self.gtfs_factory.UpdateClass('Agency', self.Agency)
-    self.gtfs_factory.UpdateClass('Stop', self.Stop)
+    self.gtfs_factory = transitfeed.get_gtfs_factory()
+    self.gtfs_factory.update_class('Agency', self.Agency)
+    self.gtfs_factory.update_class('Stop', self.Stop)
 
   def testDeprectatedFieldNames(self):
     self.SetArchiveContents(

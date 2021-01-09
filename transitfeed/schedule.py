@@ -57,7 +57,7 @@ class Schedule(object):
     if gtfs_factory is None:
       # This hackery is due to the cyclic dependency mess we currently have.
       # See gtfsfactoryuser for more.
-      gtfs_factory = gtfsfactoryuser.GtfsFactoryUser().GetGtfsFactory()
+      gtfs_factory = gtfsfactoryuser.GtfsFactoryUser().get_gtfs_factory()
     self._gtfs_factory = gtfs_factory
 
     # Map from table name to list of columns present in this schedule
@@ -172,7 +172,7 @@ class Schedule(object):
       problem_reporter.DuplicateID('agency_id', agency.agency_id)
       return
 
-    self.AddTableColumns('agency', agency._ColumnNames())
+    self.AddTableColumns('agency', agency._column_names())
     agency._schedule = weakref.proxy(self)
 
     if validate:
@@ -371,7 +371,7 @@ class Schedule(object):
       return
 
     stop._schedule = weakref.proxy(self)
-    self.AddTableColumns('stops', stop._ColumnNames())
+    self.AddTableColumns('stops', stop._column_names())
     self.stops[stop.stop_id] = stop
     if hasattr(stop, 'zone_id') and stop.zone_id:
       self.fare_zones[stop.zone_id] = True
@@ -415,7 +415,7 @@ class Schedule(object):
                                       'Route uses an unknown agency_id.')
         return
 
-    self.AddTableColumns('routes', route._ColumnNames())
+    self.AddTableColumns('routes', route._column_names())
     route._schedule = weakref.proxy(self)
     self.routes[route.route_id] = route
 
@@ -451,7 +451,7 @@ class Schedule(object):
       problem_reporter.DuplicateID('trip_id', trip.trip_id)
       return
 
-    self.AddTableColumns('trips', trip._ColumnNames())
+    self.AddTableColumns('trips', trip._column_names())
     trip._schedule = weakref.proxy(self)
     self.trips[trip.trip_id] = trip
 
@@ -547,7 +547,7 @@ class Schedule(object):
 
     if validate:
       feed_info.validate(problem_reporter)
-    self.AddTableColumns('feed_info', feed_info._ColumnNames())
+    self.AddTableColumns('feed_info', feed_info._column_names())
     self.feed_info = feed_info
 
   def AddTransferObject(self, transfer, problem_reporter=None):
@@ -564,7 +564,7 @@ class Schedule(object):
       # Duplicates are still added, while not prohibited by GTFS.
 
     transfer._schedule = weakref.proxy(self)  # See weakref comment at top
-    self.AddTableColumns('transfers', transfer._ColumnNames())
+    self.AddTableColumns('transfers', transfer._column_names())
     self._transfers[transfer_id].append(transfer)
 
   def GetTransferIter(self):
@@ -607,11 +607,11 @@ class Schedule(object):
           break
     return stop_list
 
-  def Load(self, feed_path, extra_validation=False):
+  def load(self, feed_path, extra_validation=False):
     loader = self._gtfs_factory.Loader(feed_path,
                                        self, problems=self.problem_reporter,
                                        extra_validation=extra_validation)
-    loader.Load()
+    loader.load()
 
   def _WriteArchiveString(self, archive, filename, stringio):
     zi = zipfile.ZipInfo(filename)
