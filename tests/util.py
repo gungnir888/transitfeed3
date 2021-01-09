@@ -367,7 +367,7 @@ class ValidationTestCase(TestCase):
 
   def ExpectNoProblems(self, object):
     self.accumulator.AssertNoMoreExceptions()
-    object.Validate(self.problems)
+    object.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
   # TODO: think about Expect*Closure methods. With the
@@ -386,7 +386,7 @@ class ValidationTestCase(TestCase):
   # See http://codereview.appspot.com/4020041/
   def ValidateAndExpectMissingValue(self, object, column_name):
     self.accumulator.AssertNoMoreExceptions()
-    object.Validate(self.problems)
+    object.validate(self.problems)
     self.ExpectException('MissingValue', column_name)
 
   def ExpectMissingValueInClosure(self, column_name, c):
@@ -397,7 +397,7 @@ class ValidationTestCase(TestCase):
   def ValidateAndExpectInvalidValue(self, object, column_name,
                                     value=INVALID_VALUE):
     self.accumulator.AssertNoMoreExceptions()
-    object.Validate(self.problems)
+    object.validate(self.problems)
     self.ExpectException('InvalidValue', column_name, value)
 
   def ExpectInvalidValueInClosure(self, column_name, value=INVALID_VALUE,
@@ -408,12 +408,12 @@ class ValidationTestCase(TestCase):
 
   def ValidateAndExpectInvalidFloatValue(self, object, value):
     self.accumulator.AssertNoMoreExceptions()
-    object.Validate(self.problems)
+    object.validate(self.problems)
     self.ExpectException('InvalidFloatValue', None, value)
 
   def ValidateAndExpectOtherProblem(self, object):
     self.accumulator.AssertNoMoreExceptions()
-    object.Validate(self.problems)
+    object.validate(self.problems)
     self.ExpectException('OtherProblem')
 
   def ExpectOtherProblemInClosure(self, c):
@@ -424,7 +424,7 @@ class ValidationTestCase(TestCase):
   def ValidateAndExpectDateOutsideValidRange(self, object, column_name,
                                              value=INVALID_VALUE):
     self.accumulator.AssertNoMoreExceptions()
-    object.Validate(self.problems)
+    object.validate(self.problems)
     self.ExpectException('DateOutsideValidRange', column_name, value)
 
   def ExpectException(self, type_name, column_name=None, value=INVALID_VALUE):

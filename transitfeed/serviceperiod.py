@@ -342,7 +342,7 @@ class ServicePeriod(object):
                               date, context, problems_module.TYPE_ERROR)
         return False
 
-  def Validate(self, problems=problems_module.default_problem_reporter):
+  def validate(self, problems=problems_module.default_problem_reporter):
 
     self.ValidateServiceId(problems)
 

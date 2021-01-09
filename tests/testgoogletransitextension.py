@@ -219,24 +219,24 @@ class StopExtensionTestCase(ValidationTestCase):
   def testValidateVehicleType(self):
     # Test with non-integer value
     self._stop.vehicle_type = 'abc'
-    self._stop.Validate(self.problems)
+    self._stop.validate(self.problems)
     self.accumulator.PopInvalidValue('vehicle_type')
     self.accumulator.AssertNoMoreExceptions()
 
     # Test with not known value
     self._stop.vehicle_type = 2547
-    self._stop.Validate(self.problems)
+    self._stop.validate(self.problems)
     self.accumulator.PopInvalidValue('vehicle_type')
     self.accumulator.AssertNoMoreExceptions()
 
   def testEntranceExceptions(self):
     # There should be no error validating _entrance
-    self._entrance.Validate(self.problems)
+    self._entrance.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # An entrance must not have a stop_timezone
     self._entrance.stop_timezone = 'America/Los_Angeles'
-    self._entrance.Validate(self.problems)
+    self._entrance.validate(self.problems)
     e = self.accumulator.PopInvalidValue('stop_timezone')
     self.assertMatchesRegex(r'stop_timezone', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
@@ -244,26 +244,26 @@ class StopExtensionTestCase(ValidationTestCase):
 
     # An entrance must not have a vehicle type
     self._entrance.vehicle_type = 200
-    self._entrance.Validate(self.problems)
+    self._entrance.validate(self.problems)
     e = self.accumulator.PopInvalidValue('vehicle_type')
     self.accumulator.AssertNoMoreExceptions()
     self._entrance.vehicle_type = None
 
     # An entrance should have a parent station
     self._entrance.parent_station = None
-    self._entrance.Validate(self.problems)
+    self._entrance.validate(self.problems)
     e = self.accumulator.PopInvalidValue('location_type')
     self.assertMatchesRegex(r'parent_station', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
 
   def testChildExceptions(self):
     # There should be no error validating _child_stop
-    self._child_stop.Validate(self.problems)
+    self._child_stop.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # A _child_stop must not have a stop_timezone
     self._child_stop.stop_timezone = 'America/Los_Angeles'
-    self._child_stop.Validate(self.problems)
+    self._child_stop.validate(self.problems)
     e = self.accumulator.PopInvalidValue('stop_timezone')
     self.assertMatchesRegex(r'stop_timezone', e.format_problem())
     self.assertTrue(e.is_warning())
@@ -272,7 +272,7 @@ class StopExtensionTestCase(ValidationTestCase):
 
     # Adding vehicle_type, Google transit doesn't read child stop vehicle types
     self._child_stop.vehicle_type = 200
-    self._child_stop.Validate(self.problems)
+    self._child_stop.validate(self.problems)
     e = self.accumulator.PopInvalidValue('vehicle_type')
     self.assertTrue(e.is_warning())
     self.accumulator.AssertNoMoreExceptions()
@@ -281,19 +281,19 @@ class StopExtensionTestCase(ValidationTestCase):
   def testAllowEmptyStopNameIfEntrance(self):
     # Empty stop_name with default location_type=0 should report MissingValue
     self._stop.stop_name = ''
-    self._stop.Validate(self.problems)
+    self._stop.validate(self.problems)
     self.accumulator.PopMissingValue('stop_name')
     self.accumulator.AssertNoMoreExceptions()
 
     # Empty stop_name in a child stop should report MissingValue
     self._child_stop.stop_name = ''
-    self._child_stop.Validate(self.problems)
+    self._child_stop.validate(self.problems)
     self.accumulator.PopMissingValue('stop_name')
     self.accumulator.AssertNoMoreExceptions()
 
     # Empty stop_name with location_type=2 should report no errors
     self._entrance.stop_name = ''
-    self._entrance.Validate(self.problems)
+    self._entrance.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
 

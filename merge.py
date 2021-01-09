@@ -1481,7 +1481,7 @@ class TripMerger(DataSetMerger):
 
   def _add(self, a, b, migrated_trip):
     # Validate now, since it wasn't done in _Migrate
-    migrated_trip.Validate(self.feed_merger.merged_schedule.problem_reporter)
+    migrated_trip.validate(self.feed_merger.merged_schedule.problem_reporter)
     self.feed_merger.Register(a, b, migrated_trip)
 
   def _GetId(self, trip):
@@ -1520,7 +1520,7 @@ class FareRuleMerger(DataSetMerger):
                                              self.feed_merger.b_merge_map,
                                              self.feed_merger.b_zone_map]):
       for fare in schedule.GetFareAttributeList():
-        for fare_rule in fare.GetFareRuleList():
+        for fare_rule in fare.get_fare_rule_list():
           fare_id = merge_map[
               schedule.GetFareAttribute(fare_rule.fare_id)].fare_id
           route_id = (fare_rule.route_id and

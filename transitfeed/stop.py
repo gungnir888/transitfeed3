@@ -239,7 +239,7 @@ class Stop(GtfsObjectBase):
       util.validate_yes_no_unknown(
           self.wheelchair_boarding, 'wheelchair_boarding', problems)
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     # First check that all required fields are present because ParseAttributes
     # may remove invalid attributes.
     self.ValidateStopRequiredFields(problems)
@@ -262,12 +262,12 @@ class Stop(GtfsObjectBase):
     # None of these checks are blocking
     return True
 
-  def ValidateAfterAdd(self, problems):
+  def validate_after_add(self, problems):
     return
 
-  def Validate(self, problems=problems_module.default_problem_reporter):
-    self.ValidateBeforeAdd(problems)
-    self.ValidateAfterAdd(problems)
+  def validate(self, problems=problems_module.default_problem_reporter):
+    self.validate_before_add(problems)
+    self.validate_after_add(problems)
 
-  def AddToSchedule(self, schedule, problems):
+  def add_to_schedule(self, schedule, problems):
     schedule.AddStopObject(self, problems)

@@ -279,7 +279,7 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def handle_json_GET_routerow(self, params):
     schedule = self.server.schedule
     route = schedule.GetRoute(params.get('route', None))
-    return [transitfeed.Route._FIELD_NAMES, route.GetFieldValuesTuple()]
+    return [transitfeed.Route._FIELD_NAMES, route.get_field_values_tuple()]
 
   def handle_json_GET_triprows(self, params):
     """Return a list of rows from the feed file that are related to this

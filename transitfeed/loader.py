@@ -417,10 +417,10 @@ class Loader:
           self._problems.set_file_context(filename, row_num, row, header)
           instance = object_class(field_dict=d)
           instance.SetGtfsFactory(self._gtfs_factory)
-          if not instance.ValidateBeforeAdd(self._problems):
+          if not instance.validate_before_add(self._problems):
             continue
-          instance.AddToSchedule(self._schedule, self._problems)
-          instance.ValidateAfterAdd(self._problems)
+          instance.add_to_schedule(self._schedule, self._problems)
+          instance.validate_after_add(self._problems)
           self._problems.clear_context()
 
   def _LoadCalendar(self):
@@ -595,6 +595,6 @@ class Loader:
       self._zip = None
 
     if self._extra_validation:
-      self._schedule.Validate(self._problems, validate_children=False)
+      self._schedule.validate(self._problems, validate_children=False)
 
     return self._schedule

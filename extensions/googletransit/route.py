@@ -85,6 +85,6 @@ class Route(transitfeed.Route):
       except ValueError:
         problems.InvalidValue('co2_per_km', self.co2_per_km)
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     self.ValidateCo2PerKm(problems)
-    return super(Route, self).ValidateBeforeAdd(problems)
+    return super(Route, self).validate_before_add(problems)

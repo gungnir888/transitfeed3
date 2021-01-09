@@ -54,7 +54,7 @@ class FareRule(GtfsObjectBase):
     if not self.contains_id:
       self.contains_id = None
 
-  def GetFieldValuesTuple(self):
+  def get_field_values_tuple(self):
     return [getattr(self, fn) for fn in self._FIELD_NAMES]
 
   def __getitem__(self, name):
@@ -67,17 +67,17 @@ class FareRule(GtfsObjectBase):
     if id(self) == id(other):
       return True
 
-    return self.GetFieldValuesTuple() == other.GetFieldValuesTuple()
+    return self.get_field_values_tuple() == other.get_field_values_tuple()
 
   def __ne__(self, other):
     return not self.__eq__(other)
 
-  def AddToSchedule(self, schedule, problems):
+  def add_to_schedule(self, schedule, problems):
     self._schedule = schedule
     schedule.AddFareRuleObject(self, problems)
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     return True
 
-  def ValidateAfterAdd(self, problems):
+  def validate_after_add(self, problems):
     return

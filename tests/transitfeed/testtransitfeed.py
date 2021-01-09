@@ -71,7 +71,7 @@ class TransitFeedSampleCodeTestCase(util.TestCase):
     schedule.AddStopObject(stop2)
     trip.AddStopTime(stop2, arrival_time="12:05:00", departure_time="12:05:00")
 
-    schedule.Validate()  # not necessary, but helpful for finding problems
+    schedule.validate()  # not necessary, but helpful for finding problems
     schedule.WriteGoogleTransitFeed("new_feed.zip")
 
 

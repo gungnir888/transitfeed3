@@ -19,6 +19,7 @@ from .gtfsobjectbase import GtfsObjectBase
 from .problems import default_problem_reporter
 from . import util
 
+
 class FareAttribute(GtfsObjectBase):
   """Represents a fare type."""
   _REQUIRED_FIELD_NAMES = ['fare_id', 'price', 'currency_type',
@@ -69,13 +70,13 @@ class FareAttribute(GtfsObjectBase):
       except (TypeError, ValueError):
         pass
 
-  def GetFareRuleList(self):
+  def get_fare_rule_list(self):
     return self.rules
 
-  def ClearFareRules(self):
+  def clear_fare_rules(self):
     self.rules = []
 
-  def GetFieldValuesTuple(self):
+  def get_field_values_tuple(self):
     return [getattr(self, fn) for fn in self._FIELD_NAMES]
 
   def __getitem__(self, name):
@@ -88,23 +89,23 @@ class FareAttribute(GtfsObjectBase):
     if id(self) == id(other):
       return True
 
-    if self.GetFieldValuesTuple() != other.GetFieldValuesTuple():
+    if self.get_field_values_tuple() != other.get_field_values_tuple():
       return False
 
-    self_rules = [r.GetFieldValuesTuple() for r in self.GetFareRuleList()]
+    self_rules = [r.get_field_values_tuple() for r in self.get_fare_rule_list()]
     self_rules.sort()
-    other_rules = [r.GetFieldValuesTuple() for r in other.GetFareRuleList()]
+    other_rules = [r.get_field_values_tuple() for r in other.get_fare_rule_list()]
     other_rules.sort()
     return self_rules == other_rules
 
   def __ne__(self, other):
     return not self.__eq__(other)
 
-  def ValidateFareId(self, problems):
+  def validate_fare_id(self, problems):
     if util.is_empty(self.fare_id):
       problems.MissingValue("fare_id")
 
-  def ValidatePrice(self, problems):
+  def validate_price(self, problems):
     if self.price == None:
       problems.MissingValue("price")
     elif not isinstance(self.price, float) and not isinstance(self.price, int):
@@ -112,47 +113,47 @@ class FareAttribute(GtfsObjectBase):
     elif self.price < 0:
       problems.invalid_value("price", self.price)
 
-  def ValidateCurrencyType(self, problems):
+  def validate_currency_type(self, problems):
     if util.is_empty(self.currency_type):
       problems.MissingValue("currency_type")
     elif self.currency_type not in util.ISO4217.codes:
       problems.invalid_value("currency_type", self.currency_type)
 
-  def ValidatePaymentMethod(self, problems):
+  def validate_payment_method(self, problems):
     if self.payment_method == "" or self.payment_method == None:
       problems.MissingValue("payment_method")
     elif (not isinstance(self.payment_method, int) or
           self.payment_method not in range(0, 2)):
       problems.InvalidValue("payment_method", self.payment_method)
 
-  def ValidateTransfers(self, problems):
+  def validate_transfers(self, problems):
     if not ((self.transfers == None) or
             (isinstance(self.transfers, int) and
              self.transfers in range(0, 3))):
       problems.InvalidValue("transfers", self.transfers)
 
-  def ValidateTransferDuration(self, problems):
+  def validate_transfer_duration(self, problems):
     if ((self.transfer_duration != None) and
         not isinstance(self.transfer_duration, int)):
       problems.InvalidValue("transfer_duration", self.transfer_duration)
     if self.transfer_duration and (self.transfer_duration < 0):
       problems.InvalidValue("transfer_duration", self.transfer_duration)
 
-  def Validate(self, problems=default_problem_reporter):
-      self.ValidateFareId(problems)
-      self.ValidatePrice(problems)
-      self.ValidateCurrencyType(problems)
-      self.ValidatePaymentMethod(problems)
-      self.ValidateTransfers(problems)
-      self.ValidateTransferDuration(problems)
+  def validate(self, problems=default_problem_reporter):
+      self.validate_fare_id(problems)
+      self.validate_price(problems)
+      self.validate_currency_type(problems)
+      self.validate_payment_method(problems)
+      self.validate_transfers(problems)
+      self.validate_transfer_duration(problems)
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     return True
 
-  def ValidateAfterAdd(self, problems):
+  def validate_after_add(self, problems):
     return
 
-  def AddToSchedule(self, schedule=None, problems=None):
+  def add_to_schedule(self, schedule=None, problems=None):
     if schedule:
       schedule.AddFareAttributeObject(self, problems)
       self._schedule = schedule

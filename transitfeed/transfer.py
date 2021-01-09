@@ -166,7 +166,7 @@ class Transfer(GtfsObjectBase):
                                            transfer_time=self.min_transfer_time,
                                            distance=distance)
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     result = True
     result = self.ValidateFromStopIdIsPresent(problems) and result
     result = self.ValidateToStopIdIsPresent(problems) and result
@@ -174,7 +174,7 @@ class Transfer(GtfsObjectBase):
     result = self.ValidateMinimumTransferTime(problems) and result
     return result
 
-  def ValidateAfterAdd(self, problems):
+  def validate_after_add(self, problems):
     valid_stop_ids = True
     valid_stop_ids = self.ValidateFromStopIdIsValid(problems) and valid_stop_ids
     valid_stop_ids = self.ValidateToStopIdIsValid(problems) and valid_stop_ids
@@ -184,13 +184,13 @@ class Transfer(GtfsObjectBase):
       self.ValidateTransferDistance(problems)
       self.ValidateTransferWalkingTime(problems)
 
-  def Validate(self,
+  def validate(self,
                problems=problems_module.default_problem_reporter):
-    if self.ValidateBeforeAdd(problems) and self._schedule:
-      self.ValidateAfterAdd(problems)
+    if self.validate_before_add(problems) and self._schedule:
+      self.validate_after_add(problems)
 
   def _ID(self):
     return tuple(self[i] for i in self._ID_COLUMNS)
 
-  def AddToSchedule(self, schedule, problems):
+  def add_to_schedule(self, schedule, problems):
     schedule.AddTransferObject(self, problems)

@@ -250,7 +250,7 @@ class Route(GtfsObjectBase):
     if self.bikes_allowed:
       util.validate_yes_no_unknown(self.bikes_allowed, 'bikes_allowed', problems)
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     self.ValidateRouteIdIsPresent(problems)
     self.ValidateRouteTypeIsPresent(problems)
     self.ValidateRouteShortAndLongNamesAreNotBlank(problems)
@@ -268,12 +268,12 @@ class Route(GtfsObjectBase):
     # None of these checks are blocking
     return True
 
-  def ValidateAfterAdd(self, problems):
+  def validate_after_add(self, problems):
     return
 
-  def AddToSchedule(self, schedule, problems):
+  def add_to_schedule(self, schedule, problems):
     schedule.AddRouteObject(self, problems)
 
-  def Validate(self, problems=problems_module.default_problem_reporter):
-    self.ValidateBeforeAdd(problems)
-    self.ValidateAfterAdd(problems)
+  def validate(self, problems=problems_module.default_problem_reporter):
+    self.validate_before_add(problems)
+    self.validate_after_add(problems)

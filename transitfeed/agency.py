@@ -23,7 +23,7 @@ class Agency(GtfsObjectBase):
   """Represents an agency in a schedule.
 
   Callers may assign arbitrary values to instance attributes. __init__ makes no
-  attempt at validating the attributes. Call Validate() to check that
+  attempt at validating the attributes. Call validate() to check that
   attributes are valid and the agency object is consistent with itself.
 
   Attributes:
@@ -85,7 +85,7 @@ class Agency(GtfsObjectBase):
   def ValidateAgencyEmail(self, problems):
     return not util.validate_email(self.agency_email, 'agency_email', problems)
 
-  def Validate(self, problems=default_problem_reporter):
+  def validate(self, problems=default_problem_reporter):
     """Validate attribute values and this object's internal consistency.
 
     Returns:
@@ -103,12 +103,12 @@ class Agency(GtfsObjectBase):
 
     return not found_problem
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     return True
 
-  def ValidateAfterAdd(self, problems):
-    self.Validate(problems)
+  def validate_after_add(self, problems):
+    self.validate(problems)
 
-  def AddToSchedule(self, schedule, problems):
+  def add_to_schedule(self, schedule, problems):
     schedule.AddAgencyObject(self, problems)
 

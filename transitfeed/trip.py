@@ -53,7 +53,7 @@ class Trip(GtfsObjectBase):
         self.service_id = service_period.service_id
     self.__dict__.update(field_dict)
 
-  def GetFieldValuesTuple(self):
+  def get_field_values_tuple(self):
     return [getattr(self, fn) or '' for fn in self._FIELD_NAMES]
 
   def AddStopTime(self, stop, problems=None, schedule=None, **kwargs):
@@ -363,7 +363,7 @@ class Trip(GtfsObjectBase):
     """Generator for rows of the stop_times file"""
     stoptimes = self.GetStopTimes()
     for i, st in enumerate(stoptimes):
-      yield st.GetFieldValuesTuple(self.trip_id)
+      yield st.get_field_values_tuple(self.trip_id)
 
   def GetStopTimesTuples(self):
     results = []
@@ -548,7 +548,7 @@ class Trip(GtfsObjectBase):
       util.validate_yes_no_unknown(
           self.wheelchair_accessible, 'wheelchair_accessible', problems)
 
-  def Validate(self, problems, validate_children=True):
+  def validate(self, problems, validate_children=True):
     """Validate attributes of this object.
 
     Check that this object has all required values set to a valid value without
@@ -710,11 +710,11 @@ class Trip(GtfsObjectBase):
     self.ValidateDistanceFromStopToShape(problems, stoptimes)
     self.ValidateFrequencies(problems)
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     return True
 
-  def ValidateAfterAdd(self, problems):
-    self.Validate(problems)
+  def validate_after_add(self, problems):
+    self.validate(problems)
 
   def _CheckSpeed(self, prev_stop, next_stop, depart_time,
                   arrive_time, max_speed, problems):
@@ -759,7 +759,7 @@ class Trip(GtfsObjectBase):
                                speed_between_stops,
                                type=problems_module.TYPE_WARNING)
 
-  def AddToSchedule(self, schedule, problems):
+  def add_to_schedule(self, schedule, problems):
     schedule.AddTripObject(self, problems)
 
 

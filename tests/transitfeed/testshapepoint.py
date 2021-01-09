@@ -35,7 +35,7 @@ class ShapeValidationTestCase(util.ValidationTestCase):
 
     shape.AddPoint(36.915760, -116.751709, 0, self.problems)
     shape.AddPoint(36.905018, -116.763206, 5, self.problems)
-    shape.Validate(self.problems)
+    shape.validate(self.problems)
 
     shape.shape_id = None
     self.ValidateAndExpectMissingValue(shape, 'shape_id')

@@ -162,7 +162,7 @@ class StopTime(object):
     if stop_sequence is not None:
       self.stop_sequence = stop_sequence
 
-  def GetFieldValuesTuple(self, trip_id):
+  def get_field_values_tuple(self, trip_id):
     """Return a tuple that outputs a row of _FIELD_NAMES to be written to a
        GTFS file.
 

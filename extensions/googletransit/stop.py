@@ -22,7 +22,7 @@ class Stop(transitfeed.Stop):
   """Extension of transitfeed.Stop:
   - Adding and validating new fields (see _FIELD_NAMES). See proposal at
     https://sites.google.com/site/gtfschanges/spec-changes-summary#stops
-  - Overriding ValidateAfterAdd() in order to call new validation functions.
+  - Overriding validate_after_add() in order to call new validation functions.
   - Overriding ValidateStopLocationType(), adding location_type 2 (entrance).
   """
 
@@ -46,9 +46,9 @@ class Stop(transitfeed.Stop):
               reason='Google Transit does not read vehicle types for stops '
               'having a parent station', type=problems_module.TYPE_WARNING)
 
-  # Overriding transitfeed.Stop.ValidateBeforeAdd().
-  def ValidateBeforeAdd(self, problems):
-    super(Stop, self).ValidateBeforeAdd(problems)
+  # Overriding transitfeed.Stop.validate_before_add().
+  def validate_before_add(self, problems):
+    super(Stop, self).validate_before_add(problems)
     self.ValidateVehicleType(problems)
     return True # None of these checks are blocking
 

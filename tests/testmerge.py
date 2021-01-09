@@ -42,8 +42,8 @@ def CheckAttribs(a, b, attrs, assertEquals):
   """
   # For Stop objects (and maybe others in the future) Validate converts some
   # attributes from string to native type
-  a.Validate()
-  b.Validate()
+  a.validate()
+  b.validate()
   for k in attrs:
     assertEquals(getattr(a, k), getattr(b, k))
 
@@ -1295,10 +1295,10 @@ class TestFareRuleMerger(util.TestCase):
     fare_1 = self.fm.a_merge_map[self.f1]
     fare_2 = self.fm.a_merge_map[self.f3]
 
-    self.assertEquals(len(fare_1.GetFareRuleList()), 1)
-    fare_rule_1 = fare_1.GetFareRuleList()[0]
-    self.assertEquals(len(fare_2.GetFareRuleList()), 1)
-    fare_rule_2 = fare_2.GetFareRuleList()[0]
+    self.assertEquals(len(fare_1.get_fare_rule_list()), 1)
+    fare_rule_1 = fare_1.get_fare_rule_list()[0]
+    self.assertEquals(len(fare_2.get_fare_rule_list()), 1)
+    fare_rule_2 = fare_2.get_fare_rule_list()[0]
 
     self.assertEquals(fare_rule_1.fare_id,
                       self.fm.a_merge_map[self.f1].fare_id)

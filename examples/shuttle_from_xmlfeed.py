@@ -89,7 +89,7 @@ def SaveFeed(input, output):
       for (time, stop) in trip_stops:
         t.AddStopTime(stop=stop, arrival_secs=time, departure_secs=time)
 
-  schedule.Validate(problems=NoUnusedStopExceptionProblemReporter())
+  schedule.validate(problems=NoUnusedStopExceptionProblemReporter())
   schedule.WriteGoogleTransitFeed(output)
 
 

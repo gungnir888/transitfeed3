@@ -97,7 +97,7 @@ class RouteConstructorTestCase(util.TestCase):
     route = transitfeed.Route()
     repr(route)
     self.assertEqual({}, dict(route))
-    route.Validate(self.problems)
+    route.validate(self.problems)
     repr(route)
     self.assertEqual({}, dict(route))
 
@@ -113,7 +113,7 @@ class RouteConstructorTestCase(util.TestCase):
     # route_type name
     route = transitfeed.Route(route_id='id1', short_name='22', route_type='Bus')
     repr(route)
-    route.Validate(self.problems)
+    route.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.assertEquals(3, route.route_type)  # converted to an int
     self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
@@ -122,7 +122,7 @@ class RouteConstructorTestCase(util.TestCase):
     # route_type as an int
     route = transitfeed.Route(route_id='i1', long_name='Twenty 2', route_type=1)
     repr(route)
-    route.Validate(self.problems)
+    route.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.assertEquals(1, route.route_type)  # kept as an int
     self.assertEquals({'route_id': 'i1', 'route_long_name': 'Twenty 2',
@@ -131,7 +131,7 @@ class RouteConstructorTestCase(util.TestCase):
     # route_type as a string
     route = transitfeed.Route(route_id='id1', short_name='22', route_type='1')
     repr(route)
-    route.Validate(self.problems)
+    route.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.assertEquals(1, route.route_type)  # converted to an int
     self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
@@ -141,7 +141,7 @@ class RouteConstructorTestCase(util.TestCase):
     route = transitfeed.Route(route_id='id1', short_name='22',
                               route_type='8')
     repr(route)
-    route.Validate(self.problems)
+    route.validate(self.problems)
     e = self.accumulator.PopException('InvalidValue')
     self.assertEqual('route_type', e.column_name)
     self.assertEqual(1, e.type)
@@ -153,7 +153,7 @@ class RouteConstructorTestCase(util.TestCase):
     route = transitfeed.Route(route_id='id1', short_name='22',
                               route_type='1foo')
     repr(route)
-    route.Validate(self.problems)
+    route.validate(self.problems)
     e = self.accumulator.PopException('InvalidValue')
     self.assertEqual('route_type', e.column_name)
     self.accumulator.AssertNoMoreExceptions()
@@ -164,7 +164,7 @@ class RouteConstructorTestCase(util.TestCase):
     route = transitfeed.Route(route_id='id1', short_name='22', route_type=1,
                               agency_id='myage')
     repr(route)
-    route.Validate(self.problems)
+    route.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                        'route_type': '1', 'agency_id': 'myage'}, dict(route))
@@ -183,7 +183,7 @@ class RouteConstructorTestCase(util.TestCase):
     route = transitfeed.Route(field_dict={
       'route_id': 'id1', 'route_short_name': '22', 'agency_id': 'myage',
       'route_type': '1', 'bikes_allowed': '1'})
-    route.Validate(self.problems)
+    route.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.assertEquals(
         {'route_id': 'id1', 'route_short_name': '22', 'agency_id': 'myage',
@@ -193,7 +193,7 @@ class RouteConstructorTestCase(util.TestCase):
     route = transitfeed.Route(field_dict={
       'route_id': 'id1', 'route_short_name': '22', 'agency_id': 'myage',
       'route_type': '1', 'my_column': 'v'})
-    route.Validate(self.problems)
+    route.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                        'agency_id': 'myage', 'route_type': '1',
@@ -213,7 +213,7 @@ class RouteValidationTestCase(util.ValidationTestCase):
     route.route_short_name = '54C'
     route.route_long_name = 'South Side - North Side'
     route.route_type = 7
-    route.Validate(self.problems)
+    route.validate(self.problems)
 
     # blank short & long names
     route.route_short_name = ''
@@ -225,7 +225,7 @@ class RouteValidationTestCase(util.ValidationTestCase):
     route.route_long_name = ''
     self.ValidateAndExpectInvalidValue(route, 'route_short_name')
     route.route_short_name = 'M7bis'  # 5 is OK
-    route.Validate(self.problems)
+    route.validate(self.problems)
 
     # long name contains short name
     route.route_short_name = '54C'
@@ -286,23 +286,23 @@ class RouteValidationTestCase(util.ValidationTestCase):
     route.route_color = '0000FF'  # Bad
     self.ValidateAndExpectInvalidValue(route, 'route_color')
     route.route_color = '00BF00'  # OK
-    route.Validate(self.problems)
+    route.validate(self.problems)
     route.route_color = '005F00'  # Bad
     self.ValidateAndExpectInvalidValue(route, 'route_color')
     route.route_color = 'FF00FF'  # OK
-    route.Validate(self.problems)
+    route.validate(self.problems)
     route.route_text_color = 'FFFFFF' # OK too
-    route.Validate(self.problems)
+    route.validate(self.problems)
     route.route_text_color = '00FF00' # think of color-blind people!
     self.ValidateAndExpectInvalidValue(route, 'route_color')
     route.route_text_color = '007F00'
     route.route_color = 'FF0000'
     self.ValidateAndExpectInvalidValue(route, 'route_color')
     route.route_color = '00FFFF'      # OK
-    route.Validate(self.problems)
+    route.validate(self.problems)
     route.route_text_color = None # black
     route.route_color = None      # white
-    route.Validate(self.problems)
+    route.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # bad bikes_allowed

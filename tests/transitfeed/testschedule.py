@@ -122,7 +122,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
     trip2.AddStopTime(self.stop2, stop_time="6:30:00")
     trip2.AddStopTime(self.stop1, stop_time="7:00:00")
 
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
 
     self.accumulator.AssertNoMoreExceptions()
 
@@ -140,7 +140,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
     trip2.AddStopTime(self.stop2, stop_time="6:20:00")
     trip2.AddStopTime(self.stop1, stop_time="6:50:00")
 
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
 
     e = self.accumulator.PopException('OverlappingTripsInSameBlock')
     self.assertEqual(e.trip_id1, 'CITY1')
@@ -173,7 +173,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
     trip4.AddStopTime(self.stop2, stop_time="7:20:00")
     trip4.AddStopTime(self.stop1, stop_time="7:50:00")
 
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
 
     e = self.accumulator.PopException('OverlappingTripsInSameBlock')
     self.assertEqual(e.trip_id1, 'CITY1')
@@ -206,7 +206,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
     trip2.AddStopTime(self.stop2, stop_time="6:20:00")
     trip2.AddStopTime(self.stop1, stop_time="6:50:00")
 
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
 
     self.accumulator.AssertNoMoreExceptions()
 
@@ -446,7 +446,7 @@ class DuplicateTripTestCase(util.ValidationTestCase):
     trip3.AddStopTime(stop2, arrival_time="6:15:00", departure_time="6:16:00",
                       stop_sequence=1, shape_dist_traveled=1)
 
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
     e = self.accumulator.PopException('DuplicateTrip')
     self.assertTrue(e.format_problem().find('t1 of route') != -1)
     self.assertTrue(e.format_problem().find('t2 of route') != -1)
@@ -480,7 +480,7 @@ class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
     trip2.AddStopTime(stop1, arrival_time="6:11:00", departure_time="6:12:00")
     trip2.AddStopTime(stop3, arrival_time="6:21:00", departure_time="6:22:00")
 
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
     e = self.accumulator.PopException("StopWithMultipleRouteTypes")
     self.assertTrue(e.format_problem().find("Stop stop1") != -1)
     self.assertTrue(e.format_problem().find("subway (ID=1)") != -1)
@@ -684,7 +684,7 @@ class DuplicateStopValidationTestCase(util.ValidationTestCase):
     stop2.stop_lon = 32.258937
     schedule.AddStopObject(stop2)
     trip.AddStopTime(stop2, arrival_time="12:05:00", departure_time="12:05:00")
-    schedule.Validate()
+    schedule.validate()
 
     stop3 = transitfeed.Stop()
     stop3.stop_id = "STOP3"
@@ -693,7 +693,7 @@ class DuplicateStopValidationTestCase(util.ValidationTestCase):
     stop3.stop_lon = 32.268937
     schedule.AddStopObject(stop3)
     trip.AddStopTime(stop3, arrival_time="12:10:00", departure_time="12:10:00")
-    schedule.Validate()
+    schedule.validate()
     self.accumulator.AssertNoMoreExceptions()
 
     stop4 = transitfeed.Stop()
@@ -703,7 +703,7 @@ class DuplicateStopValidationTestCase(util.ValidationTestCase):
     stop4.stop_lon = 32.268936
     schedule.AddStopObject(stop4)
     trip.AddStopTime(stop4, arrival_time="12:15:00", departure_time="12:15:00")
-    schedule.Validate()
+    schedule.validate()
     e = self.accumulator.PopException('StopsTooClose')
     self.accumulator.AssertNoMoreExceptions()
 
@@ -901,7 +901,7 @@ class ServiceGapsTestCase(util.MemoryZipTestCase):
   # If there is a service gap starting before today, and today has no service,
   # it should be found - even if tomorrow there is service
   def testServiceGapBeforeTodayIsDiscovered(self):
-    self.schedule.Validate(today=date(2009, 7, 17),
+    self.schedule.validate(today=date(2009, 7, 17),
                            service_gap_interval=13)
     exception = self.accumulator.PopException("TooManyDaysWithoutService")
     self.assertEquals(date(2009, 7, 5),
@@ -913,7 +913,7 @@ class ServiceGapsTestCase(util.MemoryZipTestCase):
 
   # If today has service past service gaps should not appear
   def testNoServiceGapBeforeTodayIfTodayHasService(self):
-    self.schedule.Validate(today=date(2009, 7, 18),
+    self.schedule.validate(today=date(2009, 7, 18),
                            service_gap_interval=13)
 
     self.AssertCommonExceptions(date(2010, 6, 25))
@@ -921,7 +921,7 @@ class ServiceGapsTestCase(util.MemoryZipTestCase):
   # If the feed starts today NO previous service gap should be found
   # even if today does not have service
   def testNoServiceGapBeforeTodayIfTheFeedStartsToday(self):
-    self.schedule.Validate(today=date(2009, 6, 1),
+    self.schedule.validate(today=date(2009, 6, 1),
                            service_gap_interval=13)
 
     # This service gap is the one between FULLW and WE
@@ -936,7 +936,7 @@ class ServiceGapsTestCase(util.MemoryZipTestCase):
 
   # If there is a gap at the end of the one-year period we should find it
   def testGapAtTheEndOfTheOneYearPeriodIsDiscovered(self):
-    self.schedule.Validate(today=date(2009, 6, 22),
+    self.schedule.validate(today=date(2009, 6, 22),
                            service_gap_interval=13)
 
     # This service gap is the one between FULLW and WE
@@ -952,7 +952,7 @@ class ServiceGapsTestCase(util.MemoryZipTestCase):
   # report as starting on "today - 12 days" and lasting until
   # service resumes
   def testCurrentServiceGapIsDiscovered(self):
-    self.schedule.Validate(today=date(2009, 6, 30),
+    self.schedule.validate(today=date(2009, 6, 30),
                            service_gap_interval=13)
     exception = self.accumulator.PopException("TooManyDaysWithoutService")
     self.assertEquals(date(2009, 6, 18),

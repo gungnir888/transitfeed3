@@ -57,11 +57,11 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
                                                 })
 
     # expect no problems for non-overlapping periods
-    headway_period1.AddToSchedule(self.schedule, self.problems)
-    headway_period2.AddToSchedule(self.schedule, self.problems)
-    headway_period3.AddToSchedule(self.schedule, self.problems)
-    headway_period4.AddToSchedule(self.schedule, self.problems)
-    self.trip.Validate(self.problems)
+    headway_period1.add_to_schedule(self.schedule, self.problems)
+    headway_period2.add_to_schedule(self.schedule, self.problems)
+    headway_period3.add_to_schedule(self.schedule, self.problems)
+    headway_period4.add_to_schedule(self.schedule, self.problems)
+    self.trip.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.trip.ClearFrequencies()
 
@@ -77,8 +77,8 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
                                                  'end_time': '18:00:00',
                                                  'headway_secs': 1200,
                                                 })
-    headway_period1.AddToSchedule(self.schedule, self.problems)
-    headway_period2.AddToSchedule(self.schedule, self.problems)
+    headway_period1.add_to_schedule(self.schedule, self.problems)
+    headway_period2.add_to_schedule(self.schedule, self.problems)
     self.ValidateAndExpectOtherProblem(self.trip)
     self.trip.ClearFrequencies()
     self.accumulator.AssertNoMoreExceptions()
@@ -89,7 +89,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
                                                  'end_time': '12:00:00',
                                                  'headway_secs': 600,
                                                 })
-    headway_period1.AddToSchedule(self.schedule, self.problems)
+    headway_period1.add_to_schedule(self.schedule, self.problems)
     e = self.accumulator.PopException('InvalidValue')
     self.assertEqual('trip_id', e.column_name)
     self.trip.ClearFrequencies()
@@ -99,28 +99,28 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800"})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.assertEquals(frequency.ExactTimes(), 0)
     # Test that empty exact_times converts to 0
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": ""})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.assertEquals(frequency.ExactTimes(), 0)
     # Test that exact_times "0" converts to 0
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": "0"})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.assertEquals(frequency.ExactTimes(), 0)
     # Test that exact_times "1" converts to 1
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": "1"})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.assertEquals(frequency.ExactTimes(), 1)
     self.accumulator.AssertNoMoreExceptions()
 
@@ -130,21 +130,21 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": None})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.assertEquals(frequency.ExactTimes(), 0)
     # Test that exact_times 0 remains 0
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": 0})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.assertEquals(frequency.ExactTimes(), 0)
     # Test that exact_times 1 remains 1
     frequency = transitfeed.Frequency(
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": 1})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.assertEquals(frequency.ExactTimes(), 1)
     self.accumulator.AssertNoMoreExceptions()
 
@@ -154,7 +154,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": 15})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.accumulator.PopInvalidValue("exact_times")
     self.accumulator.AssertNoMoreExceptions()
     # Test that exact_times "yes" raises error
@@ -162,6 +162,6 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
         field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                     "end_time": "23:01:00", "headway_secs": "1800",
                     "exact_times": "yes"})
-    frequency.ValidateBeforeAdd(self.problems)
+    frequency.validate_before_add(self.problems)
     self.accumulator.PopInvalidValue("exact_times")
     self.accumulator.AssertNoMoreExceptions()

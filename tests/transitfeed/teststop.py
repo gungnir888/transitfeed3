@@ -356,7 +356,7 @@ class StopValidationTestCase(util.ValidationTestCase):
     stop.zone_id = 'A'
     stop.stop_url = 'http://example.com'
     stop.wheelchair_boarding = '2'
-    stop.Validate(self.problems)
+    stop.validate(self.problems)
 
     # latitude too large
     stop.stop_lat = 100.0
@@ -366,7 +366,7 @@ class StopValidationTestCase(util.ValidationTestCase):
     # latitude as a string works when it is valid
     # empty strings or whitespaces should get reported as MissingValue
     stop.stop_lat = '50.0'
-    stop.Validate(self.problems)
+    stop.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     stop.stop_lat = '10f'
     self.ValidateAndExpectInvalidValue(stop, 'stop_lat')
@@ -386,7 +386,7 @@ class StopValidationTestCase(util.ValidationTestCase):
     # longitude as a string works when it is valid
     # empty strings or whitespaces should get reported as MissingValue
     stop.stop_lon = '50.0'
-    stop.Validate(self.problems)
+    stop.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     stop.stop_lon = '10f'
     self.ValidateAndExpectInvalidValue(stop, 'stop_lon')
@@ -429,7 +429,7 @@ class StopValidationTestCase(util.ValidationTestCase):
     stop.stop_timezone = 'This_Timezone/Does_Not_Exist'
     self.ValidateAndExpectInvalidValue(stop, 'stop_timezone')
     stop.stop_timezone = 'America/Los_Angeles'
-    stop.Validate(self.problems)
+    stop.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # invalid wheelchair_boarding
@@ -441,7 +441,7 @@ class StopValidationTestCase(util.ValidationTestCase):
 class StopAttributes(util.ValidationTestCase):
   def testWithoutSchedule(self):
     stop = transitfeed.Stop()
-    stop.Validate(self.problems)
+    stop.validate(self.problems)
     for name in "stop_id stop_name stop_lat stop_lon".split():
       e = self.accumulator.PopException('MissingValue')
       self.assertEquals(name, e.column_name)
@@ -462,11 +462,11 @@ class StopAttributes(util.ValidationTestCase):
     stop.stop_lon = '40.02'
     self.assertEquals(stop.new_column, 'val')
     self.assertEquals(stop['new_column'], 'val')
-    self.assertTrue(isinstance(stop['stop_lat'], basestring))
+    self.assertTrue(isinstance(stop['stop_lat'], str))
     self.assertAlmostEqual(float(stop['stop_lat']), 5.909)
-    self.assertTrue(isinstance(stop['stop_lon'], basestring))
+    self.assertTrue(isinstance(stop['stop_lon'], str))
     self.assertAlmostEqual(float(stop['stop_lon']), 40.02)
-    stop.Validate(self.problems)
+    stop.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     # After validation stop.stop_lon has been converted to a float
     self.assertAlmostEqual(stop.stop_lat, 5.909)
@@ -495,7 +495,7 @@ class StopAttributes(util.ValidationTestCase):
     # Okay to add a stop with only stop_id
     stop = transitfeed.Stop(field_dict={"stop_id": "b"})
     schedule.AddStopObject(stop)
-    stop.Validate(self.problems)
+    stop.validate(self.problems)
     for name in "stop_name stop_lat stop_lon".split():
       e = self.accumulator.PopException("MissingValue")
       self.assertEquals(name, e.column_name)

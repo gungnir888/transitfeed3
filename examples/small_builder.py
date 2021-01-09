@@ -35,5 +35,5 @@ trip = route.AddTrip(schedule, headsign="To Suburbia")
 trip.AddStopTime(stop1, stop_time='17:30:00')
 trip.AddStopTime(stop2, stop_time='17:45:00')
 
-schedule.Validate()
+schedule.validate()
 schedule.WriteGoogleTransitFeed(options.output)

@@ -129,7 +129,7 @@ class TripValidationTestCase(util.ValidationTestCase):
     trip.shape_id = None
     trip.bikes_allowed = '1'
     trip.wheelchair_accessible = '2'
-    trip.Validate(self.problems)
+    trip.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     repr(trip)  # shouldn't crash
 
@@ -176,13 +176,13 @@ class TripValidationTestCase(util.ValidationTestCase):
     # Make sure calling Trip.Validate validates that route_id and service_id
     # are found in the schedule.
     trip.service_id = 'WEEK-notfound'
-    trip.Validate(self.problems)
+    trip.validate(self.problems)
     e = self.accumulator.PopException('InvalidValue')
     self.assertEqual('service_id', e.column_name)
     self.accumulator.AssertNoMoreExceptions()
     trip.service_id = 'WEEK'
 
-    trip.Validate(self.problems)
+    trip.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # expect no problems for non-overlapping periods
@@ -190,7 +190,7 @@ class TripValidationTestCase(util.ValidationTestCase):
     trip.AddFrequency("01:00:00", "02:00:00", 1200)
     trip.AddFrequency("04:00:00", "05:00:00", 1000)
     trip.AddFrequency("12:00:00", "19:00:00", 700)
-    trip.Validate(self.problems)
+    trip.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     trip.ClearFrequencies()
 
@@ -231,7 +231,7 @@ class TripSequenceValidationTestCase(util.ValidationTestCase):
     trip._AddStopTimeObjectUnordered(stoptime1, schedule)
     trip._AddStopTimeObjectUnordered(stoptime2, schedule)
     trip._AddStopTimeObjectUnordered(stoptime3, schedule)
-    trip.Validate(self.problems)
+    trip.validate(self.problems)
     e = self.accumulator.PopException('OtherProblem')
     self.assertTrue(e.format_problem().find('Timetravel detected') != -1)
     self.assertTrue(e.format_problem().find('number 2 in trip 054C-00') != -1)
@@ -293,7 +293,7 @@ class TripHasStopTimeValidationTestCase(util.ValidationTestCase):
     # It should trigger a TYPE_ERROR if there are frequencies for the trip
     # but no stops
     trip.AddFrequency("01:00:00", "12:00:00", 600)
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
     self.accumulator.PopException('OtherProblem')  # pop first warning
     e = self.accumulator.PopException('OtherProblem')  # pop frequency error
     self.assertTrue(e.format_problem().find('Frequencies defined, but') != -1)
@@ -312,7 +312,7 @@ class TripHasStopTimeValidationTestCase(util.ValidationTestCase):
     stop = transitfeed.Stop(36.424288, -117.133142, "Demo Stop 2", "STOP2")
     schedule.AddStopObject(stop)
     trip.AddStopTime(stop, arrival_time="5:15:00", departure_time="5:16:00")
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
 
     trip.AddStopTime(stop, stop_time="05:20:00")
     trip.AddStopTime(stop, stop_time="05:22:00")
@@ -349,7 +349,7 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     trip.AddStopTime(stop, arrival_time="5:18:00", departure_time="5:19:00",
                      stop_sequence=2, shape_dist_traveled=2)
     self.accumulator.AssertNoMoreExceptions()
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
     e = self.accumulator.PopException('OtherProblem')
     self.assertMatchesRegex('shape_dist_traveled=2', e.format_problem())
     self.accumulator.AssertNoMoreExceptions()
@@ -364,7 +364,7 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
                                     shape_dist_traveled=1.7)
     trip.AddStopTimeObject(stoptime, schedule=schedule)
     self.accumulator.AssertNoMoreExceptions()
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
     e = self.accumulator.PopException('InvalidValue')
     self.assertMatchesRegex('stop STOP4 has', e.format_problem())
     self.assertMatchesRegex('shape_dist_traveled=1.7', e.format_problem())
@@ -375,7 +375,7 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
     # Warning if distance remains the same between two stop_times
     stoptime.shape_dist_traveled = 2.0
     trip.ReplaceStopTimeObject(stoptime, schedule=schedule)
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
     e = self.accumulator.PopException('InvalidValue')
     self.assertMatchesRegex('stop STOP4 has', e.format_problem())
     self.assertMatchesRegex('shape_dist_traveled=2.0', e.format_problem())
@@ -407,7 +407,7 @@ class StopMatchWithShapeTestCase(util.ValidationTestCase):
     trip.AddStopTime(stop, arrival_time="5:15:00", departure_time="5:16:00",
                      stop_sequence=1, shape_dist_traveled=1)
 
-    schedule.Validate(self.problems)
+    schedule.validate(self.problems)
     e = self.accumulator.PopException('StopTooFarFromShapeWithDistTraveled')
     self.assertTrue(e.format_problem().find('Demo Stop 2') != -1)
     self.assertTrue(e.format_problem().find('1344 meters away') != -1)
@@ -640,7 +640,7 @@ class AddStopTimeParametersTestCase(util.TestCase):
     trip.AddStopTime(stop, arrival_secs=300, departure_secs=360)
     trip.AddStopTime(stop)
     trip.AddStopTime(stop, arrival_time="00:07:00", departure_time="00:07:30")
-    trip.Validate(problem_reporter)
+    trip.validate(problem_reporter)
 
 
 class AddFrequencyValidationTestCase(util.ValidationTestCase):

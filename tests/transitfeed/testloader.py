@@ -44,7 +44,7 @@ class NoExceptionTestCase(util.RedirectStdOutTestCaseBase):
                                   problems=transitfeed.ProblemReporter(),
                                   extra_validation=True)
       schedule = loader.Load()
-      schedule.Validate()
+      schedule.validate()
 
 
 class EndOfLineCheckerTestCase(util.TestCase):

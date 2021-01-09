@@ -32,7 +32,7 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
     period.end_date = '20071231'
     period.day_of_week[0] = True
     repr(period)  # shouldn't crash
-    period.Validate(self.problems)
+    period.validate(self.problems)
 
     # missing start_date. If one of start_date or end_date is None then
     # ServicePeriod.Validate assumes the required column is missing and already
@@ -137,7 +137,7 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
     period3.start_date = '18990101'
     period3.end_date = '29991231'
     period3.day_of_week[5] = True
-    period3.Validate(self.problems)
+    period3.validate(self.problems)
     e = self.accumulator.PopDateOutsideValidRange('start_date')
     self.assertEquals('18990101', e.value)
     e.format_problem() #should not throw any exceptions
@@ -159,7 +159,7 @@ class ServicePeriodValidationTestCase(util.ValidationTestCase):
     period.SetDateHasService('21070101', False) #removed service exception
     period.SetDateHasService('20070205', False) #removed service exception
     period.SetDateHasService('10070102', True) #added service exception
-    period.Validate(self.problems)
+    period.validate(self.problems)
 
     # check for error from first date exception
     e = self.accumulator.PopDateOutsideValidRange('date')
@@ -183,7 +183,7 @@ class ServicePeriodDateRangeTestCase(util.ValidationTestCase):
     period.end_date = '20071231'
     period.SetWeekdayService(True)
     period.SetDateHasService('20071231', False)
-    period.Validate(self.problems)
+    period.validate(self.problems)
     self.assertEqual(('20070101', '20071231'), period.GetDateRange())
 
     period2 = transitfeed.ServicePeriod()
@@ -191,12 +191,12 @@ class ServicePeriodDateRangeTestCase(util.ValidationTestCase):
     period2.SetDateHasService('20071225', True)
     period2.SetDateHasService('20080101', True)
     period2.SetDateHasService('20080102', False)
-    period2.Validate(self.problems)
+    period2.validate(self.problems)
     self.assertEqual(('20071225', '20080101'), period2.GetDateRange())
 
     period2.start_date = '20071201'
     period2.end_date = '20071225'
-    period2.Validate(self.problems)
+    period2.validate(self.problems)
     self.assertEqual(('20071201', '20080101'), period2.GetDateRange())
 
     period3 = transitfeed.ServicePeriod()
@@ -206,7 +206,7 @@ class ServicePeriodDateRangeTestCase(util.ValidationTestCase):
     period4.service_id = 'halloween'
     period4.SetDateHasService('20051031', True)
     self.assertEqual(('20051031', '20051031'), period4.GetDateRange())
-    period4.Validate(self.problems)
+    period4.validate(self.problems)
 
     schedule = transitfeed.Schedule(problem_reporter=self.problems)
     self.assertEqual((None, None), schedule.GetDateRange())
@@ -336,17 +336,17 @@ class ExpirationDateTestCase(util.TestCase):
     service_period.SetStartDate("20070101")
 
     service_period.SetEndDate(time.strftime(date_format, two_months_from_now))
-    schedule.Validate()  # should have no problems
+    schedule.validate()  # should have no problems
     accumulator.AssertNoMoreExceptions()
 
     service_period.SetEndDate(time.strftime(date_format, two_weeks_from_now))
-    schedule.Validate()
+    schedule.validate()
     e = accumulator.PopException('ExpirationDate')
     self.assertTrue(e.format_problem().index('will soon expire'))
     accumulator.AssertNoMoreExceptions()
 
     service_period.SetEndDate(time.strftime(date_format, two_weeks_ago))
-    schedule.Validate()
+    schedule.validate()
     e = accumulator.PopException('ExpirationDate')
     self.assertTrue(e.format_problem().index('expired'))
     accumulator.AssertNoMoreExceptions()
@@ -369,15 +369,15 @@ class FutureServiceStartDateTestCase(util.TestCase):
     service_period.SetEndDate(two_months_from_today.strftime("%Y%m%d"))
 
     service_period.SetStartDate(yesterday.strftime("%Y%m%d"))
-    schedule.Validate()
+    schedule.validate()
     accumulator.AssertNoMoreExceptions()
 
     service_period.SetStartDate(today.strftime("%Y%m%d"))
-    schedule.Validate()
+    schedule.validate()
     accumulator.AssertNoMoreExceptions()
 
     service_period.SetStartDate(tomorrow.strftime("%Y%m%d"))
-    schedule.Validate()
+    schedule.validate()
     accumulator.PopException('FutureService')
     accumulator.AssertNoMoreExceptions()
 

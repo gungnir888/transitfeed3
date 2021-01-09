@@ -66,7 +66,7 @@ class MinimalWriteTestCase(util.TempFileTestCaseBase):
     schedule.AddStopObject(stop2)
     trip.AddStopTime(stop2, arrival_time="12:05:00", departure_time="12:05:00")
 
-    schedule.Validate()
+    schedule.validate()
     schedule.WriteGoogleTransitFeed(self.tempfilepath)
 
 
@@ -94,7 +94,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     trip.AddStopTime(stop1, schedule=schedule, stop_time='10:00:00')
     trip.AddStopTime(stop2, stop_time='10:10:00')
 
-    schedule.Validate(problems)
+    schedule.validate(problems)
     schedule.WriteGoogleTransitFeed(self.tempfilepath)
     read_schedule = \
         transitfeed.Loader(self.tempfilepath, problems=problems,
@@ -149,7 +149,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
                      departure_secs=3600*8 + 60*103, stop_headsign="Last stop",
                      pickup_type=1, drop_off_type=3)
 
-    schedule.Validate()
+    schedule.validate()
     schedule.WriteGoogleTransitFeed(self.tempfilepath)
     read_schedule = \
         transitfeed.Loader(self.tempfilepath, problems=problems,
@@ -446,7 +446,7 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
     feed_info.feed_lang = "en"
     schedule.AddFeedInfoObject(feed_info)
 
-    schedule.Validate(problems)
+    schedule.validate(problems)
     accumulator.AssertNoMoreExceptions()
     schedule.WriteGoogleTransitFeed(self.tempfilepath)
 
@@ -509,7 +509,7 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
 
     read_fare_rules_data = []
     for fare in read_schedule.GetFareAttributeList():
-      for rule in fare.GetFareRuleList():
+      for rule in fare.get_fare_rule_list():
         self.assertEqual(fare.fare_id, rule.fare_id)
         read_fare_rules_data.append((fare.fare_id, rule.route_id,
                                      rule.origin_id, rule.destination_id,

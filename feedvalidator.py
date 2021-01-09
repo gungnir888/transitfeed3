@@ -597,7 +597,7 @@ def run_validation(feed, options, problems):
     )
     schedule = loader.Load()
     # Start validation: children are already validated by the loader.
-    schedule.Validate(service_gap_interval=options.service_gap_interval,
+    schedule.validate(service_gap_interval=options.service_gap_interval,
                       validate_children=False)
 
     if feed == 'IWantMyvalidation-crash.txt':

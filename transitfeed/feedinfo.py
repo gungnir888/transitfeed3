@@ -58,7 +58,7 @@ class FeedInfo(transitfeed.GtfsObjectBase):
                               'feed_start_date "%s"' %
                               (self.feed_end_date, self.feed_start_date))
 
-  def ValidateBeforeAdd(self, problems):
+  def validate_before_add(self, problems):
     transitfeed.validate_required_fields_are_not_empty(self,
                                                   self._REQUIRED_FIELD_NAMES,
                                                   problems)
@@ -67,10 +67,10 @@ class FeedInfo(transitfeed.GtfsObjectBase):
     self.validate_dates(problems)
     return True # none of the above validations is blocking
 
-  def ValidateAfterAdd(self, problems):
+  def validate_after_add(self, problems):
     # Validation after add is done in extensions.googletransit.Schedule because
     # it has to cross check with other files, e.g. feed_lang vs. agency_lang.
     pass
 
-  def AddToSchedule(self, schedule, problems):
+  def add_to_schedule(self, schedule, problems):
     schedule.AddFeedInfoObject(self, problems)

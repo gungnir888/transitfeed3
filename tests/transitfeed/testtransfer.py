@@ -33,7 +33,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     self.assertEquals(None, transfer.min_transfer_time)
     # references to other tables aren't checked without schedule so this
     # validates even though from_stop_id and to_stop_id are invalid.
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
     self.assertEquals("S1", transfer.from_stop_id)
     self.assertEquals("S2", transfer.to_stop_id)
@@ -49,7 +49,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     self.assertEquals("S2", transfer.to_stop_id)
     self.assertEquals(2, transfer.transfer_type)
     self.assertEquals(2, transfer.min_transfer_time)
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     self.assertEquals("S1", transfer.from_stop_id)
     self.assertEquals("S2", transfer.to_stop_id)
     self.assertEquals(2, transfer.transfer_type)
@@ -64,7 +64,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     self.assertEquals("S2", transfer.to_stop_id)
     self.assertEquals("-4", transfer.transfer_type)
     self.assertEquals(2, transfer.min_transfer_time)
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     e = self.accumulator.PopInvalidValue("transfer_type")
     e = self.accumulator.PopException(
         "MinimumTransferTimeSetWithInvalidTransferType")
@@ -78,7 +78,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
                                                 "transfer_type": "", \
                                                 "min_transfer_time": "-1"})
     self.assertEquals(0, transfer.transfer_type)
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     # It's negative *and* transfer_type is not 2
     e = self.accumulator.PopException(
         "MinimumTransferTimeSetWithInvalidTransferType")
@@ -90,7 +90,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
                                                 "transfer_type": "2", \
                                                 "min_transfer_time": "foo"})
     self.assertEquals("foo", transfer.min_transfer_time)
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     e = self.accumulator.PopInvalidValue("min_transfer_time")
 
     # Non-integer min_transfer_time with transfer_type != 2
@@ -99,7 +99,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
                                                 "transfer_type": "1", \
                                                 "min_transfer_time": "foo"})
     self.assertEquals("foo", transfer.min_transfer_time)
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     # It's not an integer *and* transfer_type is not 2
     e = self.accumulator.PopException(
         "MinimumTransferTimeSetWithInvalidTransferType")
@@ -111,7 +111,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
                                                 "transfer_type": "2", \
                                                 "min_transfer_time": "2.5"})
     self.assertEquals("2.5", transfer.min_transfer_time)
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     e = self.accumulator.PopInvalidValue("min_transfer_time")
 
     # Fractional min_transfer_time with transfer_type != 2
@@ -120,7 +120,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
                                                 "transfer_type": "1", \
                                                 "min_transfer_time": "2.5"})
     self.assertEquals("2.5", transfer.min_transfer_time)
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     # It's not an integer *and* transfer_type is not 2
     e = self.accumulator.PopException(
         "MinimumTransferTimeSetWithInvalidTransferType")
@@ -132,9 +132,9 @@ class TransferObjectTestCase(util.ValidationTestCase):
     transfer.to_stop_id = "S2"
     transfer.transfer_type = 0
     repr(transfer)  # shouldn't crash
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     transfer.transfer_type = 3
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # transfer_type is out of range
@@ -152,15 +152,15 @@ class TransferObjectTestCase(util.ValidationTestCase):
     transfer.min_transfer_time = "text"
     self.ValidateAndExpectInvalidValue(transfer, "min_transfer_time")
     transfer.min_transfer_time = 4*3600
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     e = self.accumulator.PopInvalidValue("min_transfer_time")
     self.assertEquals(e.type, transitfeed.TYPE_WARNING)
     transfer.min_transfer_time = 25*3600
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     e = self.accumulator.PopInvalidValue("min_transfer_time")
     self.assertEquals(e.type, transitfeed.TYPE_ERROR)
     transfer.min_transfer_time = 250
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # missing stop ids
@@ -182,7 +182,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     transfer.transfer_type = 2
     transfer.min_transfer_time = 600
     repr(transfer)  # shouldn't crash
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
     # only from_stop_id is present in schedule
@@ -226,7 +226,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
       stop2.stop_lon = 30.33
       transfer.min_transfer_time = 2500
       repr(transfer)  # shouldn't crash
-      transfer.Validate(self.problems)
+      transfer.validate(self.problems)
       if transfer_type != 2:
         e = self.accumulator.PopException(
             "MinimumTransferTimeSetWithInvalidTransferType")
@@ -246,7 +246,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
       stop2.stop_lon = 30.33
       transfer.min_transfer_time = 3600
       repr(transfer)  # shouldn't crash
-      transfer.Validate(self.problems)
+      transfer.validate(self.problems)
       if transfer_type != 2:
         e = self.accumulator.PopException(
             "MinimumTransferTimeSetWithInvalidTransferType")
@@ -274,7 +274,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     transfer.transfer_type = 2
     transfer.min_transfer_time = 1
     repr(transfer)  # shouldn't crash
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     e = self.accumulator.PopException('TransferWalkingSpeedTooFast')
     self.assertEquals(e.type, transitfeed.TYPE_WARNING)
     self.assertEquals(e.from_stop_id, stop1.stop_id)
@@ -295,7 +295,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     transfer.transfer_type = 2
     transfer.min_transfer_time = 1
     repr(transfer)  # shouldn't crash
-    transfer.Validate(self.problems)
+    transfer.validate(self.problems)
     self.accumulator.AssertNoMoreExceptions()
 
   def testCustomAttribute(self):
@@ -332,7 +332,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
     transfer2 = transitfeed.Transfer(field_dict=transfer1)
     transfer2.transfer_type = 3
     schedule.AddTransferObject(transfer2)
-    transfer2.Validate()
+    transfer2.validate()
     e = self.accumulator.PopException('DuplicateID')
     self.assertEquals('(from_stop_id, to_stop_id)', e.column_name)
     self.assertEquals('(stop1, stop2)', e.value)

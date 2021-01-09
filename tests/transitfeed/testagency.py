@@ -44,7 +44,7 @@ class AgencyValidationTestCase(util.ValidationTestCase):
     # bad time zone
     agency = transitfeed.Agency(name='Test Agency', url='http://example.com',
                                 timezone='America/Alviso', id='TA')
-    agency.Validate(self.problems)
+    agency.validate(self.problems)
     e = self.accumulator.PopInvalidValue('agency_timezone')
     self.assertMatchesRegex('"America/Alviso" is not a common timezone',
                             e.format_problem())
@@ -97,7 +97,7 @@ class AgencyValidationTestCase(util.ValidationTestCase):
     # Multiple problems
     agency = transitfeed.Agency(name='Test Agency', url='www.example.com',
                                 timezone='America/West Coast', id='TA')
-    self.assertEquals(False, agency.Validate(self.problems))
+    self.assertEquals(False, agency.validate(self.problems))
     e = self.accumulator.PopException('InvalidValue')
     self.assertEqual(e.column_name, 'agency_url')
     e = self.accumulator.PopException('InvalidValue')

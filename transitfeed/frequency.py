@@ -70,17 +70,17 @@ class Frequency(GtfsObjectBase):
             'regular schedule, shortcut for a repetitive ' \
             'stop_times file).')
 
-    def ValidateBeforeAdd(self, problems):
+    def validate_before_add(self, problems):
       self.ValidateExactTimes(problems)
       return True
 
-    def ValidateAfterAdd(self, problems):
+    def validate_after_add(self, problems):
       return
 
-    def Validate(self, problems=None):
+    def validate(self, problems=None):
       return
 
-    def AddToSchedule(self, schedule=None, problems=None):
+    def add_to_schedule(self, schedule=None, problems=None):
       if schedule is None:
         return
       self._schedule = schedule

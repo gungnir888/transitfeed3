@@ -176,7 +176,7 @@ class Schedule(object):
     agency._schedule = weakref.proxy(self)
 
     if validate:
-      agency.Validate(problem_reporter)
+      agency.validate(problem_reporter)
     self._agencies[agency.agency_id] = agency
 
   def GetAgency(self, agency_id):
@@ -259,7 +259,7 @@ class Schedule(object):
       return
 
     if validate:
-      service_period.Validate(problem_reporter)
+      service_period.validate(problem_reporter)
     self.service_periods[service_period.service_id] = service_period
 
   def GetServicePeriodList(self):
@@ -429,7 +429,7 @@ class Schedule(object):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
 
-    shape.Validate(problem_reporter)
+    shape.validate(problem_reporter)
 
     if shape.shape_id in self._shapes:
       problem_reporter.DuplicateID('shape_id', shape.shape_id)
@@ -461,7 +461,7 @@ class Schedule(object):
     if validate:
       if not problem_reporter:
         problem_reporter = self.problem_reporter
-      trip.Validate(problem_reporter, validate_children=False)
+      trip.validate(problem_reporter, validate_children=False)
     try:
       self.routes[trip.route_id]._AddTripObject(trip)
     except KeyError:
@@ -484,7 +484,7 @@ class Schedule(object):
   def AddFareAttributeObject(self, fare, problem_reporter=None):
     if not problem_reporter:
       problem_reporter = self.problem_reporter
-    fare.Validate(problem_reporter)
+    fare.validate(problem_reporter)
 
     if fare.fare_id in self.fares:
       problem_reporter.DuplicateID('fare_id', fare.fare_id)
@@ -546,7 +546,7 @@ class Schedule(object):
     feed_info._schedule = weakref.proxy(self)
 
     if validate:
-      feed_info.Validate(problem_reporter)
+      feed_info.validate(problem_reporter)
     self.AddTableColumns('feed_info', feed_info._ColumnNames())
     self.feed_info = feed_info
 
@@ -723,14 +723,14 @@ class Schedule(object):
       writer = util.CsvUnicodeWriter(fare_string)
       writer.writerow(self._gtfs_factory.FareAttribute._FIELD_NAMES)
       writer.writerows(
-          f.GetFieldValuesTuple() for f in self.GetFareAttributeList())
+          f.get_field_values_tuple() for f in self.GetFareAttributeList())
       self._WriteArchiveString(archive, 'fare_attributes.txt', fare_string)
 
     # write fare rules (if applicable)
     rule_rows = []
     for fare in self.GetFareAttributeList():
-      for rule in fare.GetFareRuleList():
-        rule_rows.append(rule.GetFieldValuesTuple())
+      for rule in fare.get_fare_rule_list():
+        rule_rows.append(rule.get_field_values_tuple())
     if rule_rows:
       rule_string = StringIO()
       writer = util.CsvUnicodeWriter(rule_string)
@@ -985,7 +985,7 @@ class Schedule(object):
     # far from its child stops.
     for stop in self.stops.values():
       if validate_children:
-        stop.Validate(problems)
+        stop.validate(problems)
       cursor = self._connection.cursor()
       cursor.execute("SELECT count(*) FROM stop_times WHERE stop_id=? LIMIT 1",
                      (stop.stop_id,))
@@ -1076,7 +1076,7 @@ class Schedule(object):
     route_names = {}
     for route in self.routes.values():
       if validate_children:
-        route.Validate(problems)
+        route.validate(problems)
       short_name = ''
       if not util.is_empty(route.route_short_name):
         short_name = route.route_short_name.lower().strip()
@@ -1298,7 +1298,7 @@ class Schedule(object):
 
   def ValidateTripStopTimes(self, problems):
     # Make sure all trips have stop_times
-    # We're doing this here instead of in Trip.Validate() so that
+    # We're doing this here instead of in Trip.validate() so that
     # Trips can be validated without error during the reading of trips.txt
     for trip in self.trips.values():
       trip.ValidateChildren(problems)
@@ -1334,7 +1334,7 @@ class Schedule(object):
                             ', '.join(unused_shape_ids),
                             type=problems_module.TYPE_WARNING)
 
-  def Validate(self,
+  def validate(self,
                problems=None,
                validate_children=True,
                today=None,

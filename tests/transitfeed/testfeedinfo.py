@@ -122,7 +122,7 @@ class FeedInfoServiceGapsTestCase(util.MemoryZipTestCase):
   # If there is a service gap starting before today, and today has no service,
   # it should be found - even if tomorrow there is service
   def testServiceGapBeforeTodayIsDiscovered(self):
-    self.schedule.Validate(today=date(2009, 6, 5),
+    self.schedule.validate(today=date(2009, 6, 5),
                            service_gap_interval=7)
     exception = self.accumulator.PopException("TooManyDaysWithoutService")
     self.assertEquals(date(2009, 6, 11),
