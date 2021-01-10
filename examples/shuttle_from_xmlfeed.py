@@ -26,112 +26,111 @@ import re
 import transitfeed
 import urllib
 
-try:
-  import xml.etree.ElementTree as ET  # python 2.5
-except ImportError as e:
-  import elementtree.ElementTree as ET  # older pythons
+from xml.etree import ElementTree as ET
 
 
 class NoUnusedStopExceptionProblemReporter(transitfeed.ProblemReporter):
-  """The company shuttle database has a few unused stops for reasons unrelated
-  to this script. Ignore them.
-  """
+    """The company shuttle database has a few unused stops for reasons unrelated
+    to this script. Ignore them.
+    """
 
-  def __init__(self):
-    accumulator = transitfeed.ExceptionProblemAccumulator()
-    transitfeed.ProblemReporter.__init__(self, accumulator)
+    def __init__(self):
+        accumulator = transitfeed.ExceptionProblemAccumulator()
+        transitfeed.ProblemReporter.__init__(self, accumulator)
 
-  def unused_stop(self, stop_id, stop_name):
-    pass
+    def unused_stop(self, stop_id, stop_name):
+        pass
+
 
 def SaveFeed(input, output):
-  tree = ET.parse(urllib.urlopen(input))
+    tree = ET.parse(urllib.urlopen(input))
 
-  schedule = transitfeed.Schedule()
-  service_period = schedule.get_default_service_period()
-  service_period.set_weekday_service()
-  service_period.set_start_date('20070314')
-  service_period.set_end_date('20071231')
-  # Holidays for 2007
-  service_period.set_date_has_service('20070528', has_service=False)
-  service_period.set_date_has_service('20070704', has_service=False)
-  service_period.set_date_has_service('20070903', has_service=False)
-  service_period.set_date_has_service('20071122', has_service=False)
-  service_period.set_date_has_service('20071123', has_service=False)
-  service_period.set_date_has_service('20071224', has_service=False)
-  service_period.set_date_has_service('20071225', has_service=False)
-  service_period.set_date_has_service('20071226', has_service=False)
-  service_period.set_date_has_service('20071231', has_service=False)
+    schedule = transitfeed.Schedule()
+    service_period = schedule.get_default_service_period()
+    service_period.set_weekday_service()
+    service_period.set_start_date('20070314')
+    service_period.set_end_date('20071231')
+    # Holidays for 2007
+    service_period.set_date_has_service('20070528', has_service=False)
+    service_period.set_date_has_service('20070704', has_service=False)
+    service_period.set_date_has_service('20070903', has_service=False)
+    service_period.set_date_has_service('20071122', has_service=False)
+    service_period.set_date_has_service('20071123', has_service=False)
+    service_period.set_date_has_service('20071224', has_service=False)
+    service_period.set_date_has_service('20071225', has_service=False)
+    service_period.set_date_has_service('20071226', has_service=False)
+    service_period.set_date_has_service('20071231', has_service=False)
 
-  stops = {}  # Map from xml stop id to python Stop object
-  agency = schedule.new_default_agency(name='GBus', url='http://shuttle/',
-                                     timezone='America/Los_Angeles')
+    stops = {}  # Map from xml stop id to python Stop object
+    agency = schedule.new_default_agency(name='GBus', url='http://shuttle/',
+                                         timezone='America/Los_Angeles')
 
-  for xml_stop in tree.getiterator('stop'):
-    stop = schedule.add_stop(lat=float(xml_stop.attrib['lat']),
-                            lng=float(xml_stop.attrib['lng']),
-                            name=xml_stop.attrib['name'])
-    stops[xml_stop.attrib['id']] = stop
+    for xml_stop in tree.getiterator('stop'):
+        stop = schedule.add_stop(lat=float(xml_stop.attrib['lat']),
+                                 lng=float(xml_stop.attrib['lng']),
+                                 name=xml_stop.attrib['name'])
+        stops[xml_stop.attrib['id']] = stop
 
-  for xml_shuttleGroup in tree.getiterator('shuttleGroup'):
-    if xml_shuttleGroup.attrib['name'] == 'Test':
-      continue
-    r = schedule.add_route(short_name="",
-        long_name=xml_shuttleGroup.attrib['name'], route_type='Bus')
-    for xml_route in xml_shuttleGroup.getiterator('route'):
-      t = r.add_trip(schedule=schedule, headsign=xml_route.attrib['name'],
-          trip_id=xml_route.attrib['id'])
-      trip_stops = []  # Build a list of (time, Stop) tuples
-      for xml_schedule in xml_route.getiterator('schedule'):
-        trip_stops.append( (int(xml_schedule.attrib['time']) / 1000,
-                            stops[xml_schedule.attrib['stopId']]) )
-      trip_stops.sort()  # Sort by time
-      for (time, stop) in trip_stops:
-        t.add_stop_time(stop=stop, arrival_secs=time, departure_secs=time)
+    for xml_shuttleGroup in tree.getiterator('shuttleGroup'):
+        if xml_shuttleGroup.attrib['name'] == 'Test':
+            continue
+        r = schedule.add_route(short_name="",
+                               long_name=xml_shuttleGroup.attrib['name'], route_type='Bus')
+        for xml_route in xml_shuttleGroup.getiterator('route'):
+            t = r.add_trip(schedule=schedule, headsign=xml_route.attrib['name'],
+                           trip_id=xml_route.attrib['id'])
+            trip_stops = []  # Build a list of (time, Stop) tuples
+            for xml_schedule in xml_route.getiterator('schedule'):
+                trip_stops.append((int(xml_schedule.attrib['time']) / 1000, stops[xml_schedule.attrib['stopId']]))
+            trip_stops.sort()  # Sort by time
+            for (time, stop) in trip_stops:
+                t.add_stop_time(stop=stop, arrival_secs=time, departure_secs=time)
 
-  schedule.validate(problems=NoUnusedStopExceptionProblemReporter())
-  schedule.write_google_transit_feed(output)
+    schedule.validate(problems=NoUnusedStopExceptionProblemReporter())
+    schedule.write_google_transit_feed(output)
 
 
 def main():
-  parser = OptionParser()
-  parser.add_option('--input', dest='input',
-                    help='Path or URL of input')
-  parser.add_option('--output', dest='output',
-                    help='Path of output file. Should end in .zip and if it '
-                    'contains the substring YYYYMMDD it will be replaced with '
-                    'today\'s date. It is impossible to include the literal '
-                    'string YYYYYMMDD in the path of the output file.')
-  parser.add_option('--execute', dest='execute',
-                    help='Commands to run to copy the output. %(path)s is '
-                    'replaced with full path of the output and %(name)s is '
-                    'replaced with name part of the path. Try '
-                    'scp %(path)s myhost:www/%(name)s',
-                    action='append')
-  parser.set_defaults(input=None, output=None, execute=[])
-  (options, args) = parser.parse_args()
+    parser = OptionParser()
+    parser.add_option('--input', dest='input',
+                      help='Path or URL of input')
+    parser.add_option('--output', dest='output',
+                      help='Path of output file. Should end in .zip and if it '
+                           'contains the substring YYYYMMDD it will be replaced with '
+                           'today\'s date. It is impossible to include the literal '
+                           'string YYYYYMMDD in the path of the output file.')
+    parser.add_option('--execute', dest='execute',
+                      help='Commands to run to copy the output. %(path)s is '
+                           'replaced with full path of the output and %(name)s is '
+                           'replaced with name part of the path. Try '
+                           'scp %(path)s myhost:www/%(name)s',
+                      action='append')
+    parser.set_defaults(input=None, output=None, execute=[])
+    (options, args) = parser.parse_args()
 
-  today = datetime.date.today().strftime('%Y%m%d')
-  options.output = re.sub(r'YYYYMMDD', today, options.output)
-  (_, name) = os.path.split(options.output)
-  path = options.output
+    today = datetime.date.today().strftime('%Y%m%d')
+    options.output = re.sub(r'YYYYMMDD', today, options.output)
+    (_, name) = os.path.split(options.output)
+    path = options.output
 
-  SaveFeed(options.input, options.output)
+    SaveFeed(options.input, options.output)
 
-  for command in options.execute:
-    import subprocess
-    def check_call(cmd):
-      """Convenience function that is in the docs for subprocess but not
-      installed on my system."""
-      retcode = subprocess.call(cmd, shell=True)
-      if retcode < 0:
-        raise Exception("Child '%s' was terminated by signal %d" % (cmd,
-          -retcode))
-      elif retcode != 0:
-        raise Exception("Child '%s' returned %d" % (cmd, retcode))
+    for command in options.execute:
+        import subprocess
 
-    # path_output and filename_current can be used to run arbitrary commands
-    check_call(command % locals())
+        def check_call(cmd):
+            """Convenience function that is in the docs for subprocess but not
+            installed on my system."""
+            retcode = subprocess.call(cmd, shell=True)
+            if retcode < 0:
+                raise Exception("Child '%s' was terminated by signal %d" % (cmd,
+                                                                            -retcode))
+            elif retcode != 0:
+                raise Exception("Child '%s' returned %d" % (cmd, retcode))
+
+        # path_output and filename_current can be used to run arbitrary commands
+        check_call(command % locals())
+
 
 if __name__ == '__main__':
-  main()
+    main()

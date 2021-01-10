@@ -23,7 +23,7 @@ class FeedInfo(transitfeed.GtfsObjectBase):
     _REQUIRED_FIELD_NAMES = ["feed_publisher_name", "feed_publisher_url",
                              "feed_lang"]
     _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ["feed_start_date", "feed_end_date",
-                                            "feed_version"]
+                                            "feed_version", "feed_contact_email"]
     _DEPRECATED_FIELD_NAMES = [('feed_valid_from', 'feed_start_date'),
                                ('feed_valid_until', 'feed_end_date'),
                                ('feed_timezone', None)]
@@ -41,6 +41,9 @@ class FeedInfo(transitfeed.GtfsObjectBase):
     def validate_feed_info_publisher_url(self, problems):
         return not transitfeed.validate_url(self.feed_publisher_url,
                                             'feed_publisher_url', problems)
+
+    def validate_feed_contact_email(self, problems):
+        return not transitfeed.util.validate_email(self.feed_contact_email, 'feed_contact_email', problems)
 
     def validate_dates(self, problems):
         # Both validity dates are currently set to optional, thus they don't have
@@ -66,6 +69,7 @@ class FeedInfo(transitfeed.GtfsObjectBase):
         self.validate_feed_info_lang(problems)
         self.validate_feed_info_publisher_url(problems)
         self.validate_dates(problems)
+        self.validate_feed_contact_email(problems)
         return True  # none of the above validations is blocking
 
     def validate_after_add(self, problems):
