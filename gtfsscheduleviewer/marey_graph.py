@@ -40,7 +40,7 @@ class MareyGraph:
     _DUMMY_SEPARATOR = 10  # pixel
 
     def __init__(self):
-        # Timetablerelated state
+        # Timetable related state
         self._cache = ''
         self._stop_list = []
         self._trip_list = []

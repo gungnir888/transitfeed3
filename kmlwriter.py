@@ -67,7 +67,8 @@ in a folder hierarchy which looks like this at the top level:
     - Shapes
 """
 
-from xml.etree import ElementTree as ET  # older pythons
+from io import IOBase
+from xml.etree import ElementTree as Et
 import extensions.googletransit as googletransit
 import os.path
 import sys
@@ -79,11 +80,11 @@ class KMLWriter:
     """This class knows how to write out a transit feed as KML.
 
     Sample usage:
-      KMLWriter().Write(<transitfeed.Schedule object>, <output filename>)
+      KMLWriter().write(<transitfeed.Schedule object>, <output filename>)
 
     Attributes:
       show_trips: True if the individual trips should be included in the routes.
-      show_stop_hierarhcy: True if station-stop hierarchy details should be
+      show_stop_hierarchy: True if station-stop hierarchy details should be
         included.
       split_routes: True if the routes should be split by type.
       shape_points: True if individual shape points should be plotted.
@@ -135,14 +136,14 @@ class KMLWriter:
         Returns:
           The folder ElementTree.Element instance.
         """
-        folder = ET.SubElement(parent, 'Folder')
-        name_tag = ET.SubElement(folder, 'name')
+        folder = Et.SubElement(parent, 'Folder')
+        name_tag = Et.SubElement(folder, 'name')
         name_tag.text = name
         if description is not None:
-            desc_tag = ET.SubElement(folder, 'description')
+            desc_tag = Et.SubElement(folder, 'description')
             desc_tag.text = description
         if not visible:
-            visibility = ET.SubElement(folder, 'visibility')
+            visibility = Et.SubElement(folder, 'visibility')
             visibility.text = '0'
         return folder
 
@@ -161,16 +162,16 @@ class KMLWriter:
           The id of the style as a string.
         """
         style_id = 'route_%s' % route.route_id
-        style = ET.SubElement(doc, 'Style', {'id': style_id})
-        linestyle = ET.SubElement(style, 'LineStyle')
-        width = ET.SubElement(linestyle, 'width')
+        style = Et.SubElement(doc, 'Style', {'id': style_id})
+        linestyle = Et.SubElement(style, 'LineStyle')
+        width = Et.SubElement(linestyle, 'width')
         type_to_width = {0: '3',  # Tram
                          1: '3',  # Subway
                          2: '5',  # Rail
                          3: '1'}  # Bus
         width.text = type_to_width.get(route.route_type, '1')
         if route.route_color:
-            color = ET.SubElement(linestyle, 'color')
+            color = Et.SubElement(linestyle, 'color')
             red = route.route_color[0:2].lower()
             green = route.route_color[2:4].lower()
             blue = route.route_color[4:6].lower()
@@ -191,17 +192,17 @@ class KMLWriter:
         Returns:
           The placemark ElementTree.Element instance.
         """
-        placemark = ET.SubElement(parent, 'Placemark')
-        placemark_name = ET.SubElement(placemark, 'name')
+        placemark = Et.SubElement(parent, 'Placemark')
+        placemark_name = Et.SubElement(placemark, 'name')
         placemark_name.text = name
         if description is not None:
-            desc_tag = ET.SubElement(placemark, 'description')
+            desc_tag = Et.SubElement(placemark, 'description')
             desc_tag.text = description
         if style_id is not None:
-            styleurl = ET.SubElement(placemark, 'styleUrl')
+            styleurl = Et.SubElement(placemark, 'styleUrl')
             styleurl.text = '#%s' % style_id
         if not visible:
-            visibility = ET.SubElement(placemark, 'visibility')
+            visibility = Et.SubElement(placemark, 'visibility')
             visibility.text = '0'
         return placemark
 
@@ -223,13 +224,13 @@ class KMLWriter:
         """
         if not coordinate_list:
             return None
-        linestring = ET.SubElement(parent, 'LineString')
-        tessellate = ET.SubElement(linestring, 'tessellate')
+        linestring = Et.SubElement(parent, 'LineString')
+        tessellate = Et.SubElement(linestring, 'tessellate')
         tessellate.text = '1'
         if len(coordinate_list[0]) == 3:
-            altitude_mode = ET.SubElement(linestring, 'altitudeMode')
+            altitude_mode = Et.SubElement(linestring, 'altitudeMode')
             altitude_mode.text = 'absolute'
-        coordinates = ET.SubElement(linestring, 'coordinates')
+        coordinates = Et.SubElement(linestring, 'coordinates')
         if len(coordinate_list[0]) == 3:
             coordinate_str_list = ['%f,%f,%f' % t for t in coordinate_list]
         else:
@@ -373,12 +374,12 @@ class KMLWriter:
 
         def style_selection_method(stop):
             if stop.location_type == transitfeed.Stop.LOCATION_TYPE_STATION:
-                return ('stop_station', None)
+                return 'stop_station', None
             elif stop.location_type == googletransit.Stop.LOCATION_TYPE_ENTRANCE:
-                return ('stop_entrance', 'entrance_connection')
+                return 'stop_entrance', 'entrance_connection'
             elif stop.parent_station:
-                return ('stop_platform', 'platform_connection')
-            return ('stop_standalone', None)
+                return 'stop_platform', 'platform_connection'
+            return 'stop_standalone', None
 
         return style_selection_method
 
@@ -403,13 +404,13 @@ class KMLWriter:
 
         def create_elements(current_element, current_dict):
             for (key, value) in current_dict.items():
-                element = ET.SubElement(current_element, key)
+                element = Et.SubElement(current_element, key)
                 if isinstance(value, dict):
                     create_elements(element, value)
                 else:
                     element.text = value
 
-        style = ET.SubElement(doc, 'Style', {'id': style_id})
+        style = Et.SubElement(doc, 'Style', {'id': style_id})
         create_elements(style, style_dict)
         return style
 
@@ -428,11 +429,13 @@ class KMLWriter:
             desc_items.append('Stop info page: <a href="%s">%s</a>' % (
                 stop.stop_url, stop.stop_url))
         description = '<br/>'.join(desc_items) or None
-        placemark = self._create_placemark(stop_folder, stop.stop_name,
-                                          description=description,
-                                          style_id=style_id)
-        point = ET.SubElement(placemark, 'Point')
-        coordinates = ET.SubElement(point, 'coordinates')
+        placemark = self._create_placemark(
+            stop_folder, stop.stop_name,
+            description=description,
+            style_id=style_id
+        )
+        point = Et.SubElement(placemark, 'Point')
+        coordinates = Et.SubElement(point, 'coordinates')
         coordinates.text = '%.6f,%.6f' % (stop.stop_lon, stop.stop_lat)
 
     def _create_route_patterns_folder(self, parent, route, style_id=None, visible=True):
@@ -466,8 +469,7 @@ class KMLWriter:
             name = 'Pattern %d (trips: %d)' % (n + 1, len(trips))
             description = 'Trips using this pattern (%d in total): %s' % (
                 len(trips), ', '.join(trip_ids))
-            placemark = self._create_placemark(folder, name, style_id, visible,
-                                              description)
+            placemark = self._create_placemark(folder, name, style_id, visible, description)
             coordinates = [(stop.stop_lon, stop.stop_lat)
                            for stop in trips[0].get_pattern()]
             self._create_line_string(placemark, coordinates)
@@ -498,8 +500,8 @@ class KMLWriter:
             return None
 
         # sort by the number of trips using the shape
-        shape_id_to_trips_items = shape_id_to_trips.items()
-        shape_id_to_trips_items.sort(lambda a, b: cmp(len(b[1]), len(a[1])))
+        shape_id_to_trips_items = list(shape_id_to_trips.items())
+        shape_id_to_trips_items.sort(key=lambda a, b: cmp(len(b[1]), len(a[1])))
 
         folder = self._create_folder(parent, 'Shapes', visible)
         for shape_id, trips in shape_id_to_trips_items:
@@ -638,17 +640,18 @@ class KMLWriter:
 
         for route in routes:
             style_id = self._create_style_for_route(doc, route)
-            route_folder = self._create_folder(routes_folder,
-                                              get_route_name(route),
-                                              description=get_route_description(route))
-            self._create_route_shapes_folder(schedule, route_folder, route,
-                                          style_id, False)
+            route_folder = self._create_folder(
+                routes_folder,
+                get_route_name(route),
+                description=get_route_description(route)
+            )
+            self._create_route_shapes_folder(schedule, route_folder, route, style_id, False)
             self._create_route_patterns_folder(route_folder, route, style_id, False)
             if self.show_trips:
                 self._create_route_trips_folder(route_folder, route, style_id, schedule)
         return routes_folder
 
-    def _CreateShapesFolder(self, schedule, doc):
+    def _create_shapes_folder(self, schedule, doc):
         """Create a KML Folder containing all the shapes in a schedule.
 
         The folder contains a placemark for each shape. If there are no shapes in
@@ -670,10 +673,10 @@ class KMLWriter:
             placemark = self._create_placemark(shapes_folder, shape.shape_id)
             self._create_line_string_for_shape(placemark, shape)
             if self.shape_points:
-                self._CreateShapePointFolder(shapes_folder, shape)
+                self._create_shape_point_folder(shapes_folder, shape)
         return shapes_folder
 
-    def _CreateShapePointFolder(self, shapes_folder, shape):
+    def _create_shape_point_folder(self, shapes_folder, shape):
         """Create a KML Folder containing all the shape points in a shape.
 
         The folder contains placemarks for each shapepoint.
@@ -690,12 +693,12 @@ class KMLWriter:
         folder = self._create_folder(shapes_folder, folder_name, visible=False)
         for (index, (lat, lon, dist)) in enumerate(shape.points):
             placemark = self._create_placemark(folder, str(index + 1))
-            point = ET.SubElement(placemark, 'Point')
-            coordinates = ET.SubElement(point, 'coordinates')
+            point = Et.SubElement(placemark, 'Point')
+            coordinates = Et.SubElement(point, 'coordinates')
             coordinates.text = '%.6f,%.6f' % (lon, lat)
         return folder
 
-    def Write(self, schedule, output_file):
+    def write(self, schedule, output_file):
         """Writes out a feed as KML.
 
         Args:
@@ -703,10 +706,10 @@ class KMLWriter:
           output_file: The name of the output KML file, or file object to use.
         """
         # Generate the DOM to write
-        root = ET.Element('kml')
+        root = Et.Element('kml')
         root.attrib['xmlns'] = 'http://earth.google.com/kml/2.1'
-        doc = ET.SubElement(root, 'Document')
-        open_tag = ET.SubElement(doc, 'open')
+        doc = Et.SubElement(root, 'Document')
+        open_tag = Et.SubElement(doc, 'open')
         open_tag.text = '1'
         self._create_stops_folder(schedule, doc)
         if self.split_routes:
@@ -719,18 +722,18 @@ class KMLWriter:
                 self._create_routes_folder(schedule, doc, route_type)
         else:
             self._create_routes_folder(schedule, doc)
-        self._CreateShapesFolder(schedule, doc)
+        self._create_shapes_folder(schedule, doc)
 
         # Make sure we pretty-print
         self._set_indentation(root)
 
         # Now write the output
-        if isinstance(output_file, file):
+        if isinstance(output_file, IOBase):
             output = output_file
         else:
             output = open(output_file, 'w')
         output.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
-        ET.ElementTree(root).write(output, 'utf-8')
+        Et.ElementTree(root).write(output, 'utf-8')
 
 
 def main():
@@ -788,7 +791,6 @@ def main():
         output_filename = '%s.kml' % feed_name
         output_path = os.path.join(feed_dir, output_filename)
 
-    feed = None
     try:
         loader = transitfeed.Loader(input_path)
         feed = loader.load()
@@ -809,7 +811,7 @@ def main():
     writer.date_filter = options.date_filter
     writer.shape_points = options.shape_points
     writer.show_stop_hierarchy = options.show_stop_hierarchy
-    writer.Write(feed, output_path)
+    writer.write(feed, output_path)
 
 
 if __name__ == '__main__':

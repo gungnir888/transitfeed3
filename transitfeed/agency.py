@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 from .gtfsobjectbase import GtfsObjectBase
 from .problems import default_problem_reporter
 from . import util
@@ -28,13 +27,24 @@ class Agency(GtfsObjectBase):
     Attributes:
       All attributes are strings.
     """
-    _REQUIRED_FIELD_NAMES = ['agency_name', 'agency_url', 'agency_timezone']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ['agency_id', 'agency_lang',
-                                            'agency_phone', 'agency_fare_url', 'agency_email']
-    _DEPRECATED_FIELD_NAMES = [('agency_ticket_url', 'agency_fare_url')]
+    REQUIRED_FIELD_NAMES = [
+        'agency_name',
+        'agency_url',
+        'agency_timezone'
+    ]
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + [
+        'agency_id',
+        'agency_lang',
+        'agency_phone',
+        'agency_fare_url',
+        'agency_email'
+    ]
+    DEPRECATED_FIELD_NAMES = [
+        ('agency_ticket_url', 'agency_fare_url')
+    ]
     _TABLE_NAME = 'agency'
 
-    def __init__(self, name=None, url=None, timezone=None, id=None, email=None,
+    def __init__(self, name=None, url=None, timezone=None, idd=None, email=None,
                  field_dict=None, lang=None, **kwargs):
         """Initialize a new Agency object.
 
@@ -43,7 +53,7 @@ class Agency(GtfsObjectBase):
           name: a string, ignored when field_dict is present
           url: a string, ignored when field_dict is present
           timezone: a string, ignored when field_dict is present
-          id: a string, ignored when field_dict is present
+          idd: a string, ignored when field_dict is present
           kwargs: arbitrary keyword arguments may be used to add attributes to the
             new object, ignored when field_dict is present
         """
@@ -56,7 +66,7 @@ class Agency(GtfsObjectBase):
                 kwargs['agency_url'] = url
             if timezone:
                 kwargs['agency_timezone'] = timezone
-            if id:
+            if idd:
                 kwargs['agency_id'] = id
             if lang:
                 kwargs['agency_lang'] = lang
@@ -66,22 +76,22 @@ class Agency(GtfsObjectBase):
 
         self.__dict__.update(field_dict)
 
-    def ValidateAgencyUrl(self, problems):
+    def validate_agency_url(self, problems):
         return not util.validate_url(self.agency_url, 'agency_url', problems)
 
-    def ValidateAgencyLang(self, problems):
+    def validate_agency_lang(self, problems):
         return not util.validate_language_code(self.agency_lang, 'agency_lang',
                                                problems)
 
-    def ValidateAgencyTimezone(self, problems):
+    def validate_agency_timezone(self, problems):
         return not util.validate_timezone(self.agency_timezone, 'agency_timezone',
                                           problems)
 
-    def ValidateAgencyFareUrl(self, problems):
+    def validate_agency_fare_url(self, problems):
         return not util.validate_url(
             self.agency_fare_url, 'agency_fare_url', problems)
 
-    def ValidateAgencyEmail(self, problems):
+    def validate_agency_email(self, problems):
         return not util.validate_email(self.agency_email, 'agency_email', problems)
 
     def validate(self, problems=default_problem_reporter):
@@ -92,13 +102,13 @@ class Agency(GtfsObjectBase):
         """
         found_problem = False
         found_problem = ((not util.validate_required_fields_are_not_empty(
-            self, self._REQUIRED_FIELD_NAMES, problems))
+            self, self.REQUIRED_FIELD_NAMES, problems))
                          or found_problem)
-        found_problem = self.ValidateAgencyUrl(problems) or found_problem
-        found_problem = self.ValidateAgencyLang(problems) or found_problem
-        found_problem = self.ValidateAgencyTimezone(problems) or found_problem
-        found_problem = self.ValidateAgencyFareUrl(problems) or found_problem
-        found_problem = self.ValidateAgencyEmail(problems) or found_problem
+        found_problem = self.validate_agency_url(problems) or found_problem
+        found_problem = self.validate_agency_lang(problems) or found_problem
+        found_problem = self.validate_agency_timezone(problems) or found_problem
+        found_problem = self.validate_agency_fare_url(problems) or found_problem
+        found_problem = self.validate_agency_email(problems) or found_problem
 
         return not found_problem
 

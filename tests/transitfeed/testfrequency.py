@@ -13,155 +13,153 @@
 # limitations under the License.
 
 # Unit tests for the frequency module.
-from __future__ import absolute_import
-
 from tests import util
 import transitfeed
 
 
 class FrequencyValidationTestCase(util.ValidationTestCase):
-  def setUp(self):
-    util.ValidationTestCase.setUp(self)
-    self.schedule = self.SimpleSchedule()
-    trip = transitfeed.Trip()
-    trip.route_id = '054C'
-    trip.service_id = 'WEEK'
-    trip.trip_id = '054C-00'
-    trip.trip_headsign = 'via Polish Hill'
-    trip.direction_id = '0'
-    trip.block_id = None
-    trip.shape_id = None
-    self.schedule.add_trip_object(trip, self.problems, True)
-    self.trip = trip
+    def setUp(self):
+        util.ValidationTestCase.setUp(self)
+        self.schedule = self.SimpleSchedule()
+        trip = transitfeed.Trip()
+        trip.route_id = '054C'
+        trip.service_id = 'WEEK'
+        trip.trip_id = '054C-00'
+        trip.trip_headsign = 'via Polish Hill'
+        trip.direction_id = '0'
+        trip.block_id = None
+        trip.shape_id = None
+        self.schedule.add_trip_object(trip, self.problems, True)
+        self.trip = trip
 
-  def testNonOverlappingPeriods(self):
-    headway_period1 = transitfeed.Frequency({'trip_id': '054C-00',
+    def testNonOverlappingPeriods(self):
+        headway_period1 = transitfeed.Frequency({'trip_id': '054C-00',
                                                  'start_time': '06:00:00',
                                                  'end_time': '12:00:00',
                                                  'headway_secs': 600,
-                                                })
-    headway_period2 = transitfeed.Frequency({'trip_id': '054C-00',
+                                                 })
+        headway_period2 = transitfeed.Frequency({'trip_id': '054C-00',
                                                  'start_time': '01:00:00',
                                                  'end_time': '02:00:00',
                                                  'headway_secs': 1200,
-                                                })
-    headway_period3 = transitfeed.Frequency({'trip_id': '054C-00',
+                                                 })
+        headway_period3 = transitfeed.Frequency({'trip_id': '054C-00',
                                                  'start_time': '04:00:00',
                                                  'end_time': '05:00:00',
                                                  'headway_secs': 1000,
-                                                })
-    headway_period4 = transitfeed.Frequency({'trip_id': '054C-00',
+                                                 })
+        headway_period4 = transitfeed.Frequency({'trip_id': '054C-00',
                                                  'start_time': '12:00:00',
                                                  'end_time': '19:00:00',
                                                  'headway_secs': 700,
-                                                })
+                                                 })
 
-    # expect no problems for non-overlapping periods
-    headway_period1.add_to_schedule(self.schedule, self.problems)
-    headway_period2.add_to_schedule(self.schedule, self.problems)
-    headway_period3.add_to_schedule(self.schedule, self.problems)
-    headway_period4.add_to_schedule(self.schedule, self.problems)
-    self.trip.validate(self.problems)
-    self.accumulator.AssertNoMoreExceptions()
-    self.trip.clear_frequencies()
+        # expect no problems for non-overlapping periods
+        headway_period1.add_to_schedule(self.schedule, self.problems)
+        headway_period2.add_to_schedule(self.schedule, self.problems)
+        headway_period3.add_to_schedule(self.schedule, self.problems)
+        headway_period4.add_to_schedule(self.schedule, self.problems)
+        self.trip.validate(self.problems)
+        self.accumulator.AssertNoMoreExceptions()
+        self.trip.clear_frequencies()
 
-  def testOverlappingPeriods(self):
-    # overlapping headway periods
-    headway_period1 = transitfeed.Frequency({'trip_id': '054C-00',
+    def testOverlappingPeriods(self):
+        # overlapping headway periods
+        headway_period1 = transitfeed.Frequency({'trip_id': '054C-00',
                                                  'start_time': '00:00:00',
                                                  'end_time': '12:00:00',
                                                  'headway_secs': 600,
-                                                })
-    headway_period2 = transitfeed.Frequency({'trip_id': '054C-00',
+                                                 })
+        headway_period2 = transitfeed.Frequency({'trip_id': '054C-00',
                                                  'start_time': '06:00:00',
                                                  'end_time': '18:00:00',
                                                  'headway_secs': 1200,
-                                                })
-    headway_period1.add_to_schedule(self.schedule, self.problems)
-    headway_period2.add_to_schedule(self.schedule, self.problems)
-    self.ValidateAndExpectOtherProblem(self.trip)
-    self.trip.clear_frequencies()
-    self.accumulator.AssertNoMoreExceptions()
+                                                 })
+        headway_period1.add_to_schedule(self.schedule, self.problems)
+        headway_period2.add_to_schedule(self.schedule, self.problems)
+        self.ValidateAndExpectOtherProblem(self.trip)
+        self.trip.clear_frequencies()
+        self.accumulator.AssertNoMoreExceptions()
 
-  def testPeriodWithInvalidTripId(self):
-    headway_period1 = transitfeed.Frequency({'trip_id': 'foo',
+    def testPeriodWithInvalidTripId(self):
+        headway_period1 = transitfeed.Frequency({'trip_id': 'foo',
                                                  'start_time': '00:00:00',
                                                  'end_time': '12:00:00',
                                                  'headway_secs': 600,
-                                                })
-    headway_period1.add_to_schedule(self.schedule, self.problems)
-    e = self.accumulator.PopException('InvalidValue')
-    self.assertEqual('trip_id', e.column_name)
-    self.trip.clear_frequencies()
+                                                 })
+        headway_period1.add_to_schedule(self.schedule, self.problems)
+        e = self.accumulator.PopException('InvalidValue')
+        self.assertEqual('trip_id', e.column_name)
+        self.trip.clear_frequencies()
 
-  def testExactTimesStringValueConversion(self):
-    # Test that no exact_times converts to 0
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800"})
-    frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.get_exact_times(), 0)
-    # Test that empty exact_times converts to 0
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": ""})
-    frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.get_exact_times(), 0)
-    # Test that exact_times "0" converts to 0
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": "0"})
-    frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.get_exact_times(), 0)
-    # Test that exact_times "1" converts to 1
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": "1"})
-    frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.get_exact_times(), 1)
-    self.accumulator.AssertNoMoreExceptions()
+    def testExactTimesStringValueConversion(self):
+        # Test that no exact_times converts to 0
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800"})
+        frequency.validate_before_add(self.problems)
+        self.assertEquals(frequency.get_exact_times(), 0)
+        # Test that empty exact_times converts to 0
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": ""})
+        frequency.validate_before_add(self.problems)
+        self.assertEquals(frequency.get_exact_times(), 0)
+        # Test that exact_times "0" converts to 0
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": "0"})
+        frequency.validate_before_add(self.problems)
+        self.assertEquals(frequency.get_exact_times(), 0)
+        # Test that exact_times "1" converts to 1
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": "1"})
+        frequency.validate_before_add(self.problems)
+        self.assertEquals(frequency.get_exact_times(), 1)
+        self.accumulator.AssertNoMoreExceptions()
 
-  def testExactTimesAsIntValue(self):
-    # Test that exact_times None converts to 0
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": None})
-    frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.get_exact_times(), 0)
-    # Test that exact_times 0 remains 0
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": 0})
-    frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.get_exact_times(), 0)
-    # Test that exact_times 1 remains 1
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": 1})
-    frequency.validate_before_add(self.problems)
-    self.assertEquals(frequency.get_exact_times(), 1)
-    self.accumulator.AssertNoMoreExceptions()
+    def testExactTimesAsIntValue(self):
+        # Test that exact_times None converts to 0
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": None})
+        frequency.validate_before_add(self.problems)
+        self.assertEquals(frequency.get_exact_times(), 0)
+        # Test that exact_times 0 remains 0
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": 0})
+        frequency.validate_before_add(self.problems)
+        self.assertEquals(frequency.get_exact_times(), 0)
+        # Test that exact_times 1 remains 1
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": 1})
+        frequency.validate_before_add(self.problems)
+        self.assertEquals(frequency.get_exact_times(), 1)
+        self.accumulator.AssertNoMoreExceptions()
 
-  def testExactTimesInvalidValues(self):
-    # Test that exact_times 15 raises error
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": 15})
-    frequency.validate_before_add(self.problems)
-    self.accumulator.PopInvalidValue("exact_times")
-    self.accumulator.AssertNoMoreExceptions()
-    # Test that exact_times "yes" raises error
-    frequency = transitfeed.Frequency(
-        field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
-                    "end_time": "23:01:00", "headway_secs": "1800",
-                    "exact_times": "yes"})
-    frequency.validate_before_add(self.problems)
-    self.accumulator.PopInvalidValue("exact_times")
-    self.accumulator.AssertNoMoreExceptions()
+    def testExactTimesInvalidValues(self):
+        # Test that exact_times 15 raises error
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": 15})
+        frequency.validate_before_add(self.problems)
+        self.accumulator.PopInvalidValue("exact_times")
+        self.accumulator.AssertNoMoreExceptions()
+        # Test that exact_times "yes" raises error
+        frequency = transitfeed.Frequency(
+            field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
+                        "end_time": "23:01:00", "headway_secs": "1800",
+                        "exact_times": "yes"})
+        frequency.validate_before_add(self.problems)
+        self.accumulator.PopInvalidValue("exact_times")
+        self.accumulator.AssertNoMoreExceptions()

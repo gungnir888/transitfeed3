@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 from .agency import Agency
 from .fareattribute import FareAttribute
 from .farerule import FareRule
@@ -57,45 +56,83 @@ class GtfsFactory:
         }
 
         self._file_mapping = {
-            'agency.txt': {'required': True, 'loading_order': 0,
-                           'classes': ['Agency']},
+            'agency.txt': {
+                'required': True,
+                'loading_order': 0,
+                'classes': ['Agency']
+            },
 
-            'calendar.txt': {'required': False, 'loading_order': None,
-                             'classes': ['ServicePeriod']},
+            'calendar.txt': {
+                'required': False,
+                'loading_order': None,
+                'classes': ['ServicePeriod']
+            },
 
-            'calendar_dates.txt': {'required': False, 'loading_order': None,
-                                   'classes': ['ServicePeriod']},
+            'calendar_dates.txt': {
+                'required': False,
+                'loading_order': None,
+                'classes': ['ServicePeriod']
+            },
 
-            'fare_attributes.txt': {'required': False, 'loading_order': 50,
-                                    'classes': ['FareAttribute']},
+            'fare_attributes.txt': {
+                'required': False,
+                'loading_order': 50,
+                'classes': ['FareAttribute']
+            },
 
-            'fare_rules.txt': {'required': False, 'loading_order': 60,
-                               'classes': ['FareRule']},
+            'fare_rules.txt': {
+                'required': False,
+                'loading_order': 60,
+                'classes': ['FareRule']
+            },
 
-            'feed_info.txt': {'required': False, 'loading_order': 100,
-                              'classes': ['FeedInfo']},
+            'feed_info.txt': {
+                'required': False,
+                'loading_order': 100,
+                'classes': ['FeedInfo']
+            },
 
-            'frequencies.txt': {'required': False, 'loading_order': 70,
-                                'classes': ['Frequency']},
+            'frequencies.txt': {
+                'required': False,
+                'loading_order': 70,
+                'classes': ['Frequency']
+            },
 
-            'shapes.txt': {'required': False, 'loading_order': None,
-                           'classes': ['Shape', 'ShapePoint']},
+            'shapes.txt': {
+                'required': False,
+                'loading_order': None,
+                'classes': ['Shape', 'ShapePoint']
+            },
 
-            'stops.txt': {'required': True, 'loading_order': 10,
-                          'classes': ['Stop']},
+            'stops.txt': {
+                'required': True,
+                'loading_order': 10,
+                'classes': ['Stop']
+            },
 
-            'stop_times.txt': {'required': True, 'loading_order': None,
-                               'classes': ['StopTime']},
+            'stop_times.txt': {
+                'required': True,
+                'loading_order': None,
+                'classes': ['StopTime']
+            },
 
-            'routes.txt': {'required': True, 'loading_order': 20,
-                           'classes': ['Route']},
+            'routes.txt': {
+                'required': True,
+                'loading_order': 20,
+                'classes': ['Route']
+            },
 
-            'transfers.txt': {'required': False, 'loading_order': 30,
-                              'classes': ['Transfer']},
+            'transfers.txt': {
+                'required': False,
+                'loading_order': 30,
+                'classes': ['Transfer']
+            },
 
-            'trips.txt': {'required': True, 'loading_order': 40,
-                          'classes': ['Trip']},
-
+            'trips.txt': {
+                'required': True,
+                'loading_order': 40,
+                'classes': ['Trip']
+            },
         }
 
     def __getattr__(self, name):
@@ -227,7 +264,8 @@ class GtfsFactory:
             raise problems.NonexistentMapping(class_name)
         del self._class_mapping[class_name]
 
-    def get_problem_reporter(self):
+    @staticmethod
+    def get_problem_reporter():
         return problems.ProblemReporter()
 
 

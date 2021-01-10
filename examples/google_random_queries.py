@@ -210,7 +210,7 @@ def main():
     feed_path = args[0]
 
     # ProblemReporter prints problems on console.
-    loader = transitfeed.Loader(feed_path, problems=transitfeed.ProblemReporter(),
+    loader = transitfeed.Loader(feed_path, loader_problems=transitfeed.ProblemReporter(),
                                 load_stop_times=False)
     schedule = loader.load()
     locations = GetRandomLocationsNearStops(schedule)

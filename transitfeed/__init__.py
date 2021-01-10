@@ -54,8 +54,6 @@ Stop object which has attributes such as stop_lat and stop_name.
   time_to_seconds_since_midnight(): Convert HH:MM:SS into seconds since midnight.
   format_seconds_since_midnight(s): Formats number of seconds past midnight into a string
 """
-from __future__ import absolute_import
-
 # util needs to be imported before problems because otherwise the loading order
 # of this module is Agency -> Problems -> Util -> Trip and trip tries to
 # use problems.default_problem_reporter as a default argument (which fails

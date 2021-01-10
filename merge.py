@@ -357,7 +357,7 @@ def LoadWithoutErrors(path, memory_db):
   try:
     schedule = transitfeed.Loader(path,
                                   memory_db=memory_db,
-                                  problems=loading_problem_handler,
+                                  loader_problems=loading_problem_handler,
                                   extra_validation=True).load()
   except transitfeed.ExceptionWithContext as e:
     print((
@@ -469,9 +469,9 @@ class DataSetMerger(object):
       KeyError: Either aaid or baid is not a valid agency id.
     """
     a_agency_id = (a_agency_id or
-                   self.feed_merger.a_schedule.get_default_agency().agency_id)
+                   self.feed_merger.a_schedule.init_default_agency().agency_id)
     b_agency_id = (b_agency_id or
-                   self.feed_merger.b_schedule.get_default_agency().agency_id)
+                   self.feed_merger.b_schedule.init_default_agency().agency_id)
     a_agency = self.feed_merger.a_schedule.get_agency(
         a_agency_id)._migrated_entity
     b_agency = self.feed_merger.b_schedule.get_agency(
@@ -1068,7 +1068,7 @@ class RouteMerger(DataSetMerger):
     if entity.agency_id:
       original_agency = schedule.get_agency(entity.agency_id)
     else:
-      original_agency = schedule.get_default_agency()
+      original_agency = schedule.init_default_agency()
 
     migrated_route.agency_id = original_agency._migrated_entity.agency_id
     return migrated_route
@@ -1294,7 +1294,7 @@ class TransferMerger(DataSetMerger):
     return schedule.get_transfer_iter()
 
   def _GetId(self, transfer):
-    return transfer._id()
+    return transfer.ids()
 
   def _Migrate(self, original_transfer, schedule):
     # Make a copy of the original and then fix the stop_id references.

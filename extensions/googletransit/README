@@ -12,7 +12,7 @@ List of changes to the default behavior:
   - extension of transitfeed.FareAttribute as in the open proposal
     "add agency_id column to fare_attributes.txt" at
     http://groups.google.com/group/gtfs-changes/browse_frm/thread/4e74c23bb1f80480
-  - adds new field 'agency_id' and function ValidateAgencyId()
+  - adds new field 'agency_id' and function validate_agency_id()
 * extensions.googletransit.Route
   - extension of transitfeed.Route as proposed in
     https://sites.google.com/site/gtfschanges/spec-changes-summary#routes and

@@ -13,10 +13,7 @@
 # limitations under the License.
 
 
-from __future__ import absolute_import
-
-
-class GtfsFactoryUser(object):
+class GtfsFactoryUser:
     """Base class for objects that must store a GtfsFactory in order to
        be able to instantiate Gtfs classes.
 

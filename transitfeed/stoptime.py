@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
-
 from . import problems as problems_module
 from .stop import Stop
 from . import util
@@ -42,16 +40,34 @@ class StopTime:
     stop_sequence: int
     timepoint: int
     """
-    _REQUIRED_FIELD_NAMES = ['trip_id', 'arrival_time', 'departure_time',
-                             'stop_id', 'stop_sequence']
-    _OPTIONAL_FIELD_NAMES = ['stop_headsign', 'pickup_type',
-                             'drop_off_type', 'shape_dist_traveled', 'timepoint']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + _OPTIONAL_FIELD_NAMES
-    _DEPRECATED_FIELD_NAMES = []
-    _SQL_FIELD_NAMES = ['trip_id', 'arrival_secs', 'departure_secs',
-                        'stop_id', 'stop_sequence', 'stop_headsign',
-                        'pickup_type', 'drop_off_type', 'shape_dist_traveled',
-                        'timepoint']
+    REQUIRED_FIELD_NAMES = [
+        'trip_id',
+        'arrival_time',
+        'departure_time',
+        'stop_id',
+        'stop_sequence'
+    ]
+    _OPTIONAL_FIELD_NAMES = [
+        'stop_headsign',
+        'pickup_type',
+        'drop_off_type',
+        'shape_dist_traveled',
+        'timepoint'
+    ]
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + _OPTIONAL_FIELD_NAMES
+    DEPRECATED_FIELD_NAMES = []
+    SQL_FIELD_NAMES = [
+        'trip_id',
+        'arrival_secs',
+        'departure_secs',
+        'stop_id',
+        'stop_sequence',
+        'stop_headsign',
+        'pickup_type',
+        'drop_off_type',
+        'shape_dist_traveled',
+        'timepoint'
+    ]
     _STOP_CLASS = Stop
 
     __slots__ = ('arrival_secs', 'departure_secs', 'stop',
@@ -75,10 +91,10 @@ class StopTime:
         #
         # For more details see the discussion at
         # http://codereview.appspot.com/1713041
-        if stop_time != None:
+        if stop_time is not None:
             arrival_time = departure_time = stop_time
 
-        if arrival_secs != None:
+        if arrival_secs is not None:
             self.arrival_secs = arrival_secs
         elif arrival_time in (None, ""):
             self.arrival_secs = None  # Untimed
@@ -90,7 +106,7 @@ class StopTime:
                 problems.invalid_value('arrival_time', arrival_time)
                 self.arrival_secs = None
 
-        if departure_secs != None:
+        if departure_secs is not None:
             self.departure_secs = departure_secs
         elif departure_time in (None, ""):
             self.departure_secs = None
@@ -116,7 +132,7 @@ class StopTime:
             drop_off_type, [0, 1, 2, 3], None, True, 'drop_off_type', problems)
 
         if (self.pickup_type == 1 and self.drop_off_type == 1 and
-                self.arrival_secs == None and self.departure_secs == None):
+                self.arrival_secs is None and self.departure_secs is None):
             problems.other_problem('This stop time has a pickup_type and '
                                    'drop_off_type of 1, indicating that riders '
                                    'can\'t get on or off here.  Since it doesn\'t '
@@ -124,8 +140,9 @@ class StopTime:
                                    'purpose and should be excluded from the trip.',
                                    type=problems_module.TYPE_WARNING)
 
-        if ((self.arrival_secs != None) and (self.departure_secs != None) and
-                (self.departure_secs < self.arrival_secs)):
+        if (self.arrival_secs is None and
+                self.departure_secs is not None and
+                self.departure_secs < self.arrival_secs):
             problems.invalid_value('departure_time', departure_time,
                                    'The departure time at this stop (%s) is before '
                                    'the arrival time (%s).  This is often caused by '
@@ -134,8 +151,8 @@ class StopTime:
 
         # If the caller passed a valid arrival time but didn't attempt to pass a
         # departure time complain
-        if (self.arrival_secs != None and
-                self.departure_secs == None and departure_time == None):
+        if (self.arrival_secs is not None and
+                self.departure_secs is None and departure_time is None):
             # self.departure_secs might be None because departure_time was invalid,
             # so we need to check both
             problems.missing_value('departure_time',
@@ -144,8 +161,8 @@ class StopTime:
                                    'It\'s OK to set them both to the same value.')
         # If the caller passed a valid departure time but didn't attempt to pass a
         # arrival time complain
-        if (self.departure_secs != None and
-                self.arrival_secs == None and arrival_time == None):
+        if (self.departure_secs is not None and
+                self.arrival_secs is None and arrival_time is None):
             problems.missing_value('arrival_time',
                                    'arrival_time and departure_time should either '
                                    'both be provided or both be left blank.  '
@@ -163,7 +180,7 @@ class StopTime:
             self.stop_sequence = stop_sequence
 
     def get_field_values_tuple(self, trip_id):
-        """Return a tuple that outputs a row of _FIELD_NAMES to be written to a
+        """Return a tuple that outputs a row of FIELD_NAMES to be written to a
            GTFS file.
 
         Arguments:
@@ -171,7 +188,7 @@ class StopTime:
                      It must be provided, as it is not stored in StopTime.
         """
         result = []
-        for fn in self._FIELD_NAMES:
+        for fn in self.FIELD_NAMES:
             if fn == 'trip_id':
                 result.append(trip_id)
             else:
@@ -181,7 +198,7 @@ class StopTime:
         return tuple(result)
 
     def get_sql_values_tuple(self, trip_id):
-        """Return a tuple that outputs a row of _FIELD_NAMES to be written to a
+        """Return a tuple that outputs a row of FIELD_NAMES to be written to a
            SQLite database.
 
         Arguments:
@@ -190,7 +207,7 @@ class StopTime:
         """
 
         result = []
-        for fn in self._SQL_FIELD_NAMES:
+        for fn in self.SQL_FIELD_NAMES:
             if fn == 'trip_id':
                 result.append(trip_id)
             else:
@@ -203,9 +220,9 @@ class StopTime:
     def get_time_secs(self):
         """Return the first of arrival_secs and departure_secs that is not None.
         If both are None return None."""
-        if self.arrival_secs != None:
+        if self.arrival_secs is not None:
             return self.arrival_secs
-        elif self.departure_secs != None:
+        elif self.departure_secs is not None:
             return self.departure_secs
         else:
             return None
@@ -214,10 +231,10 @@ class StopTime:
         if name == 'stop_id':
             return self.stop.stop_id
         elif name == 'arrival_time':
-            return (self.arrival_secs != None and
+            return (self.arrival_secs is not None and
                     util.format_seconds_since_midnight(self.arrival_secs) or '')
         elif name == 'departure_time':
-            return (self.departure_secs != None and
+            return (self.departure_secs is not None and
                     util.format_seconds_since_midnight(self.departure_secs) or '')
         elif name == 'shape_dist_traveled':
             return ''

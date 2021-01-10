@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 from .gtfsobjectbase import GtfsObjectBase
 from . import problems as problems_module
 from . import util
@@ -21,14 +20,21 @@ from . import util
 class Route(GtfsObjectBase):
     """Represents a single route."""
 
-    _REQUIRED_FIELD_NAMES = [
-        'route_id', 'route_short_name', 'route_long_name', 'route_type'
+    REQUIRED_FIELD_NAMES = [
+        'route_id',
+        'route_short_name',
+        'route_long_name',
+        'route_type'
     ]
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + [
-        'agency_id', 'route_desc', 'route_url', 'route_color', 'route_text_color',
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + [
+        'agency_id',
+        'route_desc',
+        'route_url',
+        'route_color',
+        'route_text_color',
         'bikes_allowed'
     ]
-    _ROUTE_TYPES = {
+    ROUTE_TYPES = {
         0: {'name': 'Tram', 'max_speed': 100},
         1: {'name': 'Subway', 'max_speed': 150},
         2: {'name': 'Rail', 'max_speed': 300},
@@ -39,8 +45,8 @@ class Route(GtfsObjectBase):
         7: {'name': 'Funicular', 'max_speed': 50},
     }
     # Create a reverse lookup dict of route type names to route types.
-    _ROUTE_TYPE_IDS = set(_ROUTE_TYPES.keys())
-    _ROUTE_TYPE_NAMES = dict((v['name'], k) for k, v in _ROUTE_TYPES.items())
+    _ROUTE_TYPE_IDS = set(ROUTE_TYPES.keys())
+    ROUTE_TYPE_NAMES = dict((v['name'], k) for k, v in ROUTE_TYPES.items())
     _TABLE_NAME = 'routes'
 
     def __init__(self, short_name=None, long_name=None, route_type=None,
@@ -55,8 +61,8 @@ class Route(GtfsObjectBase):
             if long_name is not None:
                 field_dict['route_long_name'] = long_name
             if route_type is not None:
-                if route_type in self._ROUTE_TYPE_NAMES:
-                    self.route_type = self._ROUTE_TYPE_NAMES[route_type]
+                if route_type in self.ROUTE_TYPE_NAMES:
+                    self.route_type = self.ROUTE_TYPE_NAMES[route_type]
                 else:
                     field_dict['route_type'] = route_type
             if route_id is not None:
@@ -93,7 +99,7 @@ class Route(GtfsObjectBase):
         schedule.add_trip_object(trip_obj)
         return trip_obj
 
-    def _add_trip_object(self, trip):
+    def add_trip_object(self, trip):
         # Only class Schedule may call this. Users of the API should call
         # Route.AddTrip or schedule.AddTripObject.
         self._trips.append(trip)

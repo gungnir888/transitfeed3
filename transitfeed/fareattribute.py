@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 from .gtfsobjectbase import GtfsObjectBase
 from .problems import default_problem_reporter
 from . import util
@@ -20,9 +19,14 @@ from . import util
 
 class FareAttribute(GtfsObjectBase):
     """Represents a fare type."""
-    _REQUIRED_FIELD_NAMES = ['fare_id', 'price', 'currency_type',
-                             'payment_method', 'transfers']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ['transfer_duration']
+    REQUIRED_FIELD_NAMES = [
+        'fare_id',
+        'price',
+        'currency_type',
+        'payment_method',
+        'transfers'
+    ]
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + ['transfer_duration']
     _TABLE_NAME = "fare_attributes"
 
     def __init__(self,
@@ -30,10 +34,8 @@ class FareAttribute(GtfsObjectBase):
                  payment_method=None, transfers=None, transfer_duration=None,
                  field_dict=None):
         self._schedule = None
-        (self.fare_id, self.price, self.currency_type, self.payment_method,
-         self.transfers, self.transfer_duration) = \
-            (fare_id, price, currency_type, payment_method,
-             transfers, transfer_duration)
+        self.fare_id, self.price, self.currency_type, self.payment_method, self.transfers, self.transfer_duration = \
+            fare_id, price, currency_type, payment_method, transfers, transfer_duration
 
         if field_dict:
             if isinstance(field_dict, FareAttribute):
@@ -53,14 +55,14 @@ class FareAttribute(GtfsObjectBase):
             self.payment_method = int(self.payment_method)
         except (TypeError, ValueError):
             pass
-        if self.transfers == None or self.transfers == "":
+        if not self.transfers:
             self.transfers = None
         else:
             try:
                 self.transfers = int(self.transfers)
             except (TypeError, ValueError):
                 pass
-        if self.transfer_duration == None or self.transfer_duration == "":
+        if not self.transfer_duration:
             self.transfer_duration = None
         else:
             try:
@@ -75,7 +77,7 @@ class FareAttribute(GtfsObjectBase):
         self.rules = []
 
     def get_field_values_tuple(self):
-        return [getattr(self, fn) for fn in self._FIELD_NAMES]
+        return [getattr(self, fn) for fn in self.FIELD_NAMES]
 
     def __getitem__(self, name):
         return getattr(self, name)
@@ -104,7 +106,7 @@ class FareAttribute(GtfsObjectBase):
             problems.MissingValue("fare_id")
 
     def validate_price(self, problems):
-        if self.price == None:
+        if self.price is None:
             problems.MissingValue("price")
         elif not isinstance(self.price, float) and not isinstance(self.price, int):
             problems.invalid_value("price", self.price)
@@ -118,21 +120,17 @@ class FareAttribute(GtfsObjectBase):
             problems.invalid_value("currency_type", self.currency_type)
 
     def validate_payment_method(self, problems):
-        if self.payment_method == "" or self.payment_method == None:
+        if not self.payment_method:
             problems.MissingValue("payment_method")
-        elif (not isinstance(self.payment_method, int) or
-              self.payment_method not in range(0, 2)):
+        elif not isinstance(self.payment_method, int) or self.payment_method not in range(0, 2):
             problems.InvalidValue("payment_method", self.payment_method)
 
     def validate_transfers(self, problems):
-        if not ((self.transfers == None) or
-                (isinstance(self.transfers, int) and
-                 self.transfers in range(0, 3))):
+        if not ((self.transfers is None) or (isinstance(self.transfers, int) and self.transfers in range(0, 3))):
             problems.InvalidValue("transfers", self.transfers)
 
     def validate_transfer_duration(self, problems):
-        if ((self.transfer_duration != None) and
-                not isinstance(self.transfer_duration, int)):
+        if (self.transfer_duration is not None) and not isinstance(self.transfer_duration, int):
             problems.InvalidValue("transfer_duration", self.transfer_duration)
         if self.transfer_duration and (self.transfer_duration < 0):
             problems.InvalidValue("transfer_duration", self.transfer_duration)

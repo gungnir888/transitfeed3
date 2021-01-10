@@ -29,7 +29,7 @@ class FileParseError(Exception):
         return repr(self.msg)
 
 
-class Bcp47LanguageParser(object):
+class Bcp47LanguageParser:
     """Validates language tags to be well-formed and registered BCP-47 codes. """
 
     def __init__(self):
@@ -62,12 +62,12 @@ class Bcp47LanguageParser(object):
                 accumulated_line_parts.append(line.strip())
             else:
                 if accumulated_line_parts:
-                    yield (' '.join(accumulated_line_parts), line_number)
+                    yield ' '.join(accumulated_line_parts), line_number
                     accumulated_line_parts = [line.strip()]
                 else:
                     accumulated_line_parts = [line.strip()]
         if accumulated_line_parts:
-            yield (' '.join(accumulated_line_parts), line_number)
+            yield ' '.join(accumulated_line_parts), line_number
 
     def _read_language_subtag_registry_file(self):
         # Load the entries from the registry file in this package.
@@ -76,11 +76,11 @@ class Bcp47LanguageParser(object):
         first_line, line_number = next(line_iterator)
         if not first_line[:11] == 'File-Date: ':
             raise FileParseError(line_number,
-                                 "Invalid first line '%s'! Must be a File-Date record." % (first_line))
+                                 "Invalid first line '%s'! Must be a File-Date record." % first_line)
         second_line, line_number = next(line_iterator)
         if not second_line == '%%':
             raise FileParseError(line_number,
-                                 "Invalid first record '%s'! Must start with '%%%%'." % (second_line))
+                                 "Invalid first record '%s'! Must start with '%%%%'." % second_line)
         # Read the (Sub)tag records.
         current_type = None
         current_tag = None
@@ -88,9 +88,11 @@ class Bcp47LanguageParser(object):
         current_prefixes = []
         for line, line_number in line_iterator:
             if line == '%%':
-                self._add_subtag_from_registry_file(current_type, current_tag,
-                                                current_descriptions, current_prefixes,
-                                                line_number)
+                self._add_subtag_from_registry_file(
+                    current_type, current_tag,
+                    current_descriptions, current_prefixes,
+                    line_number
+                )
                 current_type = None
                 current_tag = None
                 current_descriptions = []
@@ -103,18 +105,18 @@ class Bcp47LanguageParser(object):
                 continue
             if len(line_parts) != 2:
                 raise FileParseError(line_number,
-                                     "Invalid line %s in registry file!" % (line))
+                                     "Invalid line %s in registry file!" % line)
 
             line_key, line_value = line_parts
             if line_key == 'Type':
                 if current_type:
                     raise FileParseError(line_number,
-                                         "Duplicate Type for (Sub)tag %s" % (current_tag))
+                                         "Duplicate Type for (Sub)tag %s" % current_tag)
                 current_type = line_value.lower()
             elif line_key == 'Subtag' or line_key == 'Tag':
                 if current_tag:
                     raise FileParseError(line_number,
-                                         "Duplicate (Sub)tag %s" % (current_tag))
+                                         "Duplicate (Sub)tag %s" % current_tag)
                 current_tag = line_value.lower()
             elif line_key == 'Description':
                 current_descriptions.append(line_value)
@@ -129,9 +131,11 @@ class Bcp47LanguageParser(object):
 
         # The last record does not get terminated by the '%%' preceding the next
         # record. So we have to add it after the 'for' loop.
-        self._add_subtag_from_registry_file(current_type, current_tag,
-                                        current_descriptions, current_prefixes,
-                                        line_number)
+        self._add_subtag_from_registry_file(
+            current_type, current_tag,
+            current_descriptions, current_prefixes,
+            line_number
+        )
 
     @staticmethod
     def int_str26to_int(int_str):
@@ -148,7 +152,7 @@ class Bcp47LanguageParser(object):
             current_descriptions, current_prefixes, line_number):
         if not current_descriptions:
             raise FileParseError(line_number,
-                                 "Missing Description(s) for (Sub)tag %s" % (current_tag))
+                                 "Missing Description(s) for (Sub)tag %s" % current_tag)
         current_description = ', '.join(current_descriptions)
 
         if not current_tag:
@@ -261,7 +265,7 @@ class Bcp47LanguageParser(object):
             return True
 
     def parse_language(self, lang_code):
-        lang_obj = bcp47_language_object(lang_code)
+        lang_obj = Bcp47LanguageObject(lang_code)
 
         if not self.is_well_formed(lang_code):
             return lang_obj
@@ -344,7 +348,7 @@ class Bcp47LanguageParser(object):
         return lang_obj.update(None, True, True)
 
     def parse_iso639_1_language(self, lang_code):
-        lang_obj = bcp47_language_object(lang_code)
+        lang_obj = Bcp47LanguageObject(lang_code)
 
         lang_code = lang_code.lower()
         if len(lang_code) == 2:
@@ -357,7 +361,7 @@ class Bcp47LanguageParser(object):
         return lang_obj
 
 
-class bcp47_language_object(object):
+class Bcp47LanguageObject:
     def __init__(self, lang_code):
         self.lang_code = lang_code
         self.descriptions = []

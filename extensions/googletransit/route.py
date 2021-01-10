@@ -26,9 +26,9 @@ class Route(transitfeed.Route):
       at http://groups.google.com/group/gtfs-changes/msg/ed917a69cf8c5bef
     """
 
-    _FIELD_NAMES = transitfeed.Route._FIELD_NAMES + ['co2_per_km']
+    FIELD_NAMES = transitfeed.Route.FIELD_NAMES + ['co2_per_km']
 
-    _ROUTE_TYPES = dict(transitfeed.Route._ROUTE_TYPES.items() + {
+    ROUTE_TYPES = dict(transitfeed.Route.ROUTE_TYPES.items() + {
         8: {'name': 'Horse Carriage', 'max_speed': 50},
         9: {'name': 'Intercity Bus', 'max_speed': 120},
         10: {'name': 'Commuter Train', 'max_speed': 150},
@@ -73,8 +73,8 @@ class Route(transitfeed.Route):
         1702: {'name': 'HorseDrawnCarriage', 'max_speed': 50}
     }.items())
 
-    _ROUTE_TYPE_IDS = set(_ROUTE_TYPES.keys())
-    # _ROUTE_TYPE_NAMES is not getting updated as we should not continue to allow
+    _ROUTE_TYPE_IDS = set(ROUTE_TYPES.keys())
+    # ROUTE_TYPE_NAMES is not getting updated as we should not continue to allow
     # reverse lookup by name. The new non GTFS route types are only valid as int.
 
     co2_per_km = None

@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
-import bisect
 from .gtfsobjectbase import GtfsObjectBase
 from . import problems as problems_module
 from . import util
-import sys
 
 
 class ShapePoint(GtfsObjectBase):
@@ -30,9 +27,13 @@ class ShapePoint(GtfsObjectBase):
       shape_pt_sequence: represents the sequence of the point
       shape_dist_traveled: represents the distance of the point
     """
-    _REQUIRED_FIELD_NAMES = ['shape_id', 'shape_pt_lat', 'shape_pt_lon',
-                             'shape_pt_sequence']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ['shape_dist_traveled']
+    REQUIRED_FIELD_NAMES = [
+        'shape_id',
+        'shape_pt_lat',
+        'shape_pt_lon',
+        'shape_pt_sequence'
+    ]
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + ['shape_dist_traveled']
 
     def __init__(self, shape_id=None, lat=None, lon=None, seq=None, dist=None,
                  field_dict=None):

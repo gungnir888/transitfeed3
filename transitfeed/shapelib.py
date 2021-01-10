@@ -1,4 +1,3 @@
-#!/usr/bin/python2.4
 #
 # Copyright 2007 Google Inc. All Rights Reserved.
 #
@@ -28,16 +27,21 @@ are relatively close together on the surface of the earth, this
 is adequate; for other purposes, this library may not be accurate
 enough.
 """
-from __future__ import print_function
 
 __author__ = 'chris.harrelson.code@gmail.com (Chris Harrelson)'
 
-import copy
-import decimal
 import heapq
 import math
 
 from transitfeed import cmp
+
+
+def path_to_str(start, end, path):
+    return "  Best path %s -> %s: %s".format(
+        str(start.to_lat_lng()),
+        str(end.to_lat_lng()),
+        path and path.get_name() or "None"
+    )
 
 
 class ShapeError(Exception):
@@ -74,8 +78,8 @@ class Point(object):
         """
         Returns the L_2 (Euclidean) norm of self.
         """
-        sum = self.x * self.x + self.y * self.y + self.z * self.z
-        return math.sqrt(float(sum))
+        summed = self.x * self.x + self.y * self.y + self.z * self.z
+        return math.sqrt(float(summed))
 
     def is_unit_length(self):
         return abs(self.norm2() - 1.0) < 1e-14
@@ -137,14 +141,14 @@ class Point(object):
         """
         if abs(self.x) > abs(self.y):
             if abs(self.x) > abs(self.z):
-                return (0, self.x)
+                return 0, self.x
             else:
-                return (2, self.z)
+                return 2, self.z
         else:
             if abs(self.y) > abs(self.z):
-                return (1, self.y)
+                return 1, self.y
             else:
-                return (2, self.z)
+                return 2, self.z
 
     def ortho(self):
         """Returns a unit-length point orthogonal to this point"""
@@ -196,7 +200,7 @@ class Point(object):
         """
         rad_lat = math.atan2(self.z, math.sqrt(self.x * self.x + self.y * self.y))
         rad_lng = math.atan2(self.y, self.x)
-        return (rad_lat * 180.0 / math.pi, rad_lng * 180.0 / math.pi)
+        return rad_lat * 180.0 / math.pi, rad_lng * 180.0 / math.pi
 
     @staticmethod
     def from_lat_lng(lat, lng):
@@ -248,12 +252,12 @@ def get_closest_point(x, a, b):
         return b
 
 
-class Poly(object):
+class Poly:
     """
     A class representing a polyline.
     """
 
-    def __init__(self, points=[], name=None):
+    def __init__(self, points=None, name=None):
         self._points = list(points)
         self._name = name
 
@@ -276,7 +280,7 @@ class Poly(object):
     def get_num_points(self):
         return len(self._points)
 
-    def _get_point_safe(self, i):
+    def get_point_safe(self, i):
         try:
             return self.get_point(i)
         except IndexError:
@@ -300,7 +304,7 @@ class Poly(object):
                 closest_point = cur_closest_point.normalize()
                 closest_i = i
 
-        return (closest_point, closest_i)
+        return closest_point, closest_i
 
     def length_meters(self):
         """Return length of this polyline in meters."""
@@ -362,9 +366,9 @@ class Poly(object):
             first_poly = polys[0]
             for p in first_poly.get_points():
                 merged.add_point(p)
-            last_point = merged._get_point_safe(-1)
+            last_point = merged.get_point_safe(-1)
             for poly in polys[1:]:
-                first_point = poly._get_point_safe(0)
+                first_point = poly.get_point_safe(0)
                 if (last_point and first_point and
                         last_point.get_distance_meters(first_point) <= merge_point_threshold):
                     points = poly.get_points()[1:]
@@ -372,7 +376,7 @@ class Poly(object):
                     points = poly.get_points()
                 for p in points:
                     merged.add_point(p)
-                last_point = merged._get_point_safe(-1)
+                last_point = merged.get_point_safe(-1)
         return merged
 
     def __str__(self):
@@ -381,12 +385,12 @@ class Poly(object):
     def to_lat_lng_string(self):
         return self._to_string(lambda p: str(p.to_lat_lng()))
 
-    def _to_string(self, pointToStringFn):
+    def _to_string(self, point_to_string_fn):
         return "%s: %s" % (self.get_name() or "",
-                           ", ".join([pointToStringFn(p) for p in self._points]))
+                           ", ".join([point_to_string_fn(p) for p in self._points]))
 
 
-class PolyCollection(object):
+class PolyCollection:
     """
     A class representing a collection of polylines.
     """
@@ -422,7 +426,7 @@ class PolyCollection(object):
         within max_radius of the given start and end points.
         """
         matches = []
-        for shape in self._name_to_shape.itervalues():
+        for shape in self._name_to_shape.values():
             if start_point.get_distance_meters(shape.get_point(0)) < max_radius and \
                     end_point.get_distance_meters(shape.get_point(-1)) < max_radius:
                 matches.append(shape)
@@ -449,7 +453,7 @@ class PolyGraph(PolyCollection):
         if point in self._nodes:
             self._nodes[point].add(edge)
         else:
-            self._nodes[point] = set([edge])
+            self._nodes[point] = {edge}
 
     def shortest_path(self, start, goal):
         """Uses the A* algorithm to find a shortest path between start and goal.
@@ -478,7 +482,7 @@ class PolyGraph(PolyCollection):
         assert goal in self._nodes
         closed_set = set()  # Set of nodes already evaluated.
         open_heap = [(0, start)]  # Nodes to visit, heapified by f(x).
-        open_set = set([start])  # Same as open_heap, but a set instead of a heap.
+        open_set = {start}  # Same as open_heap, but a set instead of a heap.
         g_scores = {start: 0}  # Distance from start along optimal path
         came_from = {}  # Map to reconstruct optimal path once we're done.
         while open_set:
@@ -548,7 +552,7 @@ class PolyGraph(PolyCollection):
         paths_found = []  # A heap sorted by inverse path length.
 
         for i, point in enumerate(points):
-            nearby = [p for p in self._nodes.iterkeys()
+            nearby = [p for p in self._nodes.keys()
                       if p.get_distance_meters(point) < max_radius]
             if verbosity >= 2:
                 print("Nearby points for point %d %s: %s"
@@ -561,15 +565,10 @@ class PolyGraph(PolyCollection):
                 print("No nearby points found for point %s" % str(point.to_lat_lng()))
                 return None
 
-        pathToStr = lambda start, end, path: ("  Best path %s -> %s: %s"
-                                              % (str(start.to_lat_lng()),
-                                                 str(end.to_lat_lng()),
-                                                 path and path.get_name() or
-                                                 "None"))
         if verbosity >= 3:
             print("Step 1")
-        step = 2
 
+        step = 2
         start_points = nearby_points[0]
         end_points = nearby_points[1]
 
@@ -577,7 +576,7 @@ class PolyGraph(PolyCollection):
             for end in end_points:
                 path = self.shortest_path(start, end)
                 if verbosity >= 3:
-                    print(pathToStr(start, end, path))
+                    print(path_to_str(start, end, path))
                 PolyGraph._add_path_to_heap(paths_found, path, keep_best_n)
 
         for possible_points in nearby_points[2:]:
@@ -595,7 +594,7 @@ class PolyGraph(PolyCollection):
                     else:
                         new_segment = self.shortest_path(start, end)
                         if verbosity >= 3:
-                            print(pathToStr(start, end, new_segment))
+                            print(path_to_str(start, end, new_segment))
                         start_end_paths[(start, end)] = new_segment
 
                     if new_segment:

@@ -28,16 +28,16 @@ class ServicePeriod:
         'monday', 'tuesday', 'wednesday', 'thursday', 'friday',
         'saturday', 'sunday'
     ]
-    _REQUIRED_FIELD_NAMES = [
+    REQUIRED_FIELD_NAMES = [
                                 'service_id', 'start_date', 'end_date'
                             ] + _DAYS_OF_WEEK
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES  # no optional fields in this one
-    _DEPRECATED_FIELD_NAMES = []  # no deprecated fields so far
-    _REQUIRED_FIELD_NAMES_CALENDAR_DATES = ['service_id', 'date',
+    FIELD_NAMES = REQUIRED_FIELD_NAMES  # no optional fields in this one
+    DEPRECATED_FIELD_NAMES = []  # no deprecated fields so far
+    _REQUIREDFIELD_NAMES_CALENDAR_DATES = ['service_id', 'date',
                                             'exception_type']
-    _FIELD_NAMES_CALENDAR_DATES = \
-        _REQUIRED_FIELD_NAMES_CALENDAR_DATES  # no optional fields in this one
-    _DEPRECATED_FIELD_NAMES_CALENDAR_DATES = []  # no deprecated fields so far
+    FIELD_NAMES_CALENDAR_DATES = \
+        _REQUIREDFIELD_NAMES_CALENDAR_DATES  # no optional fields in this one
+    _DEPRECATEDFIELD_NAMES_CALENDAR_DATES = []  # no deprecated fields so far
 
     _VALID_DATE_RANGE_FROM = 1900
     _VALID_DATE_RANGE_TO = 2100
@@ -48,16 +48,16 @@ class ServicePeriod:
     def __init__(self, id=None, field_list=None):
         self.original_day_values = []
         if field_list:
-            self.service_id = field_list[self._FIELD_NAMES.index('service_id')]
+            self.service_id = field_list[self.FIELD_NAMES.index('service_id')]
             self.day_of_week = [False] * len(self._DAYS_OF_WEEK)
 
             for day in self._DAYS_OF_WEEK:
-                value = field_list[self._FIELD_NAMES.index(day)] or ''  # can be None
+                value = field_list[self.FIELD_NAMES.index(day)] or ''  # can be None
                 self.original_day_values += [value.strip()]
                 self.day_of_week[self._DAYS_OF_WEEK.index(day)] = (value == u'1')
 
-            self.start_date = field_list[self._FIELD_NAMES.index('start_date')]
-            self.end_date = field_list[self._FIELD_NAMES.index('end_date')]
+            self.start_date = field_list[self.FIELD_NAMES.index('start_date')]
+            self.end_date = field_list[self.FIELD_NAMES.index('end_date')]
         else:
             self.service_id = id
             self.day_of_week = [False] * 7
@@ -106,13 +106,13 @@ class ServicePeriod:
         """Return the tuple of calendar.txt values or None if this ServicePeriod
         should not be in calendar.txt ."""
         if self.start_date and self.end_date:
-            return [getattr(self, fn) for fn in self._FIELD_NAMES]
+            return [getattr(self, fn) for fn in self.FIELD_NAMES]
 
     def generate_calendar_dates_field_values_tuples(self):
         """Generates tuples of calendar_dates.txt values. Yield zero tuples if
         this ServicePeriod should not be in calendar_dates.txt ."""
         for date, (exception_type, _) in self.date_exceptions.items():
-            yield (self.service_id, date, str(exception_type))
+            yield self.service_id, date, str(exception_type)
 
     def get_calendar_dates_field_values_tuples(self):
         """Return a list of date execeptions"""
@@ -128,7 +128,7 @@ class ServicePeriod:
                                   (self.service_id, date),
                                   type=problems_module.TYPE_WARNING)
         exception_context_tuple = (has_service and self._EXCEPTION_TYPE_ADD or
-                                   self._EXCEPTION_TYPE_REMOVE, problems != None and
+                                   self._EXCEPTION_TYPE_REMOVE, problems is not None and
                                    problems.get_file_context() or None)
         self.date_exceptions[date] = exception_context_tuple
 
@@ -201,7 +201,7 @@ class ServicePeriod:
                        costly conversion from string to date object.
 
         Returns:
-          True iff this service is active on date.
+          True if this service is active on date.
         """
         if date in self.date_exceptions:
             exception_type, _ = self.date_exceptions[date]
@@ -209,8 +209,7 @@ class ServicePeriod:
                 return True
             else:
                 return False
-        if (self.start_date and self.end_date and self.start_date <= date and
-                date <= self.end_date):
+        if self.start_date and self.end_date and self.start_date <= date <= self.end_date:
             if date_object is None:
                 date_object = util.date_string_to_date_object(date)
             return self.day_of_week[date_object.weekday()]

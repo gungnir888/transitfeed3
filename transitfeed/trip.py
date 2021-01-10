@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import warnings
 
 from .gtfsobjectbase import GtfsObjectBase
@@ -21,8 +20,8 @@ from . import util
 
 
 class Trip(GtfsObjectBase):
-    _REQUIRED_FIELD_NAMES = ['route_id', 'service_id', 'trip_id']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + [
+    REQUIRED_FIELD_NAMES = ['route_id', 'service_id', 'trip_id']
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + [
         'trip_headsign', 'trip_short_name', 'direction_id', 'block_id', 'shape_id',
         'bikes_allowed', 'wheelchair_accessible', 'original_trip_id'
     ]
@@ -53,13 +52,15 @@ class Trip(GtfsObjectBase):
         self.__dict__.update(field_dict)
 
     def get_field_values_tuple(self):
-        return [getattr(self, fn) or '' for fn in self._FIELD_NAMES]
+        return [getattr(self, fn) or '' for fn in self.FIELD_NAMES]
 
     def add_stop_time(self, stop, problems=None, schedule=None, **kwargs):
         """Add a stop to this trip. Stops must be added in the order visited.
 
         Args:
           stop: A Stop object
+          problems: Problems object
+          schedule: Schedule object
           kwargs: remaining keyword args passed to StopTime.__init__
 
         Returns:
@@ -70,7 +71,7 @@ class Trip(GtfsObjectBase):
             # ProblemReporter
             problems = problems_module.default_problem_reporter
         stoptime = self.get_gtfs_factory().StopTime(
-            problems=problems, stop=stop, **kwargs)
+            loader_problems=problems, stop=stop, **kwargs)
         self.add_stop_time_object(stoptime, schedule)
 
     def _add_stop_time_object_unordered(self, stoptime, schedule):
@@ -79,11 +80,10 @@ class Trip(GtfsObjectBase):
         The trip isn't checked for duplicate sequence numbers so it must be
         validated later."""
         stop_time_class = self.get_gtfs_factory().StopTime
-        cursor = schedule._connection.cursor()
         insert_query = "INSERT INTO stop_times (%s) VALUES (%s);" % (
-            ','.join(stop_time_class._SQL_FIELD_NAMES),
-            ','.join(['?'] * len(stop_time_class._SQL_FIELD_NAMES)))
-        cursor = schedule._connection.cursor()
+            ','.join(stop_time_class.SQL_FIELD_NAMES),
+            ','.join(['?'] * len(stop_time_class.SQL_FIELD_NAMES)))
+        cursor = schedule.connection.cursor()
         cursor.execute(
             insert_query, stoptime.get_sql_values_tuple(self.trip_id))
 
@@ -97,8 +97,8 @@ class Trip(GtfsObjectBase):
         if schedule is None:
             schedule = self._schedule
 
-        new_secs = stoptime.get_time_secs()
-        cursor = schedule._connection.cursor()
+        #  new_secs = stoptime.get_time_secs() TODO: Unused, what is that for?
+        cursor = schedule.connection.cursor()
         cursor.execute("DELETE FROM stop_times WHERE trip_id=? and "
                        "stop_sequence=? and stop_id=?",
                        (self.trip_id, stoptime.stop_sequence, stoptime.stop_id))
@@ -113,8 +113,7 @@ class Trip(GtfsObjectBase):
           stoptime: A StopTime object. Should not be reused in multiple trips.
           schedule: Schedule object containing this trip which must be
           passed to Trip.__init__ or here
-          problems: ProblemReporter object for validating the StopTime in its new
-          home
+          problems: ProblemReporter object for validating the StopTime in its new home
 
         Returns:
           None
@@ -128,7 +127,7 @@ class Trip(GtfsObjectBase):
             problems = schedule.problem_reporter
 
         new_secs = stoptime.get_time_secs()
-        cursor = schedule._connection.cursor()
+        cursor = schedule.connection.cursor()
         cursor.execute("SELECT max(stop_sequence), max(arrival_secs), "
                        "max(departure_secs) FROM stop_times WHERE trip_id=?",
                        (self.trip_id,))
@@ -136,13 +135,13 @@ class Trip(GtfsObjectBase):
         if row[0] is None:
             # This is the first stop_time of the trip
             stoptime.stop_sequence = 1
-            if new_secs == None:
+            if new_secs is None:
                 problems.other_problem(
                     'No time for first StopTime of trip_id "%s"' % (self.trip_id,))
         else:
             stoptime.stop_sequence = row[0] + 1
             prev_secs = max(row[1], row[2])
-            if new_secs != None and new_secs < prev_secs:
+            if new_secs is not None and new_secs < prev_secs:
                 problems.other_problem(
                     'out of order stop time for stop_id=%s trip_id=%s %s < %s' %
                     (stoptime.stop_id,
@@ -161,7 +160,7 @@ class Trip(GtfsObjectBase):
 
     def get_count_stop_times(self):
         """Return the number of stops made by this trip."""
-        cursor = self._schedule._connection.cursor()
+        cursor = self._schedule.connection.cursor()
         cursor.execute(
             'SELECT count(*) FROM stop_times WHERE trip_id=?', (self.trip_id,))
         return cursor.fetchone()[0]
@@ -185,7 +184,7 @@ class Trip(GtfsObjectBase):
             return []
         if (stoptimes[0].get_time_secs() is None or
                 stoptimes[-1].get_time_secs() is None):
-            raise ValueError("%s must have time at first and last stop" % (self))
+            raise ValueError("%s must have time at first and last stop" % self)
 
         cur_timepoint = None
         next_timepoint = None
@@ -193,7 +192,7 @@ class Trip(GtfsObjectBase):
         distance_traveled_between_timepoints = 0
 
         for i, st in enumerate(stoptimes):
-            if st.get_time_secs() != None:
+            if st.get_time_secs() is not None:
                 cur_timepoint = st
                 distance_between_timepoints = 0
                 distance_traveled_between_timepoints = 0
@@ -201,7 +200,7 @@ class Trip(GtfsObjectBase):
                     k = i + 1
                     distance_between_timepoints += util.approximate_distance_between_stops(stoptimes[k - 1].stop,
                                                                                            stoptimes[k].stop)
-                    while stoptimes[k].get_time_secs() == None:
+                    while stoptimes[k].get_time_secs() is None:
                         k += 1
                         distance_between_timepoints += util.approximate_distance_between_stops(stoptimes[k - 1].stop,
                                                                                                stoptimes[k].stop)
@@ -223,14 +222,14 @@ class Trip(GtfsObjectBase):
         StopTime objects previously returned by GetStopTimes are unchanged but are
         no longer associated with this trip.
         """
-        cursor = self._schedule._connection.cursor()
+        cursor = self._schedule.connection.cursor()
         cursor.execute('DELETE FROM stop_times WHERE trip_id=?', (self.trip_id,))
 
     def get_stop_times(self, problems=None):
         """Return a sorted list of StopTime objects for this trip."""
         # In theory problems=None should be safe because data from database has been
         # validated. See comment in _LoadStopTimes for why this isn't always true.
-        cursor = self._schedule._connection.cursor()
+        cursor = self._schedule.connection.cursor()
         cursor.execute(
             'SELECT arrival_secs,departure_secs,stop_headsign,pickup_type,'
             'drop_off_type,shape_dist_traveled,stop_id,stop_sequence,timepoint '
@@ -283,21 +282,22 @@ class Trip(GtfsObjectBase):
             # go through the pattern and generate stoptimes
             for st in stoptime_pattern:
                 arrival_secs, departure_secs = None, None  # default value if the stoptime is not timepoint
-                if st.arrival_secs != None:
+                if st.arrival_secs is not None:
                     arrival_secs = st.arrival_secs - first_secs + run_secs
-                if st.departure_secs != None:
+                if st.departure_secs is not None:
                     departure_secs = st.departure_secs - first_secs + run_secs
                 # append stoptime
-                stoptimes.append(stoptime_class(problems=problems, stop=st.stop,
-                                                arrival_secs=arrival_secs,
-                                                departure_secs=departure_secs,
-                                                stop_headsign=st.stop_headsign,
-                                                pickup_type=st.pickup_type,
-                                                drop_off_type=st.drop_off_type,
-                                                shape_dist_traveled= \
-                                                    st.shape_dist_traveled,
-                                                stop_sequence=st.stop_sequence,
-                                                timepoint=st.timepoint))
+                stoptimes.append(stoptime_class(
+                    problems=problems, stop=st.stop,
+                    arrival_secs=arrival_secs,
+                    departure_secs=departure_secs,
+                    stop_headsign=st.stop_headsign,
+                    pickup_type=st.pickup_type,
+                    drop_off_type=st.drop_off_type,
+                    shape_dist_traveled=st.shape_dist_traveled,
+                    stop_sequence=st.stop_sequence,
+                    timepoint=st.timepoint
+                ))
             # add stoptimes to the stoptimes_list
             stoptimes_list.append(stoptimes)
         return stoptimes_list
@@ -305,14 +305,14 @@ class Trip(GtfsObjectBase):
     def get_start_time(self, problems=problems_module.default_problem_reporter):
         """Return the first time of the trip. TODO: For trips defined by frequency
         return the first time of the first trip."""
-        cursor = self._schedule._connection.cursor()
+        cursor = self._schedule.connection.cursor()
         cursor.execute(
             'SELECT arrival_secs,departure_secs FROM stop_times WHERE '
             'trip_id=? ORDER BY stop_sequence LIMIT 1', (self.trip_id,))
         (arrival_secs, departure_secs) = cursor.fetchone()
-        if arrival_secs != None:
+        if arrival_secs is not None:
             return arrival_secs
-        elif departure_secs != None:
+        elif departure_secs is not None:
             return departure_secs
         else:
             problems.InvalidValue('departure_time', '',
@@ -347,21 +347,21 @@ class Trip(GtfsObjectBase):
     def get_end_time(self, problems=problems_module.default_problem_reporter):
         """Return the last time of the trip. TODO: For trips defined by frequency
         return the last time of the last trip."""
-        cursor = self._schedule._connection.cursor()
+        cursor = self._schedule.connection.cursor()
         cursor.execute(
             'SELECT arrival_secs,departure_secs FROM stop_times WHERE '
             'trip_id=? ORDER BY stop_sequence DESC LIMIT 1', (self.trip_id,))
         (arrival_secs, departure_secs) = cursor.fetchone()
-        if departure_secs != None:
+        if departure_secs is not None:
             return departure_secs
-        elif arrival_secs != None:
+        elif arrival_secs is not None:
             return arrival_secs
         else:
             problems.InvalidValue('arrival_time', '',
                                   'The last stop_time in trip %s is missing '
                                   'times.' % self.trip_id)
 
-    def _generate_stop_times_tuples(self):
+    def generate_stop_times_tuples(self):
         """Generator for rows of the stop_times file"""
         stoptimes = self.get_stop_times()
         for i, st in enumerate(stoptimes):
@@ -369,7 +369,7 @@ class Trip(GtfsObjectBase):
 
     def get_stop_times_tuples(self):
         results = []
-        for time_tuple in self._generate_stop_times_tuples():
+        for time_tuple in self.generate_stop_times_tuples():
             results.append(time_tuple)
         return results
 
@@ -385,14 +385,16 @@ class Trip(GtfsObjectBase):
                       "accordingly.", DeprecationWarning)
         self.add_frequency_object(frequency, problem_reporter)
 
-    def add_frequency_object(self, frequency, problem_reporter):
+    def add_frequency_object(self, frequency_obj, problem_reporter):
         """Add a Frequency object to this trip's list of Frequencies."""
-        if frequency is not None:
-            self.add_frequency(frequency.get_start_time(),
-                               frequency.get_end_time(),
-                               frequency.get_headway_secs(),
-                               frequency.get_exact_times(),
-                               problem_reporter)
+        if frequency_obj is not None:
+            self.add_frequency(
+                frequency_obj.get_start_time(),
+                frequency_obj.get_end_time(),
+                frequency_obj.get_headway_secs(),
+                frequency_obj.get_exact_times(),
+                problem_reporter
+            )
 
     def add_headway_period(self, start_time, end_time, headway_secs,
                            problem_reporter=problems_module.default_problem_reporter):
@@ -422,7 +424,7 @@ class Trip(GtfsObjectBase):
         Returns:
           None
         """
-        if start_time == None or start_time == '':  # 0 is OK
+        if start_time is None or start_time == '':  # 0 is OK
             problem_reporter.MissingValue('start_time')
             return
         if isinstance(start_time, str):
@@ -434,7 +436,7 @@ class Trip(GtfsObjectBase):
         elif start_time < 0:
             problem_reporter.InvalidValue('start_time', start_time)
 
-        if end_time == None or end_time == '':
+        if end_time is None or end_time == '':
             problem_reporter.MissingValue('end_time')
             return
         if isinstance(end_time, str):
@@ -575,7 +577,7 @@ class Trip(GtfsObjectBase):
             self.validate_children(problems)
 
     def validate_no_duplicate_stop_sequences(self, problems):
-        cursor = self._schedule._connection.cursor()
+        cursor = self._schedule.connection.cursor()
         cursor.execute("SELECT COUNT(stop_sequence) AS a, stop_sequence "
                        "FROM stop_times "
                        "WHERE trip_id=? GROUP BY stop_sequence HAVING a > 1",
@@ -589,10 +591,10 @@ class Trip(GtfsObjectBase):
         if stoptimes:
             if stoptimes[0].arrival_time is None and stoptimes[0].departure_time is None:
                 problems.other_problem(
-                    'No time for start of trip_id "%s""' % (self.trip_id))
+                    'No time for start of trip_id "%s""' % self.trip_id)
             if stoptimes[-1].arrival_time is None and stoptimes[-1].departure_time is None:
                 problems.other_problem(
-                    'No time for end of trip_id "%s""' % (self.trip_id))
+                    'No time for end of trip_id "%s""' % self.trip_id)
 
     def validate_stop_times_sequence_has_increasing_time_and_distance(self,
                                                                       problems,
@@ -606,11 +608,11 @@ class Trip(GtfsObjectBase):
             prev_distance = None
             try:
                 route_type = self._schedule.get_route(self.route_id).route_type
-                max_speed = route_class._ROUTE_TYPES[route_type]['max_speed']
-            except KeyError as e:
+                max_speed = route_class.ROUTE_TYPES[route_type]['max_speed']
+            except KeyError:
                 # If route_type cannot be found, assume it is 0 (Tram) for checking
                 # speeds between stops.
-                max_speed = route_class._ROUTE_TYPES[0]['max_speed']
+                max_speed = route_class.ROUTE_TYPES[0]['max_speed']
             for timepoint in stoptimes:
                 # Distance should be a nonnegative float number, so it should be
                 # always larger than None.
@@ -620,15 +622,15 @@ class Trip(GtfsObjectBase):
                         prev_distance = distance
                     else:
                         if distance == prev_distance:
-                            type = problems_module.TYPE_WARNING
+                            problem_type = problems_module.TYPE_WARNING
                         else:
-                            type = problems_module.TYPE_ERROR
+                            problem_type = problems_module.TYPE_ERROR
                         problems.InvalidValue('stoptimes.shape_dist_traveled', distance,
                                               'For the trip %s the stop %s has shape_dist_traveled=%s, '
                                               'which should be larger than the previous ones. In this '
                                               'case, the previous distance was %s.' %
                                               (self.trip_id, timepoint.stop_id, distance, prev_distance),
-                                              type=type)
+                                              type=problem_type)
 
                 if timepoint.arrival_secs is not None:
                     self._check_speed(prev_stop, timepoint.stop, prev_departure,
@@ -667,7 +669,7 @@ class Trip(GtfsObjectBase):
             if self.shape_id and self.shape_id in self._schedule._shapes:
                 shape = self._schedule.get_shape(self.shape_id)
                 max_shape_dist = shape.max_distance
-                st = stoptimes[-1]
+                #  st = stoptimes[-1] TODO: Unused, what is that for?
                 # shape_dist_traveled is valid in shape if max_shape_dist larger than 0.
                 if max_shape_dist > 0:
                     for st in stoptimes:
@@ -721,7 +723,7 @@ class Trip(GtfsObjectBase):
     def _check_speed(self, prev_stop, next_stop, depart_time,
                      arrive_time, max_speed, problems):
         # Checks that the speed between two stops is not faster than max_speed
-        if prev_stop != None:
+        if prev_stop is not None:
             try:
                 time_between_stops = arrive_time - depart_time
             except TypeError:

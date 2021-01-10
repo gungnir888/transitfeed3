@@ -586,7 +586,7 @@ def run_validation(feed, options, problems):
     print('validating %s' % feed)
     print('FeedValidator extension used: %s' % options.extension)
     loader = gtfs_factory.Loader(
-        feed, problems=problems, extra_validation=False,
+        feed, loader_problems=problems, extra_validation=False,
         memory_db=options.memory_db,
         check_duplicate_trips=options.check_duplicate_trips,
         gtfs_factory=gtfs_factory

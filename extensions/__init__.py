@@ -13,5 +13,4 @@
 # limitations under the License.
 
 # This file marks the base folder of the FeedValiator extensions as a Python
-# module. This module, however, is never used directly. So no imports are needed
-# here.
+# module. This module, however, is never used directly. So no imports are needed here.

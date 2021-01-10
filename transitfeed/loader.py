@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import codecs
 import csv
 import os
@@ -29,11 +28,11 @@ class Loader:
     def __init__(self,
                  feed_path=None,
                  schedule=None,
-                 problems=problems.default_problem_reporter,
+                 loader_problems=problems.default_problem_reporter,
                  extra_validation=False,
                  load_stop_times=True,
                  memory_db=True,
-                 zip=None,
+                 zip_content=None,
                  check_duplicate_trips=False,
                  gtfs_factory=None):
         """Initialize a new Loader object.
@@ -54,14 +53,14 @@ class Loader:
             gtfs_factory = gtfsfactoryuser.GtfsFactoryUser().get_gtfs_factory()
 
         if not schedule:
-            schedule = gtfs_factory.Schedule(problem_reporter=problems,
+            schedule = gtfs_factory.Schedule(problem_reporter=loader_problems,
                                              memory_db=memory_db, check_duplicate_trips=check_duplicate_trips)
 
         self._extra_validation = extra_validation
         self._schedule = schedule
-        self._problems = problems
+        self._problems = loader_problems
         self._path = feed_path
-        self._zip = zip
+        self._zip = zip_content
         self._loaded_stop_times = load_stop_times
         self._gtfs_factory = gtfs_factory
 
@@ -131,7 +130,7 @@ class Loader:
         if null_index != -1:
             # It is easier to get some surrounding text than calculate the exact
             # row_num
-            m = re.search(r'.{,20}\0.{,20}', contents, re.DOTALL)
+            m = re.search(r'.{,20}\\0.{,20}', contents, re.DOTALL)
             self._problems.file_format(
                 "contains a null in text \"%s\" at byte %d" %
                 (codecs.getencoder('string_escape')(m.group()), null_index + 1),
@@ -410,9 +409,9 @@ class Loader:
                 object_class = self._gtfs_factory.get_gtfs_class_by_file_name(filename)
                 for (d, row_num, header, row) in self._read_csv_dict(
                         filename,
-                        object_class._FIELD_NAMES,
-                        object_class._REQUIRED_FIELD_NAMES,
-                        object_class._DEPRECATED_FIELD_NAMES):
+                        object_class.FIELD_NAMES,
+                        object_class.REQUIRED_FIELD_NAMES,
+                        object_class.DEPRECATED_FIELD_NAMES):
                     self._problems.set_file_context(filename, row_num, row, header)
                     instance = object_class(field_dict=d)
                     instance.set_gtfs_factory(self._gtfs_factory)
@@ -439,9 +438,9 @@ class Loader:
             has_useful_contents = False
             for (row, row_num, cols) in \
                     self._read_csv(file_name,
-                                   service_period_class._FIELD_NAMES,
-                                   service_period_class._REQUIRED_FIELD_NAMES,
-                                   service_period_class._DEPRECATED_FIELD_NAMES):
+                                   service_period_class.FIELD_NAMES,
+                                   service_period_class.REQUIRED_FIELD_NAMES,
+                                   service_period_class.DEPRECATED_FIELD_NAMES):
                 context = (file_name, row_num, row, cols)
                 self._problems.set_file_context(*context)
 
@@ -458,9 +457,9 @@ class Loader:
             # ['service_id', 'date', 'exception_type']
             for (row, row_num, cols) in \
                     self._read_csv(file_name_dates,
-                                   service_period_class._FIELD_NAMES_CALENDAR_DATES,
-                                   service_period_class._REQUIRED_FIELD_NAMES_CALENDAR_DATES,
-                                   service_period_class._DEPRECATED_FIELD_NAMES_CALENDAR_DATES):
+                                   service_period_class.FIELD_NAMES_CALENDAR_DATES,
+                                   service_period_class._REQUIREDFIELD_NAMES_CALENDAR_DATES,
+                                   service_period_class._DEPRECATEDFIELD_NAMES_CALENDAR_DATES):
                 context = (file_name_dates, row_num, row, cols)
                 self._problems.set_file_context(*context)
 
@@ -499,9 +498,9 @@ class Loader:
 
         for (d, row_num, header, row) in self._read_csv_dict(
                 file_name,
-                shape_class._FIELD_NAMES,
-                shape_class._REQUIRED_FIELD_NAMES,
-                shape_class._DEPRECATED_FIELD_NAMES):
+                shape_class.FIELD_NAMES,
+                shape_class.REQUIRED_FIELD_NAMES,
+                shape_class.DEPRECATED_FIELD_NAMES):
             file_context = (file_name, row_num, row, header)
             self._problems.set_file_context(*file_context)
 
@@ -527,9 +526,9 @@ class Loader:
         stop_time_class = self._gtfs_factory.StopTime
 
         for (row, row_num, cols) in self._read_csv('stop_times.txt',
-                                                   stop_time_class._FIELD_NAMES,
-                                                   stop_time_class._REQUIRED_FIELD_NAMES,
-                                                   stop_time_class._DEPRECATED_FIELD_NAMES):
+                                                   stop_time_class.FIELD_NAMES,
+                                                   stop_time_class.REQUIRED_FIELD_NAMES,
+                                                   stop_time_class.DEPRECATED_FIELD_NAMES):
             file_context = ('stop_times.txt', row_num, row, cols)
             self._problems.set_file_context(*file_context)
 

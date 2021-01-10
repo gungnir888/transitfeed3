@@ -1,6 +1,4 @@
-#!/usr/bin/python2.4
-
-# Copyright (C) 2008 Google Inc.
+ Copyright (C) 2008 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -387,7 +385,7 @@ class DivaImporter:
       assert not trip.id in self.trips
       self.trips[trip.id] = trip
 
-  def Write(self, outpath):
+  def write(self, outpath):
     "Writes a .zip file in Google Transit format."
     out = zipfile.ZipFile(outpath, mode="w", compression=zipfile.ZIP_DEFLATED)
     for filename, func in [('agency.txt', self.WriteAgency),
@@ -505,7 +503,7 @@ def main(argv):
 
   importer = DivaImporter(ConvertCH1903, options.drop_unadvertised_lines)
   importer.Import(options.in_file)
-  importer.Write(options.out_file)
+  importer.write(options.out_file)
   print('Wrote output to', options.out_file)
 
 

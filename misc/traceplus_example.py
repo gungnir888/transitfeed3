@@ -3,7 +3,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 
-def CrashOrNot(crash_commanded):
+def crash_or_not(crash_commanded):
     some_value = 1
     if crash_commanded:
         some_value -= 1
@@ -11,10 +11,10 @@ def CrashOrNot(crash_commanded):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--crash", help="Do something that causes a crash", action="store_true")
-    args = parser.parse_args()
-    CrashOrNot(args.crash)
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("--crash", help="Do something that causes a crash", action="store_true")
+    args = arg_parser.parse_args()
+    crash_or_not(args.crash)
 
 
 # If the traceplus module is found use it, otherwise run main() directly.

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import warnings
 
 from .gtfsobjectbase import GtfsObjectBase
@@ -35,14 +34,26 @@ class Stop(GtfsObjectBase):
       stop_lon: a float representing the longitude of the stop
       All other attributes are strings.
     """
-    _REQUIRED_FIELD_NAMES = ['stop_id', 'stop_name', 'stop_lat', 'stop_lon']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + \
-                   ['stop_desc', 'zone_id', 'stop_url', 'stop_code',
-                    'location_type', 'parent_station', 'stop_timezone',
-                    'wheelchair_boarding']
+    REQUIRED_FIELD_NAMES = [
+        'stop_id',
+        'stop_name',
+        'stop_lat',
+        'stop_lon'
+    ]
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + [
+        'stop_desc',
+        'zone_id',
+        'stop_url',
+        'stop_code',
+        'location_type',
+        'parent_station',
+        'stop_timezone',
+        'wheelchair_boarding'
+    ]
     _TABLE_NAME = 'stops'
 
     LOCATION_TYPE_STATION = 1
+    location_type = None
 
     def __init__(self, lat=None, lng=None, name=None, stop_id=None,
                  field_dict=None, stop_code=None):
@@ -95,10 +106,8 @@ class Stop(GtfsObjectBase):
         if schedule is None:
             warnings.warn("No longer supported. _schedule attribute is  used to get "
                           "stop_times table", DeprecationWarning)
-        cursor = schedule._connection.cursor()
-        cursor.execute("SELECT trip_id,stop_sequence FROM stop_times "
-                       "WHERE stop_id=?",
-                       (self.stop_id,))
+        cursor = schedule.connection.cursor()
+        cursor.execute("SELECT trip_id,stop_sequence FROM stop_times WHERE stop_id=?", [self.stop_id])
         return [(schedule.get_trip(row[0]), row[1]) for row in cursor]
 
     def _get_trip_index(self, schedule=None):
@@ -192,7 +201,7 @@ class Stop(GtfsObjectBase):
                                            type=problems_module.TYPE_WARNING)
 
     def validate_stop_required_fields(self, problems):
-        for required in self._REQUIRED_FIELD_NAMES:
+        for required in self.REQUIRED_FIELD_NAMES:
             if util.is_empty(getattr(self, required, None)):
                 self._report_missing_required_field(problems, required)
 
@@ -203,8 +212,13 @@ class Stop(GtfsObjectBase):
         setattr(self, required, None)
 
     def validate_stop_not_too_close_to_origin(self, problems):
-        if (self.stop_lat is not None and self.stop_lon is not None and
-            abs(self.stop_lat) < 1.0) and (abs(self.stop_lon) < 1.0):
+        valid_conditions = all([
+            self.stop_lat is not None,
+            self.stop_lon is not None,
+            abs(self.stop_lat) < 1.0,
+            abs(self.stop_lon) < 1.0
+        ])
+        if valid_conditions:
             problems.invalid_value('stop_lat', self.stop_lat,
                                    'Stop location too close to 0, 0',
                                    type=problems_module.TYPE_WARNING)

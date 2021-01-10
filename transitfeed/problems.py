@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
-from __future__ import absolute_import
 from functools import reduce
 import logging
 import time
@@ -24,6 +22,10 @@ from .errors import TYPE_ERROR, TYPE_WARNING, TYPE_NOTICE, ALL_TYPES
 MAX_DISTANCE_FROM_STOP_TO_SHAPE = 1000
 MAX_DISTANCE_BETWEEN_STOP_AND_PARENT_STATION_WARNING = 100.0
 MAX_DISTANCE_BETWEEN_STOP_AND_PARENT_STATION_ERROR = 1000.0
+
+
+class Error(Exception):
+  """The base exception class for this module."""
 
 
 class ProblemReporter:

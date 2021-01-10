@@ -13,10 +13,9 @@
 # limitations under the License.
 
 # Unit tests for the agency module.
-from __future__ import absolute_import
-
 import transitfeed
 from tests import util
+
 
 class AgencyValidationTestCase(util.ValidationTestCase):
   def runTest(self):

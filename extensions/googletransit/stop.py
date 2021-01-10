@@ -19,13 +19,13 @@ import transitfeed.problems as problems_module
 
 class Stop(transitfeed.Stop):
     """Extension of transitfeed.Stop:
-    - Adding and validating new fields (see _FIELD_NAMES). See proposal at
+    - Adding and validating new fields (see FIELD_NAMES). See proposal at
       https://sites.google.com/site/gtfschanges/spec-changes-summary#stops
     - Overriding validate_after_add() in order to call new validation functions.
     - Overriding validate_stop_location_type(), adding location_type 2 (entrance).
     """
 
-    _FIELD_NAMES = transitfeed.Stop._FIELD_NAMES + ['vehicle_type', 'platform_code']
+    FIELD_NAMES = transitfeed.Stop.FIELD_NAMES + ['vehicle_type', 'platform_code']
 
     LOCATION_TYPE_ENTRANCE = 2
     vehicle_type = None

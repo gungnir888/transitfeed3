@@ -1,6 +1,4 @@
-#!/usr/bin/python2.4
-
-# Copyright (C) 2009 Google Inc.
+ Copyright (C) 2009 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,8 +38,9 @@ class SqlLoop(cmd.Cmd):
     def do_help(self, topic):
         print(self.doc)
 
-    def do_eof(self, line):
-        print()
+    @staticmethod
+    def do_eof(line=None):
+        print() if not line else print(line)
         return True
 
     def default(self, line):
@@ -55,7 +54,7 @@ class SqlLoop(cmd.Cmd):
             self.prompt = '> '
 
         try:
-            self.cursor.execute(line);
+            self.cursor.execute(line)
             s = "%s" % self.cursor.fetchall()
             if len(s) > 2000:
                 print(s[0:2000])
@@ -113,7 +112,7 @@ def load_file(f, table_name, conn):
     for row in reader:
         if row:
             if len(row) < len(columns):
-                row.extend([None] * (len(columns) - len(row)))
+                row.extend([''] * (len(columns) - len(row)))
             c.execute(insert_values, row)
     # c.execute("END TRANSACTION;")
     conn.commit()

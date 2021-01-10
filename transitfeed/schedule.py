@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import bisect
 import datetime
 import itertools
@@ -42,6 +41,10 @@ class Schedule:
     """Represents a Schedule, a collection of stops, routes, trips and
     an agency.  This is the main class for this module."""
 
+    _temp_db_file = None
+    _temp_db_filename = None
+    connection = None
+
     def __init__(self, problem_reporter=None,
                  memory_db=True, check_duplicate_trips=False,
                  gtfs_factory=None):
@@ -63,7 +66,7 @@ class Schedule:
         self.fare_zones = {}  # represents the set of all known fare zones
         self.feed_info = None
         self._shapes = {}  # shape_id to Shape
-        # A map from transfer._id() to a list of transfers. A list is used so
+        # A map from transfer.ids() to a list of transfers. A list is used so
         # there can be more than one transfer with each ID. Once GTFS explicitly
         # prohibits duplicate IDs this might be changed to a simple dict of
         # Transfers.
@@ -98,8 +101,8 @@ class Schedule:
         return self._table_columns[table]
 
     def __del__(self):
-        self._connection.cursor().close()
-        self._connection.close()
+        self.connection.cursor().close()
+        self.connection.close()
         if hasattr(self, '_temp_db_filename'):
             os.remove(self._temp_db_filename)
 
@@ -108,20 +111,20 @@ class Schedule:
             return sqlite.connect(db_file)
 
         if memory_db:
-            self._connection = connector(":memory:")
+            self.connection = connector(":memory:")
         else:
             try:
                 self._temp_db_file = tempfile.NamedTemporaryFile()
-                self._connection = connector(self._temp_db_file.name)
+                self.connection = connector(self._temp_db_file.name)
             except sqlite.OperationalError:
                 # Windows won't let a file be opened twice. mkstemp does not remove the
                 # file when all handles to it are closed.
                 self._temp_db_file = None
                 (fd, self._temp_db_filename) = tempfile.mkstemp(".db")
                 os.close(fd)
-                self._connection = connector(self._temp_db_filename)
+                self.connection = connector(self._temp_db_filename)
 
-        cursor = self._connection.cursor()
+        cursor = self.connection.cursor()
         cursor.execute(
             """
             CREATE TABLE stop_times (
@@ -164,7 +167,7 @@ class Schedule:
             problem_reporter.DuplicateID('agency_id', agency.agency_id)
             return
 
-        self.add_table_columns('agency', agency._column_names())
+        self.add_table_columns('agency', agency.column_names())
         agency._schedule = weakref.proxy(self)
 
         if validate:
@@ -175,7 +178,7 @@ class Schedule:
         """Return Agency with agency_id or throw a KeyError"""
         return self._agencies[agency_id]
 
-    def get_default_agency(self):
+    def init_default_agency(self):
         """Return the default Agency. If no default Agency has been set select the
         default depending on how many Agency objects are in the Schedule. If there
         are 0 make a new Agency the default, if there is 1 it becomes the default,
@@ -185,7 +188,7 @@ class Schedule:
             if len(self._agencies) == 0:
                 self.new_default_agency()
             elif len(self._agencies) == 1:
-                self._default_agency = self._agencies.values()[0]
+                self._default_agency = next(iter(self._agencies.values()), None)
         return self._default_agency
 
     def new_default_agency(self, **kwargs):
@@ -222,7 +225,7 @@ class Schedule:
             if len(self.service_periods) == 0:
                 self.new_default_service_period()
             elif len(self.service_periods) == 1:
-                self._default_service_period = self.service_periods.values()[0]
+                self._default_service_period = next(iter(self.service_periods.values()), None)
         return self._default_service_period
 
     def new_default_service_period(self):
@@ -261,8 +264,8 @@ class Schedule:
         """Returns a tuple of (earliest, latest) dates on which the service periods
         in the schedule define service, in YYYYMMDD form.
         """
-        (minvalue, maxvalue, minorigin, maxorigin) = self.get_date_range_with_origins()
-        return (minvalue, maxvalue)
+        minvalue, maxvalue, minorigin, maxorigin = self.get_date_range_with_origins()
+        return minvalue, maxvalue
 
     def get_date_range_with_origins(self):
         """Returns a tuple of (earliest, latest, earliest_origin, latest_origin)
@@ -279,7 +282,7 @@ class Schedule:
         ends = list(filter(lambda x: x, [item[1] for item in ranges]))
 
         if not starts or not ends:
-            return (None, None, None, None)
+            return None, None, None, None
 
         minvalue, minindex = min(zip(starts, itertools.count()))
         maxvalue, maxindex = max(zip(ends, itertools.count()))
@@ -301,7 +304,7 @@ class Schedule:
             maxvalue = self.feed_info.feed_end_date
             maxreason = "feed_end_date in feed_info.txt"
 
-        return (minvalue, maxvalue, minreason, maxreason)
+        return minvalue, maxvalue, minreason, maxreason
 
     def get_service_periods_active_each_date(self, date_start, date_end):
         """Return a list of tuples (date, [period1, period2, ...]).
@@ -362,7 +365,7 @@ class Schedule:
             return
 
         stop._schedule = weakref.proxy(self)
-        self.add_table_columns('stops', stop._column_names())
+        self.add_table_columns('stops', stop.column_names())
         self.stops[stop.stop_id] = stop
         if hasattr(stop, 'zone_id') and stop.zone_id:
             self.fare_zones[stop.zone_id] = True
@@ -385,7 +388,7 @@ class Schedule:
             route_id = util.find_unique_id(self.routes)
         route = self._gtfs_factory.Route(short_name=short_name, long_name=long_name,
                                          route_type=route_type, route_id=route_id)
-        route.agency_id = self.get_default_agency().agency_id
+        route.agency_id = self.init_default_agency().agency_id
         self.add_route_object(route)
         return route
 
@@ -406,7 +409,7 @@ class Schedule:
                                               'Route uses an unknown agency_id.')
                 return
 
-        self.add_table_columns('routes', route._column_names())
+        self.add_table_columns('routes', route.column_names())
         route._schedule = weakref.proxy(self)
         self.routes[route.route_id] = route
 
@@ -442,7 +445,7 @@ class Schedule:
             problem_reporter.DuplicateID('trip_id', trip.trip_id)
             return
 
-        self.add_table_columns('trips', trip._column_names())
+        self.add_table_columns('trips', trip.column_names())
         trip._schedule = weakref.proxy(self)
         self.trips[trip.trip_id] = trip
 
@@ -454,7 +457,7 @@ class Schedule:
                 problem_reporter = self.problem_reporter
             trip.validate(problem_reporter, validate_children=False)
         try:
-            self.routes[trip.route_id]._add_trip_object(trip)
+            self.routes[trip.route_id].add_trip_object(trip)
         except KeyError:
             # Invalid route_id was reported in the Trip.Validate call above
             pass
@@ -538,7 +541,7 @@ class Schedule:
 
         if validate:
             feed_info.validate(problem_reporter)
-        self.add_table_columns('feed_info', feed_info._column_names())
+        self.add_table_columns('feed_info', feed_info.column_names())
         self.feed_info = feed_info
 
     def add_transfer_object(self, transfer, problem_reporter=None):
@@ -546,16 +549,17 @@ class Schedule:
         if not problem_reporter:
             problem_reporter = self.problem_reporter
 
-        transfer_id = transfer._id()
+        transfer_id = transfer.ids()
 
         if transfer_id in self._transfers:
-            self.problem_reporter.DuplicateID(self._gtfs_factory.Transfer._ID_COLUMNS,
-                                              transfer_id,
-                                              type=problems_module.TYPE_WARNING)
+            problem_reporter.DuplicateID(
+                self._gtfs_factory.Transfer.ID_COLUMNS,
+                transfer_id,
+                type=problems_module.TYPE_WARNING)
             # Duplicates are still added, while not prohibited by GTFS.
 
         transfer._schedule = weakref.proxy(self)  # See weakref comment at top
-        self.add_table_columns('transfers', transfer._column_names())
+        self.add_table_columns('transfers', transfer.column_names())
         self._transfers[transfer_id].append(transfer)
 
     def get_transfer_iter(self):
@@ -566,8 +570,8 @@ class Schedule:
         """Return a list containing all Transfer objects in this schedule."""
         return list(self.get_transfer_iter())
 
-    def get_stop(self, id):
-        return self.stops[id]
+    def get_stop(self, idd):
+        return self.stops[idd]
 
     def get_fare_zones(self):
         """Returns the list of all fare zones that have been identified by
@@ -591,8 +595,7 @@ class Schedule:
         """Return a sample of up to n stops in a bounding box"""
         stop_list = []
         for s in self.stops.values():
-            if (s.stop_lat <= north and s.stop_lat >= south and
-                    s.stop_lon <= east and s.stop_lon >= west):
+            if north >= s.stop_lat >= south and east >= s.stop_lon >= west:
                 stop_list.append(s)
                 if len(stop_list) == n:
                     break
@@ -600,11 +603,12 @@ class Schedule:
 
     def load(self, feed_path, extra_validation=False):
         loader = self._gtfs_factory.Loader(feed_path,
-                                           self, problems=self.problem_reporter,
+                                           self, loader_problems=self.problem_reporter,
                                            extra_validation=extra_validation)
         loader.load()
 
-    def _write_archive_string(self, archive, filename, stringio):
+    @staticmethod
+    def _write_archive_string(archive, filename, stringio):
         zi = zipfile.ZipInfo(filename)
         # See
         # http://stackoverflow.com/questions/434641/how-do-i-set-permissions-attributes-on-a-file-in-a-zip-file-using-pythons-zipf
@@ -645,7 +649,7 @@ class Schedule:
         calendar_dates_string = StringIO()
         writer = util.CsvUnicodeWriter(calendar_dates_string)
         writer.writerow(
-            self._gtfs_factory.ServicePeriod._FIELD_NAMES_CALENDAR_DATES)
+            self._gtfs_factory.ServicePeriod.FIELD_NAMES_CALENDAR_DATES)
         has_data = False
         for period in self.service_periods.values():
             for row in period.generate_calendar_dates_field_values_tuples():
@@ -659,7 +663,7 @@ class Schedule:
 
         calendar_string = StringIO()
         writer = util.CsvUnicodeWriter(calendar_string)
-        writer.writerow(self._gtfs_factory.ServicePeriod._FIELD_NAMES)
+        writer.writerow(self._gtfs_factory.ServicePeriod.FIELD_NAMES)
         has_data = False
         for s in self.service_periods.values():
             row = s.get_calendar_field_values_tuple()
@@ -703,7 +707,7 @@ class Schedule:
         if headway_rows:
             headway_string = StringIO()
             writer = util.CsvUnicodeWriter(headway_string)
-            writer.writerow(self._gtfs_factory.Frequency._FIELD_NAMES)
+            writer.writerow(self._gtfs_factory.Frequency.FIELD_NAMES)
             writer.writerows(headway_rows)
             self._write_archive_string(archive, 'frequencies.txt', headway_string)
 
@@ -711,7 +715,7 @@ class Schedule:
         if self.get_fare_attribute_list():
             fare_string = StringIO()
             writer = util.CsvUnicodeWriter(fare_string)
-            writer.writerow(self._gtfs_factory.FareAttribute._FIELD_NAMES)
+            writer.writerow(self._gtfs_factory.FareAttribute.FIELD_NAMES)
             writer.writerows(
                 f.get_field_values_tuple() for f in self.get_fare_attribute_list())
             self._write_archive_string(archive, 'fare_attributes.txt', fare_string)
@@ -724,14 +728,14 @@ class Schedule:
         if rule_rows:
             rule_string = StringIO()
             writer = util.CsvUnicodeWriter(rule_string)
-            writer.writerow(self._gtfs_factory.FareRule._FIELD_NAMES)
+            writer.writerow(self._gtfs_factory.FareRule.FIELD_NAMES)
             writer.writerows(rule_rows)
             self._write_archive_string(archive, 'fare_rules.txt', rule_string)
         stop_times_string = StringIO()
         writer = util.CsvUnicodeWriter(stop_times_string)
-        writer.writerow(self._gtfs_factory.StopTime._FIELD_NAMES)
+        writer.writerow(self._gtfs_factory.StopTime.FIELD_NAMES)
         for t in self.trips.values():
-            writer.writerows(t._generate_stop_times_tuples())
+            writer.writerows(t.generate_stop_times_tuples())
         self._write_archive_string(archive, 'stop_times.txt', stop_times_string)
 
         # write shapes (if applicable)
@@ -744,7 +748,7 @@ class Schedule:
         if shape_rows:
             shape_string = StringIO()
             writer = util.CsvUnicodeWriter(shape_string)
-            writer.writerow(self._gtfs_factory.Shape._FIELD_NAMES)
+            writer.writerow(self._gtfs_factory.Shape.FIELD_NAMES)
             writer.writerows(shape_rows)
             self._write_archive_string(archive, 'shapes.txt', shape_string)
 
@@ -980,7 +984,7 @@ class Schedule:
         for stop in self.stops.values():
             if validate_children:
                 stop.validate(problems)
-            cursor = self._connection.cursor()
+            cursor = self.connection.cursor()
             cursor.execute("SELECT count(*) FROM stop_times WHERE stop_id=? LIMIT 1",
                            (stop.stop_id,))
             count = cursor.fetchone()[0]
@@ -1028,11 +1032,11 @@ class Schedule:
                                    self.get_stop_list()))
         sorted_stops.sort(
             key=(lambda x: [x.stop_lat, x.stop_lon, getattr(x, 'stop_id', None)]))
-        TWO_METERS_LAT = 0.000018
+        two_meters_lat = 0.000018
         for index, stop in enumerate(sorted_stops[:-1]):
             index += 1
             while ((index < len(sorted_stops)) and
-                   ((sorted_stops[index].stop_lat - stop.stop_lat) < TWO_METERS_LAT)):
+                   ((sorted_stops[index].stop_lat - stop.stop_lat) < two_meters_lat)):
                 distance = util.approximate_distance_between_stops(stop,
                                                                    sorted_stops[index])
                 if distance is not None and distance < 2:
@@ -1051,6 +1055,8 @@ class Schedule:
                             other_stop.stop_id, distance)
                     elif (stop.location_type in (0, 1) and
                           other_stop.location_type in (0, 1)):
+                        this_stop = None
+                        this_station = None
                         if stop.location_type == 0 and other_stop.location_type == 1:
                             this_stop = stop
                             this_station = other_stop
@@ -1110,15 +1116,15 @@ class Schedule:
                 stop_id = st.stop.stop_id
                 stop_ids.append(stop_id)
                 # Check a stop if which belongs to both subway and bus.
-                if (route_type == self._gtfs_factory.Route._ROUTE_TYPE_NAMES['Subway'] or
-                        route_type == self._gtfs_factory.Route._ROUTE_TYPE_NAMES['Bus']):
+                if (route_type == self._gtfs_factory.Route.ROUTE_TYPE_NAMES['Subway'] or
+                        route_type == self._gtfs_factory.Route.ROUTE_TYPE_NAMES['Bus']):
                     if stop_id not in stop_types:
                         stop_types[stop_id] = [trip.route_id, route_type, 0]
                     elif (stop_types[stop_id][1] != route_type and
                           stop_types[stop_id][2] == 0):
                         stop_types[stop_id][2] = 1
                         if stop_types[stop_id][1] == \
-                                self._gtfs_factory.Route._ROUTE_TYPE_NAMES['Subway']:
+                                self._gtfs_factory.Route.ROUTE_TYPE_NAMES['Subway']:
                             subway_route_id = stop_types[stop_id][0]
                             bus_route_id = trip.route_id
                         else:
@@ -1160,7 +1166,8 @@ class Schedule:
         # overlaps in the intervals
         self.validate_blocks(problems, trip_intervals_by_block_id)
 
-    def validate_stop_times_for_trip(self, problems, trip, stop_times):
+    @staticmethod
+    def validate_stop_times_for_trip(problems, trip, stop_times):
         """Checks for the stop times of a trip.
 
         Ensure that a trip does not have too many consecutive stop times with the
@@ -1175,9 +1182,11 @@ class Schedule:
             # affects about 0.5% of current GTFS trips.
             if (prev_departure_secs != -1 and
                     consecutive_stop_times_with_fully_specified_same_time > 5):
-                problems.too_many_consecutive_stop_times_with_same_time(trip.trip_id,
-                                                                        consecutive_stop_times_with_fully_specified_same_time,
-                                                                        prev_departure_secs)
+                problems.too_many_consecutive_stop_times_with_same_time(
+                    trip.trip_id,
+                    consecutive_stop_times_with_fully_specified_same_time,
+                    prev_departure_secs
+                )
 
         for index, st in enumerate(stop_times):
             if st.arrival_secs is None or st.departure_secs is None:
@@ -1269,9 +1278,11 @@ class Schedule:
                             service_period_overlap_cache[service_id_pair_key] = overlap
 
                         if service_period_overlap_cache[service_id_pair_key]:
-                            problems.overlapping_trips_in_same_block(trip_a.trip_id,
-                                                                     trip_b.trip_id,
-                                                                     block_id)
+                            problems.overlapping_trips_in_same_block(
+                                trip_a.trip_id,
+                                trip_b.trip_id,
+                                block_id
+                            )
 
     def validate_idless_agency(self, problems):
         # Check that only one agency is IDless
@@ -1285,8 +1296,7 @@ class Schedule:
     def validate_route_agency_id(self, problems):
         # Check that routes' agency IDs are valid, if set
         for route in self.routes.values():
-            if (not util.is_empty(route.agency_id) and
-                    not route.agency_id in self._agencies):
+            if not util.is_empty(route.agency_id) and route.agency_id not in self._agencies:
                 problems.invalid_agency_id('agency_id', route.agency_id,
                                            'route', route.route_id)
 
@@ -1323,10 +1333,10 @@ class Schedule:
             used_shape_ids.add(trip.shape_id)
         unused_shape_ids = known_shape_ids - used_shape_ids
         if unused_shape_ids:
-            problems.other_problem('The shapes with the following shape_ids aren\'t '
-                                   'used by any trips: %s' %
-                                   ', '.join(unused_shape_ids),
-                                   type=problems_module.TYPE_WARNING)
+            problems.other_problem(
+                "The shapes with the following shape_ids aren't used by any trips: %s" % ", ".join(unused_shape_ids),
+                type=problems_module.TYPE_WARNING
+            )
 
     def validate(self,
                  problems=None,

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import bisect
 
 from .gtfsfactoryuser import GtfsFactoryUser
@@ -23,10 +22,14 @@ from . import util
 class Shape(GtfsFactoryUser):
     """This class represents a geographic shape that corresponds to the route
     taken by one or more Trips."""
-    _REQUIRED_FIELD_NAMES = ['shape_id', 'shape_pt_lat', 'shape_pt_lon',
-                             'shape_pt_sequence']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ['shape_dist_traveled']
-    _DEPRECATED_FIELD_NAMES = []
+    REQUIRED_FIELD_NAMES = [
+        'shape_id',
+        'shape_pt_lat',
+        'shape_pt_lon',
+        'shape_pt_sequence'
+    ]
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + ['shape_dist_traveled']
+    DEPRECATED_FIELD_NAMES = []
 
     def __init__(self, shape_id):
         # List of shape point tuple (lat, lng, shape_dist_traveled), where lat and
@@ -42,8 +45,7 @@ class Shape(GtfsFactoryUser):
         # List of shape_pt_sequence of each shape point.
         self.sequence = []
 
-    def add_point(self, lat, lon, distance=None,
-                  problems=problems_module.default_problem_reporter):
+    def add_point(self, lat, lon, distance=None, problems=problems_module.default_problem_reporter):
         shapepoint_class = self.get_gtfs_factory().ShapePoint
         shapepoint = shapepoint_class(
             self.shape_id, lat, lon, len(self.sequence), distance)
@@ -166,4 +168,4 @@ class Shape(GtfsFactoryUser):
         # works well for short distance.
         lat = (lat1 * ca + lat0 * bc) / ba
         lng = (lng1 * ca + lng0 * bc) / ba
-        return (lat, lng, shape_dist_traveled)
+        return lat, lng, shape_dist_traveled

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 from .gtfsfactoryuser import GtfsFactoryUser
 
 
@@ -27,7 +26,7 @@ class GtfsObjectBase(GtfsFactoryUser):
     * define an __init__ method which sets the _schedule member to None or a
       weakref to a Schedule
     * set the _TABLE_NAME class variable to a name such as 'stops', 'agency', ...
-    * override the _REQUIRED_FIELD_NAMES, _FIELD_NAMES and _DEPRECATED_FIELD_NAMES
+    * override the REQUIRED_FIELD_NAMES, FIELD_NAMES and DEPRECATED_FIELD_NAMES
       variables according to the needs of the GTFS object
     * define methods to validate objects of that type:
       * ValidateBeforeAdd, which is called before an object is added to a
@@ -39,13 +38,15 @@ class GtfsObjectBase(GtfsFactoryUser):
     """
 
     # list of all required field names for the GTFS object
-    _REQUIRED_FIELD_NAMES = []
+    REQUIRED_FIELD_NAMES = []
     # list of all valid field names including the required ones
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + []
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + []
     # list of tuples of all deprecated field names and, optionally, their new name
     # e.g. [('old_name', 'new_name')]
     # use None if there is no new name, e.g. [('old_name', None)]
-    _DEPRECATED_FIELD_NAMES = []
+    DEPRECATED_FIELD_NAMES = []
+
+    _schedule = None
 
     def __getitem__(self, name):
         """Return a unicode or str representation of name or "" if not set."""
@@ -59,9 +60,9 @@ class GtfsObjectBase(GtfsFactoryUser):
 
         This method is only called when name is not found in __dict__.
         """
-        if name in self.__class__._FIELD_NAMES:
+        if name in self.__class__.FIELD_NAMES:
             return None
-        elif name in [dfn[0] for dfn in self.__class__._DEPRECATED_FIELD_NAMES]:
+        elif name in [dfn[0] for dfn in self.__class__.DEPRECATED_FIELD_NAMES]:
             return None
         else:
             raise AttributeError(name)
@@ -113,7 +114,7 @@ class GtfsObjectBase(GtfsFactoryUser):
             columns.add(name)
         return columns
 
-    def _column_names(self):
+    def column_names(self):
         return self.keys()
 
     def add_to_schedule(self, schedule, problems):

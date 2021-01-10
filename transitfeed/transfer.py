@@ -20,10 +20,10 @@ from . import util
 
 class Transfer(GtfsObjectBase):
     """Represents a transfer in a schedule"""
-    _REQUIRED_FIELD_NAMES = ['from_stop_id', 'to_stop_id', 'transfer_type']
-    _FIELD_NAMES = _REQUIRED_FIELD_NAMES + ['min_transfer_time']
+    REQUIRED_FIELD_NAMES = ['from_stop_id', 'to_stop_id', 'transfer_type']
+    FIELD_NAMES = REQUIRED_FIELD_NAMES + ['min_transfer_time']
     _TABLE_NAME = 'transfers'
-    _ID_COLUMNS = ['from_stop_id', 'to_stop_id']
+    ID_COLUMNS = ['from_stop_id', 'to_stop_id']
 
     def __init__(self, schedule=None, from_stop_id=None, to_stop_id=None, transfer_type=None,
                  min_transfer_time=None, field_dict=None):
@@ -88,26 +88,26 @@ class Transfer(GtfsObjectBase):
             # an error. If smaller than 24h but bigger than 3h issue a warning.
             # These errors are not blocking, and should not prevent the transfer
             # from being added to the schedule.
-            if (isinstance(self.min_transfer_time, int)):
+            if isinstance(self.min_transfer_time, int):
                 if self.min_transfer_time < 0:
                     problems.invalid_value('min_transfer_time', self.min_transfer_time,
-                                           reason="This field cannot contain a negative " \
+                                           reason="This field cannot contain a negative "
                                                   "value.")
                 elif self.min_transfer_time >= 24 * 3600:
                     problems.invalid_value('min_transfer_time', self.min_transfer_time,
-                                           reason="The value is very large for a " \
-                                                  "transfer time and most likely " \
+                                           reason="The value is very large for a "
+                                                  "transfer time and most likely "
                                                   "indicates an error.")
                 elif self.min_transfer_time >= 3 * 3600:
                     problems.invalid_value('min_transfer_time', self.min_transfer_time,
                                            type=problems_module.TYPE_WARNING,
-                                           reason="The value is large for a transfer " \
-                                                  "time and most likely indicates " \
+                                           reason="The value is large for a transfer "
+                                                  "time and most likely indicates "
                                                   "an error.")
             else:
                 # It has a value, but it is not an integer
                 problems.invalid_value('min_transfer_time', self.min_transfer_time,
-                                       reason="If present, this field should contain " \
+                                       reason="If present, this field should contain "
                                               "an integer value.")
                 return False
         return True
@@ -158,8 +158,8 @@ class Transfer(GtfsObjectBase):
         #
         # Stops that are close together (less than 240m appart) never trigger this
         # warning, regardless of min_transfer_time.
-        FAST_WALKING_SPEED = 2  # 2m/s
-        if self.min_transfer_time + 120 < distance / FAST_WALKING_SPEED:
+        fast_walking_speed = 2  # 2m/s
+        if self.min_transfer_time + 120 < distance / fast_walking_speed:
             problems.transfer_walking_speed_too_fast(from_stop_id=self.from_stop_id,
                                                      to_stop_id=self.to_stop_id,
                                                      transfer_time=self.min_transfer_time,
@@ -183,13 +183,12 @@ class Transfer(GtfsObjectBase):
             self.validate_transfer_distance(problems)
             self.validate_transfer_walking_time(problems)
 
-    def validate(self,
-                 problems=problems_module.default_problem_reporter):
+    def validate(self, problems=problems_module.default_problem_reporter):
         if self.validate_before_add(problems) and self._schedule:
             self.validate_after_add(problems)
 
-    def _id(self):
-        return tuple(self[i] for i in self._ID_COLUMNS)
+    def ids(self):
+        return tuple(self[i] for i in self.ID_COLUMNS)
 
     def add_to_schedule(self, schedule, problems):
         schedule.add_transfer_object(self, problems)

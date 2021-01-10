@@ -44,8 +44,8 @@ class UnusualTripFilter(object):
     self._threshold = threshold
     self._quiet = quiet
     self._force = force
-    if route_type in transitfeed.Route._ROUTE_TYPE_NAMES:
-      self._route_type = transitfeed.Route._ROUTE_TYPE_NAMES[route_type]
+    if route_type in transitfeed.Route.ROUTE_TYPE_NAMES:
+      self._route_type = transitfeed.Route.ROUTE_TYPE_NAMES[route_type]
     elif route_type is None:
       self._route_type = None
     else:
@@ -122,7 +122,7 @@ https://github.com/google/transitfeed/wiki/UnusualTripFilter
          dest='route_type', type='string',
          help='Filter only selected route type (specified by number'
               'or one of the following names: ' + \
-              ', '.join(transitfeed.Route._ROUTE_TYPE_NAMES) + ').')
+              ', '.join(transitfeed.Route.ROUTE_TYPE_NAMES) + ').')
   parser.add_option('-f', '--override_trip_type', default=False,
          dest='override_trip_type', action='store_true',
          help='Forces overwrite of current trip_type values.')

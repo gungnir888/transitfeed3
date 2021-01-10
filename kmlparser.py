@@ -42,7 +42,7 @@ class Placemark:
     def is_point(self):
         return len(self.coordinates) == 1
 
-    def IsLine(self):
+    def is_line(self):
         return len(self.coordinates) > 1
 
 
@@ -81,7 +81,7 @@ class KMLParser:
                 (lon, lat) = p.coordinates[0]
                 m = self.stop_name_re.search(p.name)
                 feed.add_stop(lat, lon, m.group(1))
-            elif p.IsLine():
+            elif p.is_line():
                 self.convert_placemark_to_shape(p, feed)
 
     def parse_placemark(self, node):
