@@ -113,8 +113,7 @@ def ProcessOptions(schedule, table):
   if not (agency_name and agency_url and agency_timezone):
     print("You must provide agency information")
 
-  schedule.new_default_agency(agency_name=agency_name, agency_url=agency_url,
-                            agency_timezone=agency_timezone)
+  schedule.new_default_agency(agency_name=agency_name, agency_url=agency_url, agency_timezone=agency_timezone)
 
 
 def AddStops(schedule, table):

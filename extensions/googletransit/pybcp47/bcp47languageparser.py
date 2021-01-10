@@ -144,8 +144,10 @@ class Bcp47LanguageParser:
     def int_to_int_str26(self, int_value, int_str=''):
         if int_value == 0:
             return int_str
+        print(int_str)
+        print(int_value)
         return self.int_to_int_str26(
-            int_value/26, string.ascii_lowercase[int_value % 26] + int_str)
+            int_value//26, string.ascii_lowercase[int_value % 26] + int_str)
 
     def _add_subtag_from_registry_file(
             self, current_type, current_tag,

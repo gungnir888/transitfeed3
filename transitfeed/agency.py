@@ -77,22 +77,22 @@ class Agency(GtfsObjectBase):
         self.__dict__.update(field_dict)
 
     def validate_agency_url(self, problems):
-        return not util.validate_url(self.agency_url, 'agency_url', problems)
+        return util.validate_url(self.agency_url, 'agency_url', problems)
 
     def validate_agency_lang(self, problems):
-        return not util.validate_language_code(self.agency_lang, 'agency_lang',
+        return util.validate_language_code(self.agency_lang, 'agency_lang',
                                                problems)
 
     def validate_agency_timezone(self, problems):
-        return not util.validate_timezone(self.agency_timezone, 'agency_timezone',
+        return util.validate_timezone(self.agency_timezone, 'agency_timezone',
                                           problems)
 
     def validate_agency_fare_url(self, problems):
-        return not util.validate_url(
+        return util.validate_url(
             self.agency_fare_url, 'agency_fare_url', problems)
 
     def validate_agency_email(self, problems):
-        return not util.validate_email(self.agency_email, 'agency_email', problems)
+        return util.validate_email(self.agency_email, 'agency_email', problems)
 
     def validate(self, problems=default_problem_reporter):
         """Validate attribute values and this object's internal consistency.
