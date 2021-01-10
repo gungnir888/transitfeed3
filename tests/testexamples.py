@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # Test the examples to make sure they are not broken
 
 from __future__ import absolute_import

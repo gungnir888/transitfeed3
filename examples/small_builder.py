@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # A really simple example of using transitfeed to build a Google Transit
 # Feed Specification file.
 
