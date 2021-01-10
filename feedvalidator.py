@@ -17,7 +17,6 @@
 
 For usage information run feedvalidator.py --help
 """
-from __future__ import print_function
 
 import bisect
 import datetime
@@ -33,7 +32,7 @@ from transitfeed import util
 import webbrowser
 
 
-def maybe_pluralize_word(count, word):
+def maybe_pluralize_word(count: int, word: str) -> str:
     if count == 1:
         return word
     return f'{word}s'
@@ -79,7 +78,8 @@ def calendar_summary(schedule):
     # if it ends in less than 60 days.
     date_trips_departures = schedule.generate_date_trips_departures_list(
         max(today, start_date_object),
-        min(summary_end_date, end_date_object))
+        min(summary_end_date, end_date_object)
+    )
 
     if not date_trips_departures:
         return {}
@@ -92,7 +92,7 @@ def calendar_summary(schedule):
 
     # Generate a map from int number of trips in a day to a list of date objects
     # with that many trips. The list of dates is sorted.
-    trips_dates = defaultdict(lambda: [])
+    trips_dates = defaultdict(list)
     trips = 0
     for date, day_trips, day_departures in date_trips_departures:
         trips += day_trips
@@ -119,8 +119,7 @@ def format_date_list(dates):
     formatted = [d.strftime("%a %b %d") for d in dates[0:3]]
     if len(dates) > 3:
         formatted.append("...")
-    return "%s (%s)" % (pretty_number_word(len(dates), "service date"),
-                        ", ".join(formatted))
+    return "%s (%s)" % (pretty_number_word(len(dates), "service date"), ", ".join(formatted))
 
 
 class CountingConsoleProblemAccumulator(transitfeed.SimpleProblemAccumulator):
@@ -271,14 +270,13 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
         """
         class_problist = sorted(class_problist)
         output = []
-        for classname, problist in class_problist:
+        for classname, problem_list in class_problist:
             output.append('<h4 class="issueHeader"><a name="%s%s">%s</a></h4><ul>\n' %
                           (level_name, classname, un_camel_case(classname)))
-            for e in problist.problems:
+            for e in problem_list.problems:
                 self.format_exception(e, output)
-            if problist.dropped_count:
-                output.append('<li>and %d more of this type.' %
-                              (problist.dropped_count))
+            if problem_list.dropped_count:
+                output.append('<li>and %d more of this type.' % problem_list.dropped_count)
             output.append('</ul>\n')
         return ''.join(output)
 
@@ -295,10 +293,10 @@ class HTMLCountingProblemAccumulator(LimitPerTypeProblemAccumulator):
         """
         output = ['<table>']
         for classname in sorted(name_to_problist.keys()):
-            problist = name_to_problist[classname]
-            human_name = maybe_pluralize_word(problist.count, un_camel_case(classname))
+            problem_list = name_to_problist[classname]
+            human_name = maybe_pluralize_word(problem_list.count, un_camel_case(classname))
             output.append('<tr><td>%d</td><td><a href="#%s%s">%s</a></td></tr>\n' %
-                          (problist.count, level_name, classname, human_name))
+                          (problem_list.count, level_name, classname, human_name))
         output.append('</table>\n')
         return ''.join(output)
 
@@ -632,59 +630,77 @@ def parse_command_line_arguments():
 
     parser = util.OptionParserLongError(
         usage=usage, version='%prog '+transitfeed.__version__)
-    parser.add_option('-n', '--noprompt', action='store_false',
-                      dest='manual_entry',
-                      help='do not prompt for feed location or load output in '
-                           'browser')
-    parser.add_option('-o', '--output', dest='output', metavar='FILE',
-                      help='write html output to FILE or --output=CONSOLE to '
-                           'print all errors and warnings to the command console')
-    parser.add_option('-p', '--performance', action='store_true',
-                      dest='performance',
-                      help='output memory and time performance (Availability: '
-                           'Unix')
-    parser.add_option('-m', '--memory_db', dest='memory_db',  action='store_true',
-                      help='Use in-memory sqlite db instead of a temporary file. '
-                           'It is faster but uses more RAM.')
-    parser.add_option('-d', '--duplicate_trip_check',
-                      dest='check_duplicate_trips', action='store_true',
-                      help='Check for duplicate trips which go through the same '
-                           'stops with same service and start times')
-    parser.add_option('-l', '--limit_per_type',
-                      dest='limit_per_type', action='store', type='int',
-                      help='Maximum number of errors and warnings to keep of '
-                           'each type')
-    parser.add_option('--latest_version', dest='latest_version',
-                      action='store',
-                      help='a version number such as 1.2.1 or None to get the '
-                           'latest version from the project site. Output a warning if '
-                           'transitfeed.py is older than this version.')
-    parser.add_option('--service_gap_interval',
-                      dest='service_gap_interval',
-                      action='store',
-                      type='int',
-                      help='the number of consecutive days to search for with no '
-                           'scheduled service. For each interval with no service '
-                           'having this number of days or more a warning will be '
-                           'issued')
-    parser.add_option('--extension',
-                      dest='extension',
-                      help='the name of the Python module that containts a GTFS '
-                           'extension that is to be loaded and used while validating '
-                           'the specified feed.')
-    parser.add_option('--error_types_ignore_list',
-                      dest='error_types_ignore_list',
-                      help='a comma-separated list of error and warning type '
-                           'names to be ignored during validation (e.g. '
-                           '"ExpirationDate,UnusedStop"). Bad error type names will '
-                           'be silently ignored!')
+    parser.add_option(
+        '-n', '--noprompt', action='store_false',
+        dest='manual_entry',
+        help='do not prompt for feed location or load output in browser'
+    )
+    parser.add_option(
+        '-o', '--output', dest='output', metavar='FILE',
+        help='write html output to FILE or --output=CONSOLE to '
+        'print all errors and warnings to the command console'
+    )
+    parser.add_option(
+        '-p', '--performance', action='store_true',
+        dest='performance',
+        help='output memory and time performance (Availability: Unix)'
+    )
+    parser.add_option(
+        '-m', '--memory_db', dest='memory_db',  action='store_true',
+        help='Use in-memory sqlite db instead of a temporary file. '
+        'It is faster but uses more RAM.'
+    )
+    parser.add_option(
+        '-d', '--duplicate_trip_check',
+        dest='check_duplicate_trips', action='store_true',
+        help='Check for duplicate trips which go through the same '
+        'stops with same service and start times'
+    )
+    parser.add_option(
+        '-l', '--limit_per_type',
+        dest='limit_per_type', action='store', type='int',
+        help='Maximum number of errors and warnings to keep of each type'
+    )
+    parser.add_option(
+        '--latest_version', dest='latest_version',
+        action='store',
+        help='a version number such as 1.2.1 or None to get the '
+        'latest version from the project site. Output a warning if '
+        'transitfeed.py is older than this version.'
+    )
+    parser.add_option(
+        '--service_gap_interval',
+        dest='service_gap_interval',
+        action='store',
+        type='int',
+        help='the number of consecutive days to search for with no '
+             'scheduled service. For each interval with no service '
+             'having this number of days or more a warning will be issued'
+    )
+    parser.add_option(
+        '--extension',
+        dest='extension',
+        help='the name of the Python module that containts a GTFS '
+             'extension that is to be loaded and used while validating the specified feed.'
+    )
+    parser.add_option(
+        '--error_types_ignore_list',
+        dest='error_types_ignore_list',
+        help='a comma-separated list of error and warning type '
+             'names to be ignored during validation (e.g. '
+             '"ExpirationDate,UnusedStop"). Bad error type names will be silently ignored!'
+    )
 
-    parser.set_defaults(manual_entry=True, output='validation-results.html',
-                        memory_db=False, check_duplicate_trips=False,
-                        limit_per_type=5, latest_version='',
-                        service_gap_interval=13)
+    parser.set_defaults(
+        manual_entry=True, output='validation-results.html',
+        memory_db=False, check_duplicate_trips=False,
+        limit_per_type=5, latest_version='',
+        service_gap_interval=13
+    )
+
     (options, args) = parser.parse_args()
 
+    feed = None
     if not len(args) == 1:
         if options.manual_entry:
             feed = input('Enter Feed Location: ')
@@ -699,16 +715,14 @@ def parse_command_line_arguments():
         options.error_types_ignore_list = options.error_types_ignore_list.split(',')
     else:
         options.error_types_ignore_list = None
-
-    return (feed, options)
+    return feed, options
 
 
 def run_validation_from_options(feed, options):
     """Validate feed, run in profiler if in options, and return an exit code."""
     if options.performance:
         return profilerun_validation_output_from_options(feed, options)
-    else:
-        return run_validation_output_from_options(feed, options)
+    return run_validation_output_from_options(feed, options)
 
 
 def profilerun_validation_output_from_options(feed, options):
@@ -717,14 +731,16 @@ def profilerun_validation_output_from_options(feed, options):
     import pstats
     # runctx will modify a dict, but not locals(). We need a way to get rv back.
     locals_for_exec = locals()
-    cProfile.runctx('rv = run_validation_output_from_options(feed, options)',
-                    globals(), locals_for_exec, 'validate-stats')
-
+    cProfile.runctx(
+        'rv = run_validation_output_from_options(feed, options)', globals(), locals_for_exec, 'validate-stats')
     # Only available on Unix, http://docs.python.org/lib/module-resource.html
     import resource
-    print("Time: %d seconds" % (
-            resource.getrusage(resource.RUSAGE_SELF).ru_utime +
-            resource.getrusage(resource.RUSAGE_SELF).ru_stime))
+    print(
+        "Time: %d seconds" % (
+                resource.getrusage(resource.RUSAGE_SELF).ru_utime +
+                resource.getrusage(resource.RUSAGE_SELF).ru_stime
+        )
+    )
 
     # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/286222
     # http://aspn.activestate.com/ASPN/Cookbook/ "The recipes are freely

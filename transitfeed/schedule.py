@@ -782,8 +782,7 @@ class Schedule:
                 trip_runs = 1
 
             service_id_to_trips[trip.service_id] += trip_runs
-            service_id_to_departures[trip.service_id] += (
-                    (trip.get_count_stop_times() - 1) * trip_runs)
+            service_id_to_departures[trip.service_id] += ((trip.get_count_stop_times() - 1) * trip_runs)
 
         date_services = self.get_service_periods_active_each_date(date_start, date_end)
         date_trips = []
@@ -800,9 +799,10 @@ class Schedule:
                                 self.get_agency_list()))
         if len(timezones_set) > 1:
             timezones_str = '"%s"' % ('", "'.join(timezones_set))
-            problems.invalid_value('agency_timezone', timezones_str,
-                                   'All agencies should have the same time zone. ' \
-                                   'Please review agency.txt.')
+            problems.invalid_value(
+                'agency_timezone', timezones_str,
+                'All agencies should have the same time zone. Please review agency.txt.'
+            )
 
     def validate_feed_info_lang_matches_agency_lang(self, problems):
         if self.feed_info is None:
@@ -811,16 +811,18 @@ class Schedule:
             return
         agencies = self.get_agency_list()
         for agency in agencies:
-            if not util.is_empty(agency.agency_lang) and (
-                    not self.feed_info.feed_lang == agency.agency_lang):
-                problems.invalid_value("feed_lang",
-                                       "The languages specified in feedinfo.txt and in "
-                                       "agency.txt for agency with ID %s differ." %
-                                       agency.agency_id)
+            if not util.is_empty(agency.agency_lang) and not self.feed_info.feed_lang == agency.agency_lang:
+                problems.invalid_value(
+                    "feed_lang",
+                    "The languages specified in feedinfo.txt and in "
+                    "agency.txt for agency with ID %s differ." % agency.agency_id
+                )
 
-    def validate_feed_start_and_expiration_dates(self, problems, first_date, last_date,
-                                                 first_date_origin, last_date_origin,
-                                                 today):
+    @staticmethod
+    def validate_feed_start_and_expiration_dates(
+            problems, first_date, last_date,
+            first_date_origin, last_date_origin, today
+    ):
         """Validate the start and expiration dates of the feed.
            Issue a warning if it only starts in the future, or if
            it expires within 60 days.
@@ -829,6 +831,8 @@ class Schedule:
           problems: The problem reporter object
           first_date: A date object representing the first day the feed is active
           last_date: A date object representing the last day the feed is active
+          first_date_origin: TODO: what's that?
+          last_date_origin: TODO: what's that?
           today: A date object representing the date the validation is being run on
 
         Returns:

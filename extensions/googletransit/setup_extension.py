@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import transitfeed
 
 from . import agency
@@ -20,20 +19,21 @@ from . import fareattribute
 from . import route
 from . import stop
 
-def get_gtfs_factory(factory = None):
-  if not factory:
-    factory = transitfeed.get_gtfs_factory()
 
-  # Agency class extension
-  factory.update_class('Agency', agency.Agency)
+def get_gtfs_factory(factory=None):
+    if not factory:
+        factory = transitfeed.get_gtfs_factory()
 
-  # FareAttribute class extension
-  factory.update_class('FareAttribute', fareattribute.FareAttribute)
+    # Agency class extension
+    factory.update_class('Agency', agency.Agency)
 
-  # Route class extension
-  factory.update_class('Route', route.Route)
+    # FareAttribute class extension
+    factory.update_class('FareAttribute', fareattribute.FareAttribute)
 
-  # Stop class extension
-  factory.update_class('Stop', stop.Stop)
+    # Route class extension
+    factory.update_class('Route', route.Route)
 
-  return factory
+    # Stop class extension
+    factory.update_class('Stop', stop.Stop)
+
+    return factory

@@ -12,20 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
-
 from . import extension_util
 import transitfeed
 
-class Agency(transitfeed.Agency):
-  """Extension of transitfeed.Agency:
-  - Overriding ValidateAgencyLang() for supporting BCP-47 agency_lang codes.
-  """
 
-  # Overrides transitfeed.Agency.ValidateAgencyLang() and validates agency_lang
-  # using the new pybcp47 module via extension_util.py
-  def ValidateAgencyLang(self, problems):
-    if not self.agency_lang:
-      return False
-    return not extension_util.validate_language_code(
-        self.agency_lang, 'agency_lang', problems)
+class Agency(transitfeed.Agency):
+    """Extension of transitfeed.Agency:
+    - Overriding ValidateAgencyLang() for supporting BCP-47 agency_lang codes.
+    """
+
+    # Overrides transitfeed.Agency.ValidateAgencyLang() and validates agency_lang
+    # using the new pybcp47 module via extension_util.py
+    def ValidateAgencyLang(self, problems):
+        if not self.agency_lang:
+            return False
+        return not extension_util.validate_language_code(
+            self.agency_lang, 'agency_lang', problems)

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
-from __future__ import absolute_import
 import codecs
 import csv
 import datetime
@@ -80,10 +78,8 @@ def run_with_crash_handler(f):
             # Oh well, guess we won't put the version in the report
             pass
 
-        for (frame_obj, filename, line_num, fun_name, context_lines,
-             context_index) in original_trace:
-            dump.append('File "%s", line %d, in %s\n' % (filename, line_num,
-                                                         fun_name))
+        for (frame_obj, filename, line_num, fun_name, context_lines, context_index) in original_trace:
+            dump.append('File "%s", line %d, in %s\n' % (filename, line_num, fun_name))
             if context_lines:
                 for (i, line) in enumerate(context_lines):
                     if i == context_index:
@@ -206,7 +202,7 @@ def is_valid_url(url):
       - only checks whether the URL starts with 'http://' or 'https://'
     """
     # TODO: Add more thorough checking of URL
-    return url.startswith(u'http://') or url.startswith(u'https://')
+    return url.startswith('http://') or url.startswith('https://')
 
 
 def validate_url(url, column_name=None, problems=None):
@@ -415,7 +411,7 @@ def validate_yes_no_unknown(value, column_name=None, problems=None):
 
 
 def is_empty(value):
-    return value is None or (isinstance(value, str) and not value.strip())
+    return not value
 
 
 def find_unique_id(dic):

@@ -12,46 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 from .pybcp47 import Bcp47LanguageParser
 from transitfeed import problems as problems_class
 from transitfeed import util
 
 parser = Bcp47LanguageParser()
 
+
 def is_valid_language_code(lang):
-  """
-  Checks the validity of a language code value:
-    - checks whether the code, as lower case, is well formed and valid BCP47
-      using the pybcp47 module
-  """
-  bcp47_obj = parser.ParseLanguage(str(lang.lower()))
-  return bcp47_obj.IsWellformed() and bcp47_obj.IsValid()
+    """
+    Checks the validity of a language code value:
+      - checks whether the code, as lower case, is well formed and valid BCP47
+        using the pybcp47 module
+    """
+    bcp47_obj = parser.parse_language(str(lang.lower()))
+    return bcp47_obj.is_well_formed() and bcp47_obj.IsValid()
+
 
 def validate_language_code(lang, column_name=None, problems=None):
-  """
-  Validates a non-required language code value using the pybcp47 module:
-    - if invalid adds invalid_value error (if problems accumulator is provided)
-    - distinguishes between 'not well-formed' and 'not valid' and adds error
-      reasons accordingly
-    - an empty language code is regarded as valid! Otherwise we might end up
-      with many duplicate errors because of the required field checks.
-    - returns true if the language is valid, false if not well-formed or
-      invalid.
-  """
-  if util.is_empty(lang):
+    """
+    Validates a non-required language code value using the pybcp47 module:
+      - if invalid adds invalid_value error (if problems accumulator is provided)
+      - distinguishes between 'not well-formed' and 'not valid' and adds error
+        reasons accordingly
+      - an empty language code is regarded as valid! Otherwise we might end up
+        with many duplicate errors because of the required field checks.
+      - returns true if the language is valid, false if not well-formed or
+        invalid.
+    """
+    if util.is_empty(lang):
+        return True
+    bcp47_obj = parser.parse_language(str(lang.lower()))
+    if not bcp47_obj.wellformed:
+        if problems:
+            problems.InvalidValue(column_name, lang,
+                                  'language code "%s" is not well-formed' %
+                                  lang, type=problems_class.TYPE_ERROR)
+        return False
+    if not bcp47_obj.valid:
+        if problems:
+            problems.InvalidValue(column_name, lang,
+                                  'language code "%s" is not valid, parses as: %s' %
+                                  (lang, bcp47_obj), type=problems_class.TYPE_WARNING)
+        return False
     return True
-  bcp47_obj = parser.ParseLanguage(str(lang.lower()))
-  if not bcp47_obj.wellformed:
-    if problems:
-      problems.InvalidValue(column_name, lang,
-                            'language code "%s" is not well-formed' %
-                            lang, type=problems_class.TYPE_ERROR)
-    return False
-  if not bcp47_obj.valid:
-    if problems:
-      problems.InvalidValue(column_name, lang,
-                            'language code "%s" is not valid, parses as: %s' %
-                            (lang, bcp47_obj), type=problems_class.TYPE_WARNING)
-    return False
-  return True

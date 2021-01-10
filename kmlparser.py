@@ -27,15 +27,11 @@ a single point.
 For line geometries, information about shapes is extracted from a kml file.
 
 """
-from __future__ import print_function
 
 import re
-import string
-import sys
 import transitfeed
 from transitfeed import util
 import xml.dom.minidom as minidom
-import zipfile
 
 
 class Placemark:
@@ -50,14 +46,13 @@ class Placemark:
         return len(self.coordinates) > 1
 
 
-class KMLParser(object):
-    def __init__(self, stopNameRe='(.*)'):
+class KMLParser:
+    def __init__(self, stop_name_re='(.*)'):
         """
         Args:
-          stopNameRe - a regular expression to extract a stop name from a
-                       placemaker name
+          stop_name_re - a regular expression to extract a stop name from a placemark name
         """
-        self.stopNameRe = re.compile(stopNameRe)
+        self.stop_name_re = re.compile(stop_name_re)
 
     def parse(self, filename, feed):
         """
@@ -79,12 +74,12 @@ class KMLParser(object):
           dom - kml dom tree
           feed - an instance of Schedule class to be updated
         """
-        shape_num = 0
+        # shape_num = 0 TODO: shape_num not used
         for node in dom.getElementsByTagName('Placemark'):
             p = self.parse_placemark(node)
             if p.is_point():
                 (lon, lat) = p.coordinates[0]
-                m = self.stopNameRe.search(p.name)
+                m = self.stop_name_re.search(p.name)
                 feed.add_stop(lat, lon, m.group(1))
             elif p.IsLine():
                 self.convert_placemark_to_shape(p, feed)
@@ -98,25 +93,27 @@ class KMLParser(object):
                 ret.coordinates = self.extract_coordinates(child)
         return ret
 
-    def extract_text(self, node):
+    @staticmethod
+    def extract_text(node):
         for child in node.childNodes:
             if child.nodeType == child.TEXT_NODE:
                 return child.wholeText  # is a unicode string
         return ""
 
     def extract_coordinates(self, node):
-        coordinatesText = ""
+        coordinates_text = ""
         for child in node.childNodes:
             if child.nodeName == 'coordinates':
-                coordinatesText = self.extract_text(child)
+                coordinates_text = self.extract_text(child)
                 break
         ret = []
-        for point in coordinatesText.split():
+        for point in coordinates_text.split():
             coords = point.split(',')
             ret.append((float(coords[0]), float(coords[1])))
         return ret
 
-    def convert_placemark_to_shape(self, p, feed):
+    @staticmethod
+    def convert_placemark_to_shape(p, feed):
         shape = transitfeed.Shape(p.name)
         for (lon, lat) in p.coordinates:
             shape.add_point(lat, lon)
@@ -141,16 +138,16 @@ class KMLParser(object):
 
 
 def main():
-    usage = \
-        """%prog <input.kml> <output GTFS.zip>
+    usage = """
+    %prog <input.kml> <output GTFS.zip>
         
-        Reads KML file <input.kml> and creates GTFS file <output GTFS.zip> with
-        placemarks in the KML represented as stops.
-        """
+    Reads KML file <input.kml> and creates GTFS file <output GTFS.zip> with
+    placemarks in the KML represented as stops.
+    """
 
     parser = util.OptionParserLongError(
         usage=usage, version='%prog ' + transitfeed.__version__)
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args()
     if len(args) != 2:
         parser.error('You did not provide all required command line arguments.')
 

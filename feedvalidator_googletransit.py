@@ -21,10 +21,10 @@ from transitfeed import util
 
 
 def main():
-  (feed, options) = feedvalidator.parse_command_line_arguments()
-  options.extension = 'extensions.googletransit'
-  return feedvalidator.run_validation_from_options(feed, options)
+    feed, options = feedvalidator.parse_command_line_arguments()
+    options.extension = 'extensions.googletransit'
+    return feedvalidator.run_validation_from_options(feed, options)
 
 
 if __name__ == '__main__':
-  util.run_with_crash_handler(main)
+    util.run_with_crash_handler(main)

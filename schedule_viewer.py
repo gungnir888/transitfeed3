@@ -432,10 +432,10 @@ class ScheduleRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     pattern_start_time = min((t.get_start_time() for t in triplist))
     pattern_end_time = max((t.get_end_time() for t in triplist))
 
-    marey.SetSpan(pattern_start_time,pattern_end_time)
-    marey.Draw(triplist[0].get_pattern(), triplist, height)
+    marey.set_span(pattern_start_time,pattern_end_time)
+    marey.draw(triplist[0].get_pattern(), triplist, height)
 
-    content = marey.Draw()
+    content = marey.draw()
 
     self.send_response(200)
     self.send_header('Content-Type', 'image/svg+xml')

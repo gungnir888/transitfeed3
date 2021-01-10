@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-#
 # Copyright 2008 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,21 +66,16 @@ in a folder hierarchy which looks like this at the top level:
     - Routes - Rail
     - Shapes
 """
-from __future__ import print_function
 
-try:
-    import xml.etree.ElementTree as ET  # python 2.5
-except ImportError as e:
-    import elementtree.ElementTree as ET  # older pythons
+from xml.etree import ElementTree as ET  # older pythons
 import extensions.googletransit as googletransit
-import optparse
 import os.path
 import sys
 import transitfeed
-from transitfeed import util
+from transitfeed import util, cmp
 
 
-class KMLWriter(object):
+class KMLWriter:
     """This class knows how to write out a transit feed as KML.
 
     Sample usage:
@@ -105,7 +98,7 @@ class KMLWriter(object):
         self.altitude_per_sec = 0.0
         self.date_filter = None
 
-    def _SetIndentation(self, elem, level=0):
+    def _set_indentation(self, elem, level=0):
         """Indented the ElementTree DOM.
 
         This is the recommended way to cause an ElementTree DOM to be
@@ -122,14 +115,15 @@ class KMLWriter(object):
             if not elem.text or not elem.text.strip():
                 elem.text = i + "  "
             for elem in elem:
-                self._SetIndentation(elem, level + 1)
+                self._set_indentation(elem, level + 1)
             if not elem.tail or not elem.tail.strip():
                 elem.tail = i
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
 
-    def _CreateFolder(self, parent, name, visible=True, description=None):
+    @staticmethod
+    def _create_folder(parent, name, visible=True, description=None):
         """Create a KML Folder element.
 
         Args:
@@ -152,7 +146,8 @@ class KMLWriter(object):
             visibility.text = '0'
         return folder
 
-    def _CreateStyleForRoute(self, doc, route):
+    @staticmethod
+    def _create_style_for_route(doc, route):
         """Create a KML Style element for the route.
 
         The style sets the line colour if the route colour is specified. The
@@ -182,8 +177,8 @@ class KMLWriter(object):
             color.text = 'ff%s%s%s' % (blue, green, red)
         return style_id
 
-    def _CreatePlacemark(self, parent, name, style_id=None, visible=True,
-                         description=None):
+    @staticmethod
+    def _create_placemark(parent, name, style_id=None, visible=True, description=None):
         """Create a KML Placemark element.
 
         Args:
@@ -210,7 +205,8 @@ class KMLWriter(object):
             visibility.text = '0'
         return placemark
 
-    def _CreateLineString(self, parent, coordinate_list):
+    @staticmethod
+    def _create_line_string(parent, coordinate_list):
         """Create a KML LineString element.
 
         The points of the string are given in coordinate_list. Every element of
@@ -241,7 +237,7 @@ class KMLWriter(object):
         coordinates.text = ' '.join(coordinate_str_list)
         return linestring
 
-    def _CreateLineStringForShape(self, parent, shape):
+    def _create_line_string_for_shape(self, parent, shape):
         """Create a KML LineString using coordinates from a shape.
 
         Args:
@@ -254,9 +250,9 @@ class KMLWriter(object):
         """
         coordinate_list = [(longitude, latitude) for
                            (latitude, longitude, distance) in shape.points]
-        return self._CreateLineString(parent, coordinate_list)
+        return self._create_line_string(parent, coordinate_list)
 
-    def _CreateStopsFolder(self, schedule, doc):
+    def _create_stops_folder(self, schedule, doc):
         """Create a KML Folder containing placemarks for each stop in the schedule.
 
         If there are no stops in the schedule then no folder is created.
@@ -270,27 +266,31 @@ class KMLWriter(object):
         """
         if not schedule.get_stop_list():
             return None
-        stop_folder = self._CreateFolder(doc, 'Stops')
-        stop_folder_selection = self._StopFolderSelectionMethod(stop_folder)
-        stop_style_selection = self._StopStyleSelectionMethod(doc)
+        stop_folder = self._create_folder(doc, 'Stops')
+        stop_folder_selection = self._stop_folder_selection_method(stop_folder)
+        stop_style_selection = self._stop_style_selection_method(doc)
         stops = list(schedule.get_stop_list())
         stops.sort(key=lambda x: x.stop_name)
         for stop in stops:
-            (folder, pathway_folder) = stop_folder_selection(stop)
-            (style_id, pathway_style_id) = stop_style_selection(stop)
-            self._CreateStopPlacemark(folder, stop, style_id)
-            if (self.show_stop_hierarchy and
-                    stop.location_type != transitfeed.Stop.LOCATION_TYPE_STATION and
-                    stop.parent_station and stop.parent_station in schedule.stops):
-                placemark = self._CreatePlacemark(
+            folder, pathway_folder = stop_folder_selection(stop)
+            style_id, pathway_style_id = stop_style_selection(stop)
+            self._create_stop_placemark(folder, stop, style_id)
+            station_conditions = all([
+                stop.location_type != transitfeed.Stop.LOCATION_TYPE_STATION,
+                stop.location_type,
+                stop.parent_station,
+                stop.parent_station in schedule.stops
+            ])
+            if station_conditions:
+                placemark = self._create_placemark(
                     pathway_folder, stop.stop_name, pathway_style_id)
                 parent_station = schedule.stops[stop.parent_station]
                 coordinates = [(stop.stop_lon, stop.stop_lat),
                                (parent_station.stop_lon, parent_station.stop_lat)]
-                self._CreateLineString(placemark, coordinates)
+                self._create_line_string(placemark, coordinates)
         return stop_folder
 
-    def _StopFolderSelectionMethod(self, stop_folder):
+    def _stop_folder_selection_method(self, stop_folder):
         """Create a method to determine which KML folder a stop should go in.
 
         Args:
@@ -313,25 +313,25 @@ class KMLWriter(object):
             return lambda stop: (stop_folder, None)
 
         # Create the various sub-folders for showing the stop hierarchy
-        station_folder = self._CreateFolder(stop_folder, 'Stations')
-        platform_folder = self._CreateFolder(stop_folder, 'Platforms')
-        platform_connections = self._CreateFolder(platform_folder, 'Connections')
-        entrance_folder = self._CreateFolder(stop_folder, 'Entrances')
-        entrance_connections = self._CreateFolder(entrance_folder, 'Connections')
-        standalone_folder = self._CreateFolder(stop_folder, 'Stand-Alone')
+        station_folder = self._create_folder(stop_folder, 'Stations')
+        platform_folder = self._create_folder(stop_folder, 'Platforms')
+        platform_connections = self._create_folder(platform_folder, 'Connections')
+        entrance_folder = self._create_folder(stop_folder, 'Entrances')
+        entrance_connections = self._create_folder(entrance_folder, 'Connections')
+        standalone_folder = self._create_folder(stop_folder, 'Stand-Alone')
 
-        def FolderSelectionMethod(stop):
+        def folder_selection_method(stop):
             if stop.location_type == transitfeed.Stop.LOCATION_TYPE_STATION:
-                return (station_folder, None)
+                return station_folder, None
             elif stop.location_type == googletransit.Stop.LOCATION_TYPE_ENTRANCE:
-                return (entrance_folder, entrance_connections)
+                return entrance_folder, entrance_connections
             elif stop.parent_station:
-                return (platform_folder, platform_connections)
-            return (standalone_folder, None)
+                return platform_folder, platform_connections
+            return standalone_folder, None
 
-        return FolderSelectionMethod
+        return folder_selection_method
 
-    def _StopStyleSelectionMethod(self, doc):
+    def _stop_style_selection_method(self, doc):
         """Create a method to determine which style to apply to a stop placemark.
 
         Args:
@@ -356,22 +356,22 @@ class KMLWriter(object):
             return lambda stop: (None, None)
 
         # Create the various styles for showing the stop hierarchy
-        self._CreateStyle(
+        self._create_style(
             doc, 'stop_entrance', {'IconStyle': {'color': 'ff0000ff'}})
-        self._CreateStyle(
+        self._create_style(
             doc,
             'entrance_connection',
             {'LineStyle': {'color': 'ff0000ff', 'width': '2'}})
-        self._CreateStyle(
+        self._create_style(
             doc, 'stop_platform', {'IconStyle': {'color': 'ffff0000'}})
-        self._CreateStyle(
+        self._create_style(
             doc,
             'platform_connection',
             {'LineStyle': {'color': 'ffff0000', 'width': '2'}})
-        self._CreateStyle(
+        self._create_style(
             doc, 'stop_standalone', {'IconStyle': {'color': 'ff00ff00'}})
 
-        def StyleSelectionMethod(stop):
+        def style_selection_method(stop):
             if stop.location_type == transitfeed.Stop.LOCATION_TYPE_STATION:
                 return ('stop_station', None)
             elif stop.location_type == googletransit.Stop.LOCATION_TYPE_ENTRANCE:
@@ -380,9 +380,10 @@ class KMLWriter(object):
                 return ('stop_platform', 'platform_connection')
             return ('stop_standalone', None)
 
-        return StyleSelectionMethod
+        return style_selection_method
 
-    def _CreateStyle(self, doc, style_id, style_dict):
+    @staticmethod
+    def _create_style(doc, style_id, style_dict):
         """Helper method to create a <Style/> element in a KML document.
 
         Args:
@@ -400,19 +401,19 @@ class KMLWriter(object):
         with the same semantics.
         """
 
-        def CreateElements(current_element, current_dict):
+        def create_elements(current_element, current_dict):
             for (key, value) in current_dict.items():
                 element = ET.SubElement(current_element, key)
                 if isinstance(value, dict):
-                    CreateElements(element, value)
+                    create_elements(element, value)
                 else:
                     element.text = value
 
         style = ET.SubElement(doc, 'Style', {'id': style_id})
-        CreateElements(style, style_dict)
+        create_elements(style, style_dict)
         return style
 
-    def _CreateStopPlacemark(self, stop_folder, stop, style_id):
+    def _create_stop_placemark(self, stop_folder, stop, style_id):
         """Creates a new stop <Placemark/> element.
 
         Args:
@@ -420,23 +421,21 @@ class KMLWriter(object):
           stop: the actual Stop to create a placemark for.
           style_id: optional argument indicating a style id to add to the placemark.
         """
-        desc_items = []
-        desc_items.append("Stop id: %s" % stop.stop_id)
+        desc_items = ["Stop id: %s" % stop.stop_id]
         if stop.stop_desc:
             desc_items.append(stop.stop_desc)
         if stop.stop_url:
             desc_items.append('Stop info page: <a href="%s">%s</a>' % (
                 stop.stop_url, stop.stop_url))
         description = '<br/>'.join(desc_items) or None
-        placemark = self._CreatePlacemark(stop_folder, stop.stop_name,
+        placemark = self._create_placemark(stop_folder, stop.stop_name,
                                           description=description,
                                           style_id=style_id)
         point = ET.SubElement(placemark, 'Point')
         coordinates = ET.SubElement(point, 'coordinates')
         coordinates.text = '%.6f,%.6f' % (stop.stop_lon, stop.stop_lat)
 
-    def _CreateRoutePatternsFolder(self, parent, route,
-                                   style_id=None, visible=True):
+    def _create_route_patterns_folder(self, parent, route, style_id=None, visible=True):
         """Create a KML Folder containing placemarks for each pattern in the route.
 
         A pattern is a sequence of stops used by one of the trips in the route.
@@ -461,21 +460,20 @@ class KMLWriter(object):
         pattern_trips = pattern_id_to_trips.values()
         pattern_trips.sort(lambda a, b: cmp(len(b), len(a)))
 
-        folder = self._CreateFolder(parent, 'Patterns', visible)
+        folder = self._create_folder(parent, 'Patterns', visible)
         for n, trips in enumerate(pattern_trips):
             trip_ids = [trip.trip_id for trip in trips]
             name = 'Pattern %d (trips: %d)' % (n + 1, len(trips))
             description = 'Trips using this pattern (%d in total): %s' % (
                 len(trips), ', '.join(trip_ids))
-            placemark = self._CreatePlacemark(folder, name, style_id, visible,
+            placemark = self._create_placemark(folder, name, style_id, visible,
                                               description)
             coordinates = [(stop.stop_lon, stop.stop_lat)
                            for stop in trips[0].get_pattern()]
-            self._CreateLineString(placemark, coordinates)
+            self._create_line_string(placemark, coordinates)
         return folder
 
-    def _CreateRouteShapesFolder(self, schedule, parent, route,
-                                 style_id=None, visible=True):
+    def _create_route_shapes_folder(self, schedule, parent, route, style_id=None, visible=True):
         """Create a KML Folder for the shapes of a route.
 
         The folder contains a placemark for each shape referenced by a trip in the
@@ -503,18 +501,16 @@ class KMLWriter(object):
         shape_id_to_trips_items = shape_id_to_trips.items()
         shape_id_to_trips_items.sort(lambda a, b: cmp(len(b[1]), len(a[1])))
 
-        folder = self._CreateFolder(parent, 'Shapes', visible)
+        folder = self._create_folder(parent, 'Shapes', visible)
         for shape_id, trips in shape_id_to_trips_items:
             trip_ids = [trip.trip_id for trip in trips]
             name = '%s (trips: %d)' % (shape_id, len(trips))
-            description = 'Trips using this shape (%d in total): %s' % (
-                len(trips), ', '.join(trip_ids))
-            placemark = self._CreatePlacemark(folder, name, style_id, visible,
-                                              description)
-            self._CreateLineStringForShape(placemark, schedule.get_shape(shape_id))
+            description = 'Trips using this shape (%d in total): %s' % (len(trips), ', '.join(trip_ids))
+            placemark = self._create_placemark(folder, name, style_id, visible, description)
+            self._create_line_string_for_shape(placemark, schedule.get_shape(shape_id))
         return folder
 
-    def _CreateRouteTripsFolder(self, parent, route, style_id=None, schedule=None):
+    def _create_route_trips_folder(self, parent, route, style_id=None, schedule=None):
         """Create a KML Folder containing all the trips in the route.
 
         The folder contains a placemark for each of these trips. If there are no
@@ -528,14 +524,14 @@ class KMLWriter(object):
         Returns:
           The Folder ElementTree.Element instance or None.
         """
+        # TODO: schedule=None?
         if not route.trips:
             return None
         trips = list(route.trips)
         trips.sort(key=lambda x: x.trip_id)
-        trips_folder = self._CreateFolder(parent, 'Trips', visible=False)
+        trips_folder = self._create_folder(parent, 'Trips', visible=False)
         for trip in trips:
-            if (self.date_filter and
-                    not trip.service_period.is_active_on(self.date_filter)):
+            if self.date_filter and not trip.service_period.is_active_on(self.date_filter):
                 continue
 
             if trip.trip_headsign:
@@ -546,20 +542,23 @@ class KMLWriter(object):
             coordinate_list = []
             for secs, stoptime, tp in trip.get_time_interpolated_stops():
                 if self.altitude_per_sec > 0:
-                    coordinate_list.append((stoptime.stop.stop_lon, stoptime.stop.stop_lat,
-                                            (secs - 3600 * 4) * self.altitude_per_sec))
+                    coordinate_list.append(
+                        (stoptime.stop.stop_lon, stoptime.stop.stop_lat,
+                            (secs - 3600 * 4) * self.altitude_per_sec))
                 else:
                     coordinate_list.append((stoptime.stop.stop_lon,
                                             stoptime.stop.stop_lat))
-            placemark = self._CreatePlacemark(trips_folder,
-                                              trip.trip_id,
-                                              style_id=style_id,
-                                              visible=False,
-                                              description=description)
-            self._CreateLineString(placemark, coordinate_list)
+            placemark = self._create_placemark(
+                trips_folder,
+                trip.trip_id,
+                style_id=style_id,
+                visible=False,
+                description=description
+            )
+            self._create_line_string(placemark, coordinate_list)
         return trips_folder
 
-    def _CreateRoutesFolder(self, schedule, doc, route_type=None):
+    def _create_routes_folder(self, schedule, doc, route_type=None):
         """Create a KML Folder containing routes in a schedule.
 
         The folder contains a subfolder for each route in the schedule of type
@@ -580,7 +579,7 @@ class KMLWriter(object):
           The Folder ElementTree.Element instance or None.
         """
 
-        def GetRouteName(route):
+        def get_route_name(route):
             """Return a placemark name for the route.
 
             Args:
@@ -596,7 +595,7 @@ class KMLWriter(object):
                 name_parts.append(route.route_long_name)
             return ' - '.join(name_parts) or route.route_id
 
-        def GetRouteDescription(route):
+        def get_route_description(route):
             """Return a placemark description for the route.
 
             Args:
@@ -618,33 +617,35 @@ class KMLWriter(object):
                   if route_type is None or route.route_type == route_type]
         if not routes:
             return None
-        routes.sort(key=lambda x: GetRouteName(x))
+        routes.sort(key=lambda x: get_route_name(x))
 
         if route_type is not None:
-            route_type_names = {0: 'Tram, Streetcar or Light rail',
-                                1: 'Subway or Metro',
-                                2: 'Rail',
-                                3: 'Bus',
-                                4: 'Ferry',
-                                5: 'Cable car',
-                                6: 'Gondola or suspended cable car',
-                                7: 'Funicular'}
+            route_type_names = {
+                0: 'Tram, Streetcar or Light rail',
+                1: 'Subway or Metro',
+                2: 'Rail',
+                3: 'Bus',
+                4: 'Ferry',
+                5: 'Cable car',
+                6: 'Gondola or suspended cable car',
+                7: 'Funicular'
+            }
             type_name = route_type_names.get(route_type, str(route_type))
             folder_name = 'Routes - %s' % type_name
         else:
             folder_name = 'Routes'
-        routes_folder = self._CreateFolder(doc, folder_name, visible=False)
+        routes_folder = self._create_folder(doc, folder_name, visible=False)
 
         for route in routes:
-            style_id = self._CreateStyleForRoute(doc, route)
-            route_folder = self._CreateFolder(routes_folder,
-                                              GetRouteName(route),
-                                              description=GetRouteDescription(route))
-            self._CreateRouteShapesFolder(schedule, route_folder, route,
+            style_id = self._create_style_for_route(doc, route)
+            route_folder = self._create_folder(routes_folder,
+                                              get_route_name(route),
+                                              description=get_route_description(route))
+            self._create_route_shapes_folder(schedule, route_folder, route,
                                           style_id, False)
-            self._CreateRoutePatternsFolder(route_folder, route, style_id, False)
+            self._create_route_patterns_folder(route_folder, route, style_id, False)
             if self.show_trips:
-                self._CreateRouteTripsFolder(route_folder, route, style_id, schedule)
+                self._create_route_trips_folder(route_folder, route, style_id, schedule)
         return routes_folder
 
     def _CreateShapesFolder(self, schedule, doc):
@@ -662,12 +663,12 @@ class KMLWriter(object):
         """
         if not schedule.get_shape_list():
             return None
-        shapes_folder = self._CreateFolder(doc, 'Shapes')
+        shapes_folder = self._create_folder(doc, 'Shapes')
         shapes = list(schedule.get_shape_list())
         shapes.sort(key=lambda x: x.shape_id)
         for shape in shapes:
-            placemark = self._CreatePlacemark(shapes_folder, shape.shape_id)
-            self._CreateLineStringForShape(placemark, shape)
+            placemark = self._create_placemark(shapes_folder, shape.shape_id)
+            self._create_line_string_for_shape(placemark, shape)
             if self.shape_points:
                 self._CreateShapePointFolder(shapes_folder, shape)
         return shapes_folder
@@ -686,9 +687,9 @@ class KMLWriter(object):
         """
 
         folder_name = shape.shape_id + ' Shape Points'
-        folder = self._CreateFolder(shapes_folder, folder_name, visible=False)
+        folder = self._create_folder(shapes_folder, folder_name, visible=False)
         for (index, (lat, lon, dist)) in enumerate(shape.points):
-            placemark = self._CreatePlacemark(folder, str(index + 1))
+            placemark = self._create_placemark(folder, str(index + 1))
             point = ET.SubElement(placemark, 'Point')
             coordinates = ET.SubElement(point, 'coordinates')
             coordinates.text = '%.6f,%.6f' % (lon, lat)
@@ -707,7 +708,7 @@ class KMLWriter(object):
         doc = ET.SubElement(root, 'Document')
         open_tag = ET.SubElement(doc, 'open')
         open_tag.text = '1'
-        self._CreateStopsFolder(schedule, doc)
+        self._create_stops_folder(schedule, doc)
         if self.split_routes:
             route_types = set()
             for route in schedule.get_route_list():
@@ -715,13 +716,13 @@ class KMLWriter(object):
             route_types = list(route_types)
             route_types.sort()
             for route_type in route_types:
-                self._CreateRoutesFolder(schedule, doc, route_type)
+                self._create_routes_folder(schedule, doc, route_type)
         else:
-            self._CreateRoutesFolder(schedule, doc)
+            self._create_routes_folder(schedule, doc)
         self._CreateShapesFolder(schedule, doc)
 
         # Make sure we pretty-print
-        self._SetIndentation(root)
+        self._set_indentation(root)
 
         # Now write the output
         if isinstance(output_file, file):

@@ -17,7 +17,7 @@ List of changes to the default behavior:
   - extension of transitfeed.Route as proposed in
     https://sites.google.com/site/gtfschanges/spec-changes-summary#routes and
     https://sites.google.com/site/gtfschanges/open-proposals
-  - adding field 'co2_per_km' and ValidateCo2PerKm() function
+  - adding field 'co2_per_km' and validate_co2_per_km() function
   - adding HVT (Hierarchical Vehicle Type) route types, also used in
     extensions.googletransit.Stop for validating field vehicle_type.
     The HVT values are derived from the European TPEG standard, see discussion
