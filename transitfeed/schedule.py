@@ -555,7 +555,7 @@ class Schedule:
             problem_reporter.DuplicateID(
                 self._gtfs_factory.Transfer.ID_COLUMNS,
                 transfer_id,
-                type=problems_module.TYPE_WARNING)
+                problem_type=problems_module.TYPE_WARNING)
             # Duplicates are still added, while not prohibited by GTFS.
 
         transfer._schedule = weakref.proxy(self)  # See weakref comment at top
@@ -934,7 +934,7 @@ class Schedule:
          start_date_origin, end_date_origin) = self.get_date_range_with_origins()
         if not end_date or not start_date:
             problems.other_problem('This feed has no effective service dates!',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
         else:
             try:
                 last_service_day = datetime.datetime(
@@ -1093,7 +1093,7 @@ class Schedule:
                                        'route, as it is for the for the two routes '
                                        'with IDs "%s" and "%s".' %
                                        (route.route_id, route_names[name].route_id),
-                                       type=problems_module.TYPE_WARNING)
+                                       problem_type=problems_module.TYPE_WARNING)
             else:
                 route_names[name] = route
 
@@ -1310,16 +1310,16 @@ class Schedule:
             if not count_stop_times:
                 problems.other_problem('The trip with the trip_id "%s" doesn\'t have '
                                        'any stop times defined.' % trip.trip_id,
-                                       type=problems_module.TYPE_WARNING)
+                                       problem_type=problems_module.TYPE_WARNING)
                 if len(trip._headways) > 0:  # no stoptimes, but there are headways
                     problems.other_problem('Frequencies defined, but no stop times given '
                                            'in trip %s' % trip.trip_id,
-                                           type=problems_module.TYPE_ERROR)
+                                           problem_type=problems_module.TYPE_ERROR)
             elif count_stop_times == 1:
                 problems.other_problem('The trip with the trip_id "%s" only has one '
                                        'stop on it; it should have at least one more '
                                        'stop so that the riders can leave!' %
-                                       trip.trip_id, type=problems_module.TYPE_WARNING)
+                                       trip.trip_id, problem_type=problems_module.TYPE_WARNING)
             else:
                 # These methods report InvalidValue if there's no first or last time
                 trip.get_start_time(problems=problems)
@@ -1335,7 +1335,7 @@ class Schedule:
         if unused_shape_ids:
             problems.other_problem(
                 "The shapes with the following shape_ids aren't used by any trips: %s" % ", ".join(unused_shape_ids),
-                type=problems_module.TYPE_WARNING
+                problem_type=problems_module.TYPE_WARNING
             )
 
     def validate(self,

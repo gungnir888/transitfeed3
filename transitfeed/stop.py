@@ -198,7 +198,7 @@ class Stop(GtfsObjectBase):
             else:
                 if self.location_type not in (0, 1, 2, 3, 4):
                     problems.invalid_value('location_type', value,
-                                           type=problems_module.TYPE_WARNING)
+                                           problem_type=problems_module.TYPE_WARNING)
 
     def validate_stop_required_fields(self, problems):
         for required in self.REQUIRED_FIELD_NAMES:
@@ -221,7 +221,7 @@ class Stop(GtfsObjectBase):
         if valid_conditions:
             problems.invalid_value('stop_lat', self.stop_lat,
                                    'Stop location too close to 0, 0',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
 
     def validate_stop_description_and_name_are_different(self, problems):
         if (self.stop_desc and self.stop_name and
@@ -229,7 +229,7 @@ class Stop(GtfsObjectBase):
                 self.stop_name.strip().lower() == self.stop_desc.strip().lower()):
             problems.invalid_value('stop_desc', self.stop_desc,
                                    'stop_desc should not be the same as stop_name',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
 
     def validate_stop_is_not_station_with_parent(self, problems):
         if self.parent_station and self.location_type == self.LOCATION_TYPE_STATION:
@@ -245,7 +245,7 @@ class Stop(GtfsObjectBase):
                 not util.is_empty(self.stop_timezone)):
             problems.invalid_value('stop_timezone', self.stop_timezone,
                                    reason='a stop having a parent stop must not have a stop_timezone',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
 
     def validate_wheelchair_boarding(self, problems):
         if self.wheelchair_boarding:

@@ -45,7 +45,7 @@ class Stop(transitfeed.Stop):
             elif not util.is_empty(self.parent_station):
                 problems.invalid_value('vehicle_type', self.location_type,
                                        reason='Google Transit does not read vehicle types for stops '
-                                              'having a parent station', type=problems_module.TYPE_WARNING)
+                                              'having a parent station', problem_type=problems_module.TYPE_WARNING)
 
     # Overriding transitfeed.Stop.validate_before_add().
     def validate_before_add(self, problems):

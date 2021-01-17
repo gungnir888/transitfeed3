@@ -100,7 +100,7 @@ class Transfer(GtfsObjectBase):
                                                   "indicates an error.")
                 elif self.min_transfer_time >= 3 * 3600:
                     problems.invalid_value('min_transfer_time', self.min_transfer_time,
-                                           type=problems_module.TYPE_WARNING,
+                                           problem_type=problems_module.TYPE_WARNING,
                                            reason="The value is large for a transfer "
                                                   "time and most likely indicates "
                                                   "an error.")
@@ -141,7 +141,7 @@ class Transfer(GtfsObjectBase):
             problems.transfer_distance_too_big(self.from_stop_id,
                                                self.to_stop_id,
                                                distance,
-                                               type=problems_module.TYPE_WARNING)
+                                               problem_type=problems_module.TYPE_WARNING)
 
     def validate_transfer_walking_time(self, problems):
         if util.is_empty(self.min_transfer_time):

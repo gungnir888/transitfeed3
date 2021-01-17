@@ -121,7 +121,7 @@ class Shape(GtfsFactoryUser):
     def validate_shape_points(self, problems):
         if not self.points:
             problems.other_problem('The shape with shape_id "%s" contains no points.' %
-                                   self.shape_id, type=problems_module.TYPE_WARNING)
+                                   self.shape_id, problem_type=problems_module.TYPE_WARNING)
 
     def validate(self, problems=problems_module.default_problem_reporter):
         self.validate_shape_id(problems)

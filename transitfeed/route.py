@@ -148,7 +148,7 @@ class Route(GtfsObjectBase):
                                    'code that riders use to identify a route.  '
                                    'If this route doesn\'t have such a code, it\'s '
                                    'OK to leave this field empty.',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
 
     def validate_route_long_name_does_not_contain_short_name(self, problems):
         if self.route_short_name and self.route_long_name:
@@ -163,7 +163,7 @@ class Route(GtfsObjectBase):
                                        'the route_short_name value, as both '
                                        'fields are often displayed '
                                        'side-by-side.',
-                                       type=problems_module.TYPE_WARNING)
+                                       problem_type=problems_module.TYPE_WARNING)
 
     def validate_route_short_and_long_names_are_not_equal(self, problems):
         if self.route_short_name and self.route_long_name:
@@ -177,7 +177,7 @@ class Route(GtfsObjectBase):
                                        'fields are often displayed '
                                        'side-by-side.  It\'s OK to omit either the '
                                        'short or long name (but not both).',
-                                       type=problems_module.TYPE_WARNING)
+                                       problem_type=problems_module.TYPE_WARNING)
 
     def validate_route_description_not_the_same_as_route_name(self, problems):
         if (self.route_desc and
@@ -199,7 +199,7 @@ class Route(GtfsObjectBase):
                 if self.route_type not in self._ROUTE_TYPE_IDS:
                     problems.invalid_value('route_type',
                                            self.route_type,
-                                           type=problems_module.TYPE_WARNING)
+                                           problem_type=problems_module.TYPE_WARNING)
 
     def validate_route_url(self, problems):
         if self.route_url:
@@ -250,7 +250,7 @@ class Route(GtfsObjectBase):
                                    'to black.  In this case, route_text_color should '
                                    'be set to a lighter color like FFFFFF to ensure '
                                    'a legible contrast between the two.',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
 
     def validate_bikes_allowed(self, problems):
         if self.bikes_allowed:

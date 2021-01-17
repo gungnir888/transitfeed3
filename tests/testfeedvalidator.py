@@ -324,11 +324,11 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
         self.problems = self.CreateLimitPerTypeProblemReporter(2)
         self.accumulator = self.problems.get_accumulator()
 
-        self.problems.other_problem("e1", type=transitfeed.TYPE_ERROR)
-        self.problems.other_problem("w1", type=transitfeed.TYPE_WARNING)
-        self.problems.other_problem("e2", type=transitfeed.TYPE_ERROR)
-        self.problems.other_problem("e3", type=transitfeed.TYPE_ERROR)
-        self.problems.OtherProblem("w2", type=transitfeed.TYPE_WARNING)
+        self.problems.other_problem("e1", problem_type=transitfeed.TYPE_ERROR)
+        self.problems.other_problem("w1", problem_type=transitfeed.TYPE_WARNING)
+        self.problems.other_problem("e2", problem_type=transitfeed.TYPE_ERROR)
+        self.problems.other_problem("e3", problem_type=transitfeed.TYPE_ERROR)
+        self.problems.OtherProblem("w2", problem_type=transitfeed.TYPE_WARNING)
         self.assertEquals(2, self.accumulator.warning_count())
         self.assertEquals(3, self.accumulator.error_count())
 

@@ -138,7 +138,7 @@ class StopTime:
                                    'can\'t get on or off here.  Since it doesn\'t '
                                    'define a timepoint either, this entry serves no '
                                    'purpose and should be excluded from the trip.',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
 
         if (self.arrival_secs is None and
                 self.departure_secs is not None and

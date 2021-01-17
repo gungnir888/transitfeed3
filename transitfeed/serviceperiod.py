@@ -126,7 +126,7 @@ class ServicePeriod:
         if date in self.date_exceptions and problems:
             problems.duplicate_id(('service_id', 'date'),
                                   (self.service_id, date),
-                                  type=problems_module.TYPE_WARNING)
+                                  problem_type=problems_module.TYPE_WARNING)
         exception_context_tuple = (has_service and self._EXCEPTION_TYPE_ADD or
                                    self._EXCEPTION_TYPE_REMOVE, problems is not None and
                                    problems.get_file_context() or None)
@@ -301,7 +301,7 @@ class ServicePeriod:
             problems.other_problem('Service period with service_id "%s" '
                                    'doesn\'t have service on any days '
                                    'of the week.' % self.service_id,
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
 
     def has_date_exception_type_added(self):
         for exception_type, _ in self.date_exceptions.values():

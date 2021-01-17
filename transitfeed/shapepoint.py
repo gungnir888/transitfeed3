@@ -101,7 +101,7 @@ class ShapePoint(GtfsObjectBase):
             problems.invalid_value('shape_pt_lat', self.shape_pt_lat,
                                    'Point location too close to 0, 0, which means '
                                    'that it\'s probably an incorrect location.',
-                                   type=problems_module.TYPE_WARNING)
+                                   problem_type=problems_module.TYPE_WARNING)
             return
 
         if self.shape_dist_traveled == '':

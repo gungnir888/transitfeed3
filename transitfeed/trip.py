@@ -630,7 +630,7 @@ class Trip(GtfsObjectBase):
                                               'which should be larger than the previous ones. In this '
                                               'case, the previous distance was %s.' %
                                               (self.trip_id, timepoint.stop_id, distance, prev_distance),
-                                              type=problem_type)
+                                              problem_type=problem_type)
 
                 if timepoint.arrival_secs is not None:
                     self._check_speed(prev_stop, timepoint.stop, prev_departure,
@@ -662,7 +662,7 @@ class Trip(GtfsObjectBase):
                         'shape (shape_id=%s)' %
                         (self.trip_id, st.stop_sequence, st.shape_dist_traveled,
                          max_shape_dist, self.shape_id),
-                        type=problems_module.TYPE_WARNING)
+                        problem_type=problems_module.TYPE_WARNING)
 
     def validate_distance_from_stop_to_shape(self, problems, stoptimes):
         if stoptimes:
@@ -749,7 +749,7 @@ class Trip(GtfsObjectBase):
                                              dist_between_stops,
                                              time_between_stops,
                                              speed=None,
-                                             type=problems_module.TYPE_WARNING)
+                                             problem_type=problems_module.TYPE_WARNING)
                 return
             # This needs floating point division for precision.
             speed_between_stops = ((float(dist_between_stops) / 1000) /
@@ -761,7 +761,7 @@ class Trip(GtfsObjectBase):
                                          dist_between_stops,
                                          time_between_stops,
                                          speed_between_stops,
-                                         type=problems_module.TYPE_WARNING)
+                                         problem_type=problems_module.TYPE_WARNING)
 
     def add_to_schedule(self, schedule, problems):
         schedule.add_trip_object(self, problems)
