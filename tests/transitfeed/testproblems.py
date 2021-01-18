@@ -68,7 +68,7 @@ class BadProblemReporterTestCase(util.RedirectStdOutTestCaseBase):
     # utf-8 strings
     def runTest(self):
         loader = transitfeed.Loader(
-            util.DataPath('bad_utf8'),
+            util.data_path('bad_utf8'),
             loader_problems=transitfeed.ProblemReporter(),
             extra_validation=True)
         loader.load()

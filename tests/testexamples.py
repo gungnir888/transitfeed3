@@ -3,14 +3,16 @@ import os
 import re
 import transitfeed
 import unittest
-import urllib
+import urllib.request
 from tests import util
 
 
 class WikiExample(util.TempDirTestCaseBase):
     # Download example from wiki and run it
-    def runTest(self):
-        wiki_source = urllib.urlopen(
+
+    @staticmethod
+    def runTest():
+        wiki_source = urllib.request.urlopen(
             'https://raw.githubusercontent.com/wiki/google/transitfeed/TransitFeed.md'
         ).read()
         m = re.search(r'```\s*(import transitfeed.*)```', wiki_source, re.DOTALL)
@@ -20,9 +22,9 @@ class WikiExample(util.TempDirTestCaseBase):
         exec(wiki_code)
 
 
-class shuttle_from_xmlfeed(util.TempDirTestCaseBase):
+class ShuttleFromXmlfeed(util.TempDirTestCaseBase):
     def runTest(self):
-        self.CheckCallWithPath(
+        self.check_call_with_path(
             [self.GetExamplePath('shuttle_from_xmlfeed.py'),
              '--input', 'file:' + self.GetExamplePath('shuttle_from_xmlfeed.xml'),
              '--output', 'shuttle-YYYYMMDD.zip',
@@ -35,9 +37,9 @@ class shuttle_from_xmlfeed(util.TempDirTestCaseBase):
             raise Exception('did not create expected file')
 
 
-class table(util.TempDirTestCaseBase):
+class Table(util.TempDirTestCaseBase):
     def runTest(self):
-        self.CheckCallWithPath(
+        self.check_call_with_path(
             [self.GetExamplePath('table.py'),
              '--input', self.GetExamplePath('table.txt'),
              '--output', 'google_transit.zip'])
@@ -45,18 +47,18 @@ class table(util.TempDirTestCaseBase):
             raise Exception('should have created output')
 
 
-class small_builder(util.TempDirTestCaseBase):
+class SmallBuilder(util.TempDirTestCaseBase):
     def runTest(self):
-        self.CheckCallWithPath(
+        self.check_call_with_path(
             [self.GetExamplePath('small_builder.py'),
              '--output', 'google_transit.zip'])
         if not os.path.exists('google_transit.zip'):
             raise Exception('should have created output')
 
 
-class google_random_queries(util.TempDirTestCaseBase):
+class GoogleRandomQueries(util.TempDirTestCaseBase):
     def testNormalRun(self):
-        self.CheckCallWithPath(
+        self.check_call_with_path(
             [self.GetExamplePath('google_random_queries.py'),
              '--output', 'queries.html',
              '--limit', '5',
@@ -64,8 +66,8 @@ class google_random_queries(util.TempDirTestCaseBase):
         if not os.path.exists('queries.html'):
             raise Exception('should have created output')
 
-    def testInvalidFeedStillWorks(self):
-        self.CheckCallWithPath(
+    def TestInvalidFeedStillWorks(self):
+        self.check_call_with_path(
             [self.GetExamplePath('google_random_queries.py'),
              '--output', 'queries.html',
              '--limit', '5',
@@ -73,8 +75,8 @@ class google_random_queries(util.TempDirTestCaseBase):
         if not os.path.exists('queries.html'):
             raise Exception('should have created output')
 
-    def testBadArgs(self):
-        self.CheckCallWithPath(
+    def TestBadArgs(self):
+        self.check_call_with_path(
             [self.GetExamplePath('google_random_queries.py'),
              '--output', 'queries.html',
              '--limit', '5'],
@@ -83,19 +85,19 @@ class google_random_queries(util.TempDirTestCaseBase):
             raise Exception('should not have created output')
 
 
-class filter_unused_stops(util.TempDirTestCaseBase):
+class FilterUnusedStops(util.TempDirTestCaseBase):
     def testNormalRun(self):
         unused_stop_path = self.GetPath('tests', 'data', 'unused_stop')
         # Make sure original data has an unused stop.
-        accumulator = util.RecordingProblemAccumulator(self, ("ExpirationDate"))
+        accumulator = util.RecordingProblemAccumulator(self, "ExpirationDate")
         problem_reporter = transitfeed.ProblemReporter(accumulator)
         transitfeed.Loader(
             unused_stop_path,
             loader_problems=problem_reporter, extra_validation=True).load()
-        accumulator.PopException("UnusedStop")
-        accumulator.AssertNoMoreExceptions()
+        accumulator.pop_exception("UnusedStop")
+        accumulator.assert_no_more_exceptions()
 
-        (stdout, stderr) = self.CheckCallWithPath(
+        stdout, stderr = self.check_call_with_path(
             [self.GetExamplePath('filter_unused_stops.py'),
              '--list_removed',
              unused_stop_path, 'output.zip'])
@@ -106,7 +108,7 @@ class filter_unused_stops(util.TempDirTestCaseBase):
         schedule = transitfeed.Loader(
             'output.zip', loader_problems=problem_reporter, extra_validation=True).load()
         schedule.get_stop('STAGECOACH')
-        accumulator.AssertNoMoreExceptions()
+        accumulator.assert_no_more_exceptions()
 
 
 if __name__ == '__main__':

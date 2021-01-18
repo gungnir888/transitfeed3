@@ -22,8 +22,6 @@ from tests import util
 import transitfeed
 from transitfeed.compat import StringIO
 import unittest
-from urllib3.exceptions import HTTPError
-import urllib3
 import zipfile
 
 
@@ -34,7 +32,7 @@ class FullTests(util.TempDirTestCaseBase):
     additional_arguments = []
 
     def testGoodFeed(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__] + self.additional_arguments +
             [self.GetPath('tests', 'data', 'good_feed')])
@@ -48,7 +46,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testGoodFeedConsoleOutput(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__] + self.additional_arguments +
             ['--output=CONSOLE', self.GetPath('tests', 'data', 'good_feed')])
@@ -60,7 +58,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testMissingStops(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__] + self.additional_arguments +
             [self.GetPath('tests', 'data', 'missing_stops')],
@@ -75,7 +73,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testMissingStopsConsoleOutput(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '-o', 'console',
              '--latest_version', transitfeed.__version__] +
             self.additional_arguments +
@@ -90,7 +88,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testLimitedErrors(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-l', '2', '-n',
              '--latest_version', transitfeed.__version__] +
             self.additional_arguments +
@@ -105,7 +103,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testBadDateFormat(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__] + self.additional_arguments +
             [self.GetPath('tests', 'data', 'bad_date_format')],
@@ -121,7 +119,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testBadUtf8(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__] + self.additional_arguments +
             [self.GetPath('tests', 'data', 'bad_utf8')],
@@ -136,14 +134,14 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testFileNotFound(self):
-        (out, err) = self.CheckCallWithPath(
+        self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__, 'file-not-found.zip'],
             expected_retcode=1)
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testBadOutputPath(self):
-        (out, err) = self.CheckCallWithPath(
+        self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__, '-o', 'path/does/not/exist.html',
              self.GetPath('tests', 'data', 'good_feed')],
@@ -151,19 +149,18 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testCrashHandler(self):
-        (out, err) = self.CheckCallWithPath(
+        out, err = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__] + self.additional_arguments +
             ['IWantMyvalidation-crash.txt'],
             expected_retcode=127)
         self.assertTrue(re.search(r'Yikes', out))
         self.assertFalse(re.search(r'feed validated successfully', out))
-        crashout = open('transitfeedcrash.txt').read()
-        self.assertTrue(re.search(r'For testing the feed validator crash handler',
-                                  crashout))
+        crash_out = open('transitfeedcrash.txt').read()
+        self.assertTrue(re.search(r'For testing the feed validator crash handler', crash_out))
 
     def testCheckVersionIsRun(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              '100.100.100'] + self.additional_arguments +
             [self.GetPath('tests', 'data', 'good_feed')])
@@ -177,7 +174,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testCheckVersionIsRunConsoleOutput(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '-o', 'console',
              '--latest_version=100.100.100'] + self.additional_arguments +
             [self.GetPath('tests', 'data', 'good_feed')])
@@ -187,7 +184,7 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testUsage(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '--invalid_opt'],
             expected_retcode=2)
         self.assertMatchesRegex(r'[Uu]sage: feedvalidator(.*).py \[options\]', err)
@@ -289,12 +286,12 @@ class FeedValidatorTestCase(util.TempDirTestCaseBase):
         filename = "routes.txt"
         old_zip = zipfile.ZipFile(
             self.GetPath('tests', 'data', 'good_feed.zip'), 'r')
-        content_dict = self.ConvertZipToDict(old_zip)
+        content_dict = self.convert_zip_to_dict(old_zip)
         old_routes = content_dict[filename]
         new_routes = old_routes.replace('\n', '\r\n', 1)
         self.assertNotEquals(old_routes, new_routes)
         content_dict[filename] = new_routes
-        new_zipfile_mem = self.ConvertDictToZip(content_dict)
+        new_zipfile_mem = self.convert_dict_to_zip(content_dict)
 
         options = MockOptions()
         output_file = StringIO()
@@ -305,10 +302,11 @@ class FeedValidatorTestCase(util.TempDirTestCaseBase):
 
 class LimitPerTypeProblemReporterTestCase(util.TestCase):
 
-    def CreateLimitPerTypeProblemReporter(self, limit):
+    @staticmethod
+    def create_limit_per_type_problem_reporter(limit):
         accumulator = feedvalidator.LimitPerTypeProblemAccumulator(limit)
-        problems = transitfeed.ProblemReporter(accumulator)
-        return problems
+        problems_in_test = transitfeed.ProblemReporter(accumulator)
+        return problems_in_test
 
     def assertProblemsAttribute(self, problem_type, class_name, attribute_name,
                                 expected):
@@ -321,14 +319,14 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
 
     def testLimitOtherProblems(self):
         """The first N of each type should be kept."""
-        self.problems = self.CreateLimitPerTypeProblemReporter(2)
+        self.problems = self.create_limit_per_type_problem_reporter(2)
         self.accumulator = self.problems.get_accumulator()
 
         self.problems.other_problem("e1", problem_type=transitfeed.TYPE_ERROR)
         self.problems.other_problem("w1", problem_type=transitfeed.TYPE_WARNING)
         self.problems.other_problem("e2", problem_type=transitfeed.TYPE_ERROR)
         self.problems.other_problem("e3", problem_type=transitfeed.TYPE_ERROR)
-        self.problems.OtherProblem("w2", problem_type=transitfeed.TYPE_WARNING)
+        self.problems.other_problem("w2", problem_type=transitfeed.TYPE_WARNING)
         self.assertEquals(2, self.accumulator.warning_count())
         self.assertEquals(3, self.accumulator.error_count())
 
@@ -361,7 +359,7 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
         for i in range(20):
             exceptions.append(transitfeed.OtherProblem(description="e%i" % i))
         exceptions = exceptions[10:] + exceptions[:10]
-        self.problems = self.CreateLimitPerTypeProblemReporter(3)
+        self.problems = self.create_limit_per_type_problem_reporter(3)
         self.accumulator = self.problems.get_accumulator()
         for e in exceptions:
             self.problems.add_to_accumulator(e)
@@ -378,7 +376,7 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
 
     def testLimitSortedTooFastTravel(self):
         """Sort by decreasing distance, keeping the N greatest."""
-        self.problems = self.CreateLimitPerTypeProblemReporter(3)
+        self.problems = self.create_limit_per_type_problem_reporter(3)
         self.accumulator = self.problems.get_accumulator()
         self.problems.too_fast_travel("t1", "prev stop", "next stop", 11230.4, 5,
                                       None)
@@ -392,7 +390,7 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
 
     def testLimitSortedStopTooFarFromParentStation(self):
         """Sort by decreasing distance, keeping the N greatest."""
-        self.problems = self.CreateLimitPerTypeProblemReporter(3)
+        self.problems = self.create_limit_per_type_problem_reporter(3)
         self.accumulator = self.problems.get_accumulator()
         for i, distance in enumerate((1000, 3002.0, 1500, 2434.1, 5023.21)):
             self.problems.stop_too_far_from_parent_station(
@@ -404,7 +402,7 @@ class LimitPerTypeProblemReporterTestCase(util.TestCase):
 
     def testLimitSortedStopsTooClose(self):
         """Sort by increasing distance, keeping the N closest."""
-        self.problems = self.CreateLimitPerTypeProblemReporter(3)
+        self.problems = self.create_limit_per_type_problem_reporter(3)
         self.accumulator = self.problems.get_accumulator()
         for i, distance in enumerate((4.0, 3.0, 2.5, 2.2, 1.0, 0.0)):
             self.problems.stops_too_close(

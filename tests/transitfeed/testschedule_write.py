@@ -73,7 +73,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
     """Tests for using a Schedule object to build a GTFS file."""
 
     def testBuildFeedWithUtf8Names(self):
-        problems = util.GetTestFailureProblemReporter(self)
+        problems = util.get_test_failure_problem_reporter(self)
         schedule = transitfeed.Schedule(problem_reporter=problems)
         schedule.add_agency("\xc8\x8b Fly Agency", "http://iflyagency.com",
                             "America/Los_Angeles")
@@ -107,7 +107,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
 
     def testBuildSimpleFeed(self):
         """Make a very simple feed using the Schedule class."""
-        problems = util.GetTestFailureProblemReporter(self, ("ExpirationDate",
+        problems = util.get_test_failure_problem_reporter(self, ("ExpirationDate",
                                                              "NoServiceExceptions"))
         schedule = transitfeed.Schedule(problem_reporter=problems)
 
@@ -158,7 +158,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
         self.assertEqual(4, len(read_schedule.get_stop_list()))
 
     def testStopIdConflict(self):
-        problems = util.GetTestFailureProblemReporter(self)
+        problems = util.get_test_failure_problem_reporter(self)
         schedule = transitfeed.Schedule(problem_reporter=problems)
         schedule.add_stop(lat=3, lng=4.1, name="stop1", stop_id="1")
         schedule.add_stop(lat=3, lng=4.0, name="stop0", stop_id="0")
@@ -173,7 +173,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
                                 " ".join(s.stop_id for s in stop_list))
 
     def testRouteIdConflict(self):
-        problems = util.GetTestFailureProblemReporter(self)
+        problems = util.get_test_failure_problem_reporter(self)
         schedule = transitfeed.Schedule(problem_reporter=problems)
         route0 = schedule.add_route("0", "Long Name", "Bus")
         route1 = schedule.add_route("1", "", "Bus", route_id="1")
@@ -190,7 +190,7 @@ class ScheduleBuilderTestCase(util.TempFileTestCaseBase):
                          ",".join(r.route_long_name for r in route_list))
 
     def testTripIdConflict(self):
-        problems = util.GetTestFailureProblemReporter(self)
+        problems = util.get_test_failure_problem_reporter(self)
         schedule = transitfeed.Schedule(problem_reporter=problems)
         service_period = schedule.get_default_service_period()
         service_period.set_date_has_service("20070101")
@@ -446,7 +446,7 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
         schedule.add_feed_info_object(feed_info)
 
         schedule.validate(problems)
-        accumulator.AssertNoMoreExceptions()
+        accumulator.assert_no_more_exceptions()
         schedule.write_google_transit_feed(self.tempfilepath)
 
         read_schedule = \
@@ -458,7 +458,7 @@ class WriteSampleFeedTestCase(util.TempFileTestCaseBase):
         e = accumulator.PopException("UnrecognizedColumn")
         self.assertEqual(e.file_name, "stops.txt")
         self.assertEqual(e.column_name, "stop_sound")
-        accumulator.AssertNoMoreExceptions()
+        accumulator.assert_no_more_exceptions()
 
         self.assertEqual(1, len(read_schedule.get_agency_list()))
         self.assertEqual(agency, read_schedule.get_agency(agency.agency_id))

@@ -95,4 +95,4 @@ class FareAttributeValidationTestCase(util.ValidationTestCase):
         fare.transfer_duration = "3600"
         self.ValidateAndExpectInvalidValue(fare, "transfer_duration")
         fare.transfer_duration = 7200
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()

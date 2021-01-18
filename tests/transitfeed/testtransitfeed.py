@@ -25,7 +25,8 @@ class TransitFeedSampleCodeTestCase(util.TestCase):
     to ensure that it doesn't cause any exceptions.
     """
 
-    def runTest(self):
+    @staticmethod
+    def runTest():
         import transitfeed
 
         schedule = transitfeed.Schedule()
@@ -100,11 +101,10 @@ class DeprecatedFieldNamesTestCase(util.MemoryZipTestCase):
             "agency.txt",
             "agency_id,agency_name,agency_timezone,agency_url\n"
             "DTA,Demo Agency,America/Los_Angeles,http://google.com\n")
-        schedule = self.MakeLoaderAndLoad(self.problems,
-                                          gtfs_factory=self.gtfs_factory)
-        e = self.accumulator.PopException("DeprecatedColumn")
+        self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
+        e = self.accumulator.pop_exception("DeprecatedColumn")
         self.assertEquals("agency_url", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDeprecatedFieldDefaultsToNoneIfNotProvided(self):
         # load agency.txt with no 'agency_url', accessing the variable agency_url
@@ -113,8 +113,7 @@ class DeprecatedFieldNamesTestCase(util.MemoryZipTestCase):
             "agency.txt",
             "agency_id,agency_name,agency_timezone\n"
             "DTA,Demo Agency,America/Los_Angeles\n")
-        schedule = self.MakeLoaderAndLoad(self.problems,
-                                          gtfs_factory=self.gtfs_factory)
+        schedule = self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
         agency = schedule._agencies.values()[0]
         self.assertTrue(agency.agency_url is None)
         # stop.txt from util.MemoryZipTestCase does not have 'stop_desc', accessing
@@ -122,7 +121,7 @@ class DeprecatedFieldNamesTestCase(util.MemoryZipTestCase):
         # AttributeError
         stop = schedule.stops.values()[0]
         self.assertTrue(stop.stop_desc is None)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 if __name__ == '__main__':

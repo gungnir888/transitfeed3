@@ -32,7 +32,7 @@ class ExtensionFullTests(FullTests):
                             'DeprecatedColumn']
 
     def testGoogleTransitGoodFeed(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath(self.feedvalidator_executable), '-n', '--latest_version',
              transitfeed.__version__] + self.additional_arguments +
             [self.GetPath('tests', 'data', 'googletransit', 'good_feed')])
@@ -75,7 +75,7 @@ class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
             "route_id,agency_id,route_short_name,route_long_name,route_type\n"
             "AB,,,Airport Bullfrog,3\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNoErrorsWithOneAgencyAndNoIdAndAgencyIdColumnPresent(self):
         self.SetArchiveContents(
@@ -91,7 +91,7 @@ class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
             "route_id,agency_id,route_short_name,route_long_name,route_type\n"
             "AB,,,Airport Bullfrog,3\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNoErrorsWithSeveralAgencies(self):
         self.SetArchiveContents(
@@ -105,7 +105,7 @@ class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
             "DTA,Demo Agency,http://google.com,America/Los_Angeles,en\n"
             "ATD,Another Demo Agency,http://example.com,America/Los_Angeles,en\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testWrongIdWithOneAgencyWithNoId(self):
         self.SetArchiveContents(
@@ -121,9 +121,9 @@ class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
             "agency_id,agency_name,agency_url,agency_timezone,agency_lang\n"
             ",Demo Agency,http://google.com,America/Los_Angeles,en\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        e = self.accumulator.PopException("InvalidAgencyID")
+        e = self.accumulator.pop_exception("InvalidAgencyID")
         self.assertEquals('agency_id', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testWrongIdWithOneAgencyWithId(self):
         self.SetArchiveContents("fare_attributes.txt",
@@ -134,9 +134,9 @@ class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
             "agency_id,agency_name,agency_url,agency_timezone,agency_lang\n"
             "DTA,Demo Agency,http://google.com,America/Los_Angeles,en\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        e = self.accumulator.PopException("InvalidAgencyID")
+        e = self.accumulator.pop_exception("InvalidAgencyID")
         self.assertEquals('agency_id', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testWrongIdWithSeveralAgencies(self):
         self.SetArchiveContents(
@@ -152,9 +152,9 @@ class FareAttributeAgencyIdTestCase(ExtensionMemoryZipTestCase):
             "DTA,Demo Agency,http://google.com,America/Los_Angeles,en\n"
             "ATD,Another Demo Agency,http://example.com,America/Los_Angeles,en\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        e = self.accumulator.PopException("InvalidAgencyID")
+        e = self.accumulator.pop_exception("InvalidAgencyID")
         self.assertEquals('agency_id', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class StopExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
@@ -170,7 +170,7 @@ class StopExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
                                 "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,America/Los_Angeles,"
                                 ",,204\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testInvalidVehicleType(self):
         self.SetArchiveContents("stops.txt",
@@ -182,8 +182,8 @@ class StopExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
                                 "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,America/Los_Angeles,"
                                 ",,204\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.PopInvalidValue("vehicle_type")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("vehicle_type")
+        self.accumulator.assert_no_more_exceptions()
 
 
 class StopExtensionTestCase(ValidationTestCase):
@@ -215,81 +215,81 @@ class StopExtensionTestCase(ValidationTestCase):
         # Test with non-integer value
         self._stop.vehicle_type = 'abc'
         self._stop.validate(self.problems)
-        self.accumulator.PopInvalidValue('vehicle_type')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value('vehicle_type')
+        self.accumulator.assert_no_more_exceptions()
 
         # Test with not known value
         self._stop.vehicle_type = 2547
         self._stop.validate(self.problems)
-        self.accumulator.PopInvalidValue('vehicle_type')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value('vehicle_type')
+        self.accumulator.assert_no_more_exceptions()
 
     def testEntranceExceptions(self):
         # There should be no error validating _entrance
         self._entrance.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # An entrance must not have a stop_timezone
         self._entrance.stop_timezone = 'America/Los_Angeles'
         self._entrance.validate(self.problems)
-        e = self.accumulator.PopInvalidValue('stop_timezone')
+        e = self.accumulator.pop_invalid_value('stop_timezone')
         self.assertMatchesRegex(r'stop_timezone', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self._entrance.stop_timezone = None
 
         # An entrance must not have a vehicle type
         self._entrance.vehicle_type = 200
         self._entrance.validate(self.problems)
-        e = self.accumulator.PopInvalidValue('vehicle_type')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value('vehicle_type')
+        self.accumulator.assert_no_more_exceptions()
         self._entrance.vehicle_type = None
 
         # An entrance should have a parent station
         self._entrance.parent_station = None
         self._entrance.validate(self.problems)
-        e = self.accumulator.PopInvalidValue('location_type')
+        e = self.accumulator.pop_invalid_value('location_type')
         self.assertMatchesRegex(r'parent_station', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testChildExceptions(self):
         # There should be no error validating _child_stop
         self._child_stop.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # A _child_stop must not have a stop_timezone
         self._child_stop.stop_timezone = 'America/Los_Angeles'
         self._child_stop.validate(self.problems)
-        e = self.accumulator.PopInvalidValue('stop_timezone')
+        e = self.accumulator.pop_invalid_value('stop_timezone')
         self.assertMatchesRegex(r'stop_timezone', e.format_problem())
         self.assertTrue(e.is_warning())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self._child_stop.stop_timezone = None
 
         # Adding vehicle_type, Google transit doesn't read child stop vehicle types
         self._child_stop.vehicle_type = 200
         self._child_stop.validate(self.problems)
-        e = self.accumulator.PopInvalidValue('vehicle_type')
+        e = self.accumulator.pop_invalid_value('vehicle_type')
         self.assertTrue(e.is_warning())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self._child_stop.vehicle_type = None
 
     def testAllowEmptyStopNameIfEntrance(self):
         # Empty stop_name with default location_type=0 should report MissingValue
         self._stop.stop_name = ''
         self._stop.validate(self.problems)
-        self.accumulator.PopMissingValue('stop_name')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_missing_value('stop_name')
+        self.accumulator.assert_no_more_exceptions()
 
         # Empty stop_name in a child stop should report MissingValue
         self._child_stop.stop_name = ''
         self._child_stop.validate(self.problems)
-        self.accumulator.PopMissingValue('stop_name')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_missing_value('stop_name')
+        self.accumulator.assert_no_more_exceptions()
 
         # Empty stop_name with location_type=2 should report no errors
         self._entrance.stop_name = ''
         self._entrance.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class RouteExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
@@ -302,7 +302,7 @@ class RouteExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
             "co2_per_km\n"
             "AB,DTA,,Airport Bullfrog,201,15.5\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testInvalidCo2PerKm(self):
         self.SetArchiveContents(
@@ -310,8 +310,8 @@ class RouteExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
             "route_id,route_short_name,route_long_name,route_type,co2_per_km\n"
             "AB,,Airport Bullfrog,201,15.5mg\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.PopInvalidValue("co2_per_km")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("co2_per_km")
+        self.accumulator.assert_no_more_exceptions()
 
     def testInvalidRouteType(self):
         self.SetArchiveContents(
@@ -319,8 +319,8 @@ class RouteExtensionIntegrationTestCase(ExtensionMemoryZipTestCase):
             "route_id,route_short_name,route_long_name,route_type,co2_per_km\n"
             "AB,,Airport Bullfrog,2557,15.5\n")
         self.MakeLoaderAndLoad(self.problems, gtfs_factory=self.gtfs_factory)
-        self.accumulator.PopInvalidValue("route_type")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("route_type")
+        self.accumulator.assert_no_more_exceptions()
 
 
 class AgencyLangTestCase(ExtensionMemoryZipTestCase):
@@ -333,11 +333,11 @@ class AgencyLangTestCase(ExtensionMemoryZipTestCase):
             "DTA,Demo Agency,http://google.com,America/Los_Angeles,lang123456789\n")
         self.MakeLoaderAndLoad(self.problems,
                                gtfs_factory=self.gtfs_factory)
-        e = self.accumulator.PopInvalidValue("agency_lang")
+        e = self.accumulator.pop_invalid_value("agency_lang")
         e_msg = e.format_problem()
         self.assertTrue(e_msg.find('not well-formed') != -1,
                         '%s should not be well-formed, is: %s' % (e.value, e_msg))
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNotValidAgencyLang(self):
         self.SetArchiveContents(
@@ -347,8 +347,8 @@ class AgencyLangTestCase(ExtensionMemoryZipTestCase):
 
         self.MakeLoaderAndLoad(self.problems,
                                gtfs_factory=self.gtfs_factory)
-        e = self.accumulator.PopInvalidValue("agency_lang")
+        e = self.accumulator.pop_invalid_value("agency_lang")
         e_msg = e.format_problem()
         self.assertTrue(e_msg.find('not valid') != -1,
                         '%s should not be valid, is: %s' % (e.value, e_msg))
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()

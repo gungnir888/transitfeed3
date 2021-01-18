@@ -50,29 +50,29 @@ class ShapeValidationTestCase(util.ValidationTestCase):
 
         # distance decreasing is bad, but staying the same is OK
         shape.add_point(36.905019, -116.763206, 4, self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('Each subsequent point', e.format_problem())
         self.assertMatchesRegex('distance was 5.000000.', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         shape.add_point(36.925019, -116.764206, 6, self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         shapepoint = transitfeed.ShapePoint('TEST', 36.915760, -116.7156, 6, 8)
         shape.add_shape_point_object_unsorted(shapepoint, self.problems)
         shapepoint = transitfeed.ShapePoint('TEST', 36.915760, -116.7156, 5, 10)
         shape.add_shape_point_object_unsorted(shapepoint, self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('Each subsequent point', e.format_problem())
         self.assertMatchesRegex('distance was 8.000000.', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         shapepoint = transitfeed.ShapePoint('TEST', 36.915760, -116.7156, 6, 11)
         shape.add_shape_point_object_unsorted(shapepoint, self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('The sequence number 6 occurs ', e.format_problem())
         self.assertMatchesRegex('once in shape TEST.', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class ShapePointValidationTestCase(util.ValidationTestCase):
@@ -83,27 +83,27 @@ class ShapePointValidationTestCase(util.ValidationTestCase):
 
         shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', '00', '0')
         shapepoint.parse_attributes(self.problems)
-        e = self.accumulator.PopException('InvalidNonNegativeIntegerValue')
+        e = self.accumulator.pop_exception('InvalidNonNegativeIntegerValue')
         self.assertMatchesRegex('not have a leading zero', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', -1, '0')
         shapepoint.parse_attributes(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('Value should be a number', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         shapepoint = transitfeed.ShapePoint('T', '0.1', '0.1', '1', '0')
         shapepoint.parse_attributes(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('too close to 0, 0,', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', '0', '')
         shapepoint.parse_attributes(self.problems)
         shapepoint = transitfeed.ShapePoint('T', '36.9151', '-116.7611', '0', '-1')
         shapepoint.parse_attributes(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('Invalid value -1.0', e.format_problem())
         self.assertMatchesRegex('should be a positive number', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()

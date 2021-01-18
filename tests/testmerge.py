@@ -130,12 +130,12 @@ class TestApproximateDistanceBetweenPoints(util.TestCase):
     def testDegenerate(self):
         p = (30.0, 30.0)
         self._assertWithinEpsilon(
-            merge.ApproximateDistanceBetweenPoints(p, p), 0.0)
+            merge.approximate_distance_between_points(p, p), 0.0)
 
     def testFar(self):
         p1 = (30.0, 30.0)
         p2 = (40.0, 40.0)
-        self.assert_(merge.ApproximateDistanceBetweenPoints(p1, p2) > 1e4)
+        self.assert_(merge.approximate_distance_between_points(p1, p2) > 1e4)
 
 
 class TestSchemedMerge(util.TestCase):
@@ -161,7 +161,7 @@ class TestSchemedMerge(util.TestCase):
             """A migration function for the mock entity."""
             return self.TestEntity(ent.x, ent.y, ent.z)
 
-        self.ds._Migrate = Migrate
+        self.ds._migrate = Migrate
 
     def testMergeIdentical(self):
         class TestAttrib:
@@ -174,27 +174,27 @@ class TestSchemedMerge(util.TestCase):
         a = TestAttrib()
         b = TestAttrib()
 
-        self.assert_(self.ds._MergeIdentical(x, x) == x)
-        self.assert_(self.ds._MergeIdentical(a, b) is b)
-        self.assertRaises(merge.MergeError, self.ds._MergeIdentical, 1, 2)
+        self.assert_(self.ds._merge_identical(x, x) == x)
+        self.assert_(self.ds._merge_identical(a, b) is b)
+        self.assertRaises(merge.MergeError, self.ds._merge_identical, 1, 2)
 
     def testMergeIdenticalCaseInsensitive(self):
-        self.assert_(self.ds._MergeIdenticalCaseInsensitive('abc', 'ABC') == 'ABC')
-        self.assert_(self.ds._MergeIdenticalCaseInsensitive('abc', 'AbC') == 'AbC')
+        self.assert_(self.ds._merge_identical_case_insensitive('abc', 'ABC') == 'ABC')
+        self.assert_(self.ds._merge_identical_case_insensitive('abc', 'AbC') == 'AbC')
         self.assertRaises(merge.MergeError,
-                          self.ds._MergeIdenticalCaseInsensitive, 'abc', 'bcd')
+                          self.ds._merge_identical_case_insensitive, 'abc', 'bcd')
         self.assertRaises(merge.MergeError,
-                          self.ds._MergeIdenticalCaseInsensitive, 'abc', 'ABCD')
+                          self.ds._merge_identical_case_insensitive, 'abc', 'ABCD')
 
     def testMergeOptional(self):
         x = 99
         y = 100
 
-        self.assertEquals(self.ds._MergeOptional(None, None), None)
-        self.assertEquals(self.ds._MergeOptional(None, x), x)
-        self.assertEquals(self.ds._MergeOptional(x, None), x)
-        self.assertEquals(self.ds._MergeOptional(x, x), x)
-        self.assertRaises(merge.MergeError, self.ds._MergeOptional, x, y)
+        self.assertEquals(self.ds._merge_optional(None, None), None)
+        self.assertEquals(self.ds._merge_optional(None, x), x)
+        self.assertEquals(self.ds._merge_optional(x, None), x)
+        self.assertEquals(self.ds._merge_optional(x, x), x)
+        self.assertRaises(merge.MergeError, self.ds._merge_optional, x, y)
 
     def testMergeSameAgency(self):
         kwargs = {'name': 'xxx',
@@ -210,25 +210,25 @@ class TestSchemedMerge(util.TestCase):
         b = self.fm.b_schedule.new_default_agency(id=id2, **kwargs)
         c = transitfeed.Agency(id=id3, **kwargs)
         self.fm.merged_schedule.add_agency_object(c)
-        self.fm.Register(a, b, c)
+        self.fm.register(a, b, c)
 
         d = transitfeed.Agency(id=id4, **kwargs)
         e = transitfeed.Agency(id=id5, **kwargs)
         self.fm.a_schedule.add_agency_object(d)
         self.fm.merged_schedule.add_agency_object(e)
-        self.fm.Register(d, None, e)
+        self.fm.register(d, None, e)
 
-        self.assertEquals(self.ds._MergeSameAgency(id1, id2), id3)
-        self.assertEquals(self.ds._MergeSameAgency(None, None), id3)
-        self.assertEquals(self.ds._MergeSameAgency(id1, None), id3)
-        self.assertEquals(self.ds._MergeSameAgency(None, id2), id3)
+        self.assertEquals(self.ds._merge_same_agency(id1, id2), id3)
+        self.assertEquals(self.ds._merge_same_agency(None, None), id3)
+        self.assertEquals(self.ds._merge_same_agency(id1, None), id3)
+        self.assertEquals(self.ds._merge_same_agency(None, id2), id3)
 
         # id1 is not a valid agency_id in the new schedule so it cannot be merged
-        self.assertRaises(KeyError, self.ds._MergeSameAgency, id1, id1)
+        self.assertRaises(KeyError, self.ds._merge_same_agency, id1, id1)
 
         # this fails because d (id4) and b (id2) don't map to the same agency
         # in the merged schedule
-        self.assertRaises(merge.MergeError, self.ds._MergeSameAgency, id4, id2)
+        self.assertRaises(merge.MergeError, self.ds._merge_same_agency, id4, id2)
 
     def testSchemedMerge_Success(self):
 
@@ -238,7 +238,7 @@ class TestSchemedMerge(util.TestCase):
         scheme = {'x': Merger, 'y': Merger, 'z': Merger}
         a = self.TestEntity(1, 2, 3)
         b = self.TestEntity(4, 5, 6)
-        c = self.ds._SchemedMerge(scheme, a, b)
+        c = self.ds._schemed_merge(scheme, a, b)
 
         self.assertEquals(c.x, 5)
         self.assertEquals(c.y, 7)
@@ -253,19 +253,19 @@ class TestSchemedMerge(util.TestCase):
         a = self.TestEntity(1, 2, 3)
         b = self.TestEntity(4, 5, 6)
 
-        self.assertRaises(merge.MergeError, self.ds._SchemedMerge,
+        self.assertRaises(merge.MergeError, self.ds._schemed_merge,
                           scheme, a, b)
 
     def testSchemedMerge_NoNewId(self):
         class TestDataSetMerger(merge.DataSetMerger):
-            def _Migrate(self, entity, schedule, newid):
+            def _migrate(self, entity, schedule, newid):
                 self.newid = newid
                 return entity
 
         dataset_merger = TestDataSetMerger(self.fm)
         a = self.TestEntity(1, 2, 3)
         b = self.TestEntity(4, 5, 6)
-        dataset_merger._SchemedMerge({}, a, b)
+        dataset_merger._schemed_merge({}, a, b)
         self.assertEquals(dataset_merger.newid, False)
 
     def testSchemedMerge_ErrorTextContainsAttributeNameAndReason(self):
@@ -286,7 +286,7 @@ class TestSchemedMerge(util.TestCase):
                   attribute_name: BadMerger}
 
         try:
-            self.ds._SchemedMerge(scheme, a, b)
+            self.ds._schemed_merge(scheme, a, b)
         except merge.MergeError as merge_error:
             error_text = str(merge_error)
             self.assert_(reason in error_text)
@@ -300,7 +300,7 @@ class TestFeedMerger(util.TestCase):
             self.n = n
             self.should_fail = should_fail
 
-        def MergeDataSets(self):
+        def merge_data_sets(self):
             self.test.called.append(self.n)
             return not self.should_fail
 
@@ -316,21 +316,21 @@ class TestFeedMerger(util.TestCase):
 
     def testSequence(self):
         for i in range(10):
-            self.fm.AddMerger(TestFeedMerger.Merger(self, i))
-        self.assert_(self.fm.MergeSchedules())
+            self.fm.add_merger(TestFeedMerger.Merger(self, i))
+        self.assert_(self.fm.merge_schedules())
         self.assertEquals(self.called, range(10))
 
     def testStopsAfterError(self):
         for i in range(10):
-            self.fm.AddMerger(TestFeedMerger.Merger(self, i, i == 5))
-        self.assert_(not self.fm.MergeSchedules())
+            self.fm.add_merger(TestFeedMerger.Merger(self, i, i == 5))
+        self.assert_(not self.fm.merge_schedules())
         self.assertEquals(self.called, range(6))
 
     def testRegister(self):
         s1 = transitfeed.Stop(stop_id='1')
         s2 = transitfeed.Stop(stop_id='2')
         s3 = transitfeed.Stop(stop_id='3')
-        self.fm.Register(s1, s2, s3)
+        self.fm.register(s1, s2, s3)
         self.assertEquals(self.fm.a_merge_map, {s1: s3})
         self.assertEquals('3', s1._migrated_entity.stop_id)
         self.assertEquals(self.fm.b_merge_map, {s2: s3})
@@ -339,22 +339,22 @@ class TestFeedMerger(util.TestCase):
     def testRegisterNone(self):
         s2 = transitfeed.Stop(stop_id='2')
         s3 = transitfeed.Stop(stop_id='3')
-        self.fm.Register(None, s2, s3)
+        self.fm.register(None, s2, s3)
         self.assertEquals(self.fm.a_merge_map, {})
         self.assertEquals(self.fm.b_merge_map, {s2: s3})
         self.assertEquals('3', s2._migrated_entity.stop_id)
 
     def testGenerateId_Prefix(self):
         x = 'test'
-        a = self.fm.GenerateId(x)
-        b = self.fm.GenerateId(x)
+        a = self.fm.generate_id(x)
+        b = self.fm.generate_id(x)
         self.assertNotEqual(a, b)
         self.assert_(a.startswith(x))
         self.assert_(b.startswith(x))
 
     def testGenerateId_None(self):
-        a = self.fm.GenerateId(None)
-        b = self.fm.GenerateId(None)
+        a = self.fm.generate_id(None)
+        b = self.fm.generate_id(None)
         self.assertNotEqual(a, b)
 
     def testGenerateId_InitialCounter(self):
@@ -377,7 +377,7 @@ class TestFeedMerger(util.TestCase):
 
         # check that the postfix number of any generated ids are greater than
         # the postfix numbers of any ids in the old and new schedules
-        gen_id = feed_merger.GenerateId(None)
+        gen_id = feed_merger.generate_id(None)
         postfix_num = int(gen_id[gen_id.rfind('_') + 1:])
         self.assert_(postfix_num >= 10)
 
@@ -391,14 +391,14 @@ class TestFeedMerger(util.TestCase):
         a = MergerA(self.fm)
         b = MergerB(self.fm)
 
-        self.fm.AddMerger(a)
-        self.fm.AddMerger(b)
+        self.fm.add_merger(a)
+        self.fm.add_merger(b)
 
-        self.assertEquals(self.fm.GetMerger(MergerA), a)
-        self.assertEquals(self.fm.GetMerger(MergerB), b)
+        self.assertEquals(self.fm.get_merger(MergerA), a)
+        self.assertEquals(self.fm.get_merger(MergerB), b)
 
     def testGetMerger_Error(self):
-        self.assertRaises(LookupError, self.fm.GetMerger, TestFeedMerger.Merger)
+        self.assertRaises(LookupError, self.fm.get_merger, TestFeedMerger.Merger)
 
 
 class TestServicePeriodMerger(util.TestCase):
@@ -412,7 +412,7 @@ class TestServicePeriodMerger(util.TestCase):
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
         self.spm = merge.ServicePeriodMerger(self.fm)
-        self.fm.AddMerger(self.spm)
+        self.fm.add_merger(self.spm)
 
     def _AddTwoPeriods(self, start1, end1, start2, end2):
         sp1fields = ['test1', start1, end1] + ['1'] * 7
@@ -426,27 +426,27 @@ class TestServicePeriodMerger(util.TestCase):
     def testCheckDisjoint_True(self):
         self._AddTwoPeriods('20071213', '20071231',
                             '20080101', '20080201')
-        self.assert_(self.spm.CheckDisjointCalendars())
+        self.assert_(self.spm.check_disjoint_calendars())
 
     def testCheckDisjoint_False1(self):
         self._AddTwoPeriods('20071213', '20080201',
                             '20080101', '20080301')
-        self.assert_(not self.spm.CheckDisjointCalendars())
+        self.assert_(not self.spm.check_disjoint_calendars())
 
     def testCheckDisjoint_False2(self):
         self._AddTwoPeriods('20080101', '20090101',
                             '20070101', '20080601')
-        self.assert_(not self.spm.CheckDisjointCalendars())
+        self.assert_(not self.spm.check_disjoint_calendars())
 
     def testCheckDisjoint_False3(self):
         self._AddTwoPeriods('20080301', '20080901',
                             '20080101', '20090101')
-        self.assert_(not self.spm.CheckDisjointCalendars())
+        self.assert_(not self.spm.check_disjoint_calendars())
 
     def testDisjoinCalendars(self):
         self._AddTwoPeriods('20071213', '20080201',
                             '20080101', '20080301')
-        self.spm.DisjoinCalendars('20080101')
+        self.spm.disjoin_calendars('20080101')
         self.assertEquals(self.sp1.start_date, '20071213')
         self.assertEquals(self.sp1.end_date, '20071231')
         self.assertEquals(self.sp2.start_date, '20080101')
@@ -460,7 +460,7 @@ class TestServicePeriodMerger(util.TestCase):
         self.sp2.set_date_has_service('20071201')
         self.sp2.set_date_has_service('20081231')
 
-        self.spm.DisjoinCalendars('20080101')
+        self.spm.disjoin_calendars('20080101')
 
         self.assert_('20071201' in self.sp1.date_exceptions.keys())
         self.assert_('20081231' not in self.sp1.date_exceptions.keys())
@@ -470,9 +470,9 @@ class TestServicePeriodMerger(util.TestCase):
     def testUnion(self):
         self._AddTwoPeriods('20071213', '20071231',
                             '20080101', '20080201')
-        self.accumulator.ExpectProblemClass(merge.MergeNotImplemented)
-        self.fm.MergeSchedules()
-        merged_schedule = self.fm.GetMergedSchedule()
+        self.accumulator.ExpectProblemClass(merge.merge_not_implemented)
+        self.fm.merge_schedules()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_service_period_list()), 2)
 
         # make fields a copy of the service period attributes except service_id
@@ -490,16 +490,16 @@ class TestServicePeriodMerger(util.TestCase):
     def testMerge_RequiredButNotDisjoint(self):
         self._AddTwoPeriods('20070101', '20090101',
                             '20080101', '20100101')
-        self.accumulator.ExpectProblemClass(merge.CalendarsNotDisjoint)
-        self.assertEquals(self.spm.MergeDataSets(), False)
+        self.accumulator.ExpectProblemClass(merge.calendars_not_disjoint)
+        self.assertEquals(self.spm.merge_data_sets(), False)
         self.accumulator.assertExpectedProblemsReported(self)
 
     def testMerge_NotRequiredAndNotDisjoint(self):
         self._AddTwoPeriods('20070101', '20090101',
                             '20080101', '20100101')
         self.spm.require_disjoint_calendars = False
-        self.accumulator.ExpectProblemClass(merge.MergeNotImplemented)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.merge_not_implemented)
+        self.fm.merge_schedules()
         self.accumulator.assertExpectedProblemsReported(self)
 
 
@@ -514,7 +514,7 @@ class TestAgencyMerger(util.TestCase):
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
         self.am = merge.AgencyMerger(self.fm)
-        self.fm.AddMerger(self.am)
+        self.fm.add_merger(self.am)
 
         self.a1 = transitfeed.Agency(id='a1', agency_name='a1',
                                      agency_url='http://www.a1.com',
@@ -529,9 +529,9 @@ class TestAgencyMerger(util.TestCase):
         self.a2.agency_id = self.a1.agency_id
         self.fm.a_schedule.add_agency_object(self.a1)
         self.fm.b_schedule.add_agency_object(self.a2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_agency_list()), 1)
         self.assertEquals(merged_schedule.get_agency_list()[0],
                           self.fm.a_merge_map[self.a1])
@@ -539,7 +539,7 @@ class TestAgencyMerger(util.TestCase):
                           self.fm.b_merge_map[self.a2])
         # differing values such as agency_phone should be taken from self.a2
         self.assertEquals(merged_schedule.get_agency_list()[0], self.a2)
-        self.assertEquals(self.am.GetMergeStats(), (1, 0, 0))
+        self.assertEquals(self.am.get_merge_stats(), (1, 0, 0))
 
         # check that id is preserved
         self.assertEquals(self.fm.a_merge_map[self.a1].agency_id,
@@ -548,9 +548,9 @@ class TestAgencyMerger(util.TestCase):
     def testNoMerge_DifferentId(self):
         self.fm.a_schedule.add_agency_object(self.a1)
         self.fm.b_schedule.add_agency_object(self.a2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_agency_list()), 2)
 
         self.assert_(self.fm.a_merge_map[self.a1] in
@@ -559,7 +559,7 @@ class TestAgencyMerger(util.TestCase):
                      merged_schedule.get_agency_list())
         self.assertEquals(self.a1, self.fm.a_merge_map[self.a1])
         self.assertEquals(self.a2, self.fm.b_merge_map[self.a2])
-        self.assertEquals(self.am.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.am.get_merge_stats(), (0, 1, 1))
 
         # check that the ids are preserved
         self.assertEquals(self.fm.a_merge_map[self.a1].agency_id,
@@ -577,12 +577,12 @@ class TestAgencyMerger(util.TestCase):
         self.fm.a_schedule.add_agency_object(self.a1)
         self.fm.b_schedule.add_agency_object(self.a2)
 
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_agency_list()), 2)
-        self.assertEquals(self.am.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.am.get_merge_stats(), (0, 1, 1))
 
         # check that the merged entities have different ids
         self.assertNotEqual(self.fm.a_merge_map[self.a1].agency_id,
@@ -602,7 +602,7 @@ class TestStopMerger(util.TestCase):
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
         self.sm = merge.StopMerger(self.fm)
-        self.fm.AddMerger(self.sm)
+        self.fm.add_merger(self.sm)
 
         self.s1 = transitfeed.Stop(30.0, 30.0,
                                    u'Andr\202', 's1')
@@ -622,15 +622,15 @@ class TestStopMerger(util.TestCase):
 
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_stop_list()), 1)
         self.assertEquals(merged_schedule.get_stop_list()[0],
                           self.fm.a_merge_map[self.s1])
         self.assertEquals(self.fm.a_merge_map[self.s1],
                           self.fm.b_merge_map[self.s2])
-        self.assertEquals(self.sm.GetMergeStats(), (1, 0, 0))
+        self.assertEquals(self.sm.get_merge_stats(), (1, 0, 0))
 
         # check that the remaining attributes are taken from the new stop
         fields = ['stop_name', 'stop_lat', 'stop_lon', 'stop_desc', 'stop_url',
@@ -647,26 +647,26 @@ class TestStopMerger(util.TestCase):
     def testNoMerge_DifferentId(self):
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_stop_list()), 2)
         self.assert_(self.fm.a_merge_map[self.s1] in merged_schedule.get_stop_list())
         self.assert_(self.fm.b_merge_map[self.s2] in merged_schedule.get_stop_list())
-        self.assertEquals(self.sm.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.sm.get_merge_stats(), (0, 1, 1))
 
     def testNoMerge_DifferentName(self):
         self.s2.stop_id = self.s1.stop_id
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_stop_list()), 2)
         self.assert_(self.fm.a_merge_map[self.s1] in merged_schedule.get_stop_list())
         self.assert_(self.fm.b_merge_map[self.s2] in merged_schedule.get_stop_list())
-        self.assertEquals(self.sm.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.sm.get_merge_stats(), (0, 1, 1))
 
     def testNoMerge_FarApart(self):
         self.s2.stop_id = self.s1.stop_id
@@ -676,14 +676,14 @@ class TestStopMerger(util.TestCase):
 
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_stop_list()), 2)
         self.assert_(self.fm.a_merge_map[self.s1] in merged_schedule.get_stop_list())
         self.assert_(self.fm.b_merge_map[self.s2] in merged_schedule.get_stop_list())
-        self.assertEquals(self.sm.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.sm.get_merge_stats(), (0, 1, 1))
 
         # check that the merged ids are different
         self.assertNotEquals(self.fm.a_merge_map[self.s1].stop_id,
@@ -696,23 +696,23 @@ class TestStopMerger(util.TestCase):
         self.s2.stop_name = self.s1.stop_name.upper()
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
-        merged_schedule = self.fm.GetMergedSchedule()
+        self.fm.merge_schedules()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_stop_list()), 1)
-        self.assertEquals(self.sm.GetMergeStats(), (1, 0, 0))
+        self.assertEquals(self.sm.get_merge_stats(), (1, 0, 0))
 
     def testNoMerge_ZoneId(self):
         self.s2.zone_id = 'zone2'
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_stop_list()), 2)
 
         self.assert_(self.s1.zone_id in self.fm.a_zone_map)
         self.assert_(self.s2.zone_id in self.fm.b_zone_map)
-        self.assertEquals(self.sm.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.sm.get_merge_stats(), (0, 1, 1))
 
         # check that the zones are still different
         self.assertNotEqual(self.fm.a_merge_map[self.s1].zone_id,
@@ -723,7 +723,7 @@ class TestStopMerger(util.TestCase):
         # merge, they are still the same after.
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.a_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.assertEquals(self.fm.a_merge_map[self.s1].zone_id,
                           self.fm.a_merge_map[self.s2].zone_id)
 
@@ -732,7 +732,7 @@ class TestStopMerger(util.TestCase):
         # are merged, they should map to different zone_ids
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.assertNotEquals(self.fm.a_merge_map[self.s1].zone_id,
                              self.fm.b_merge_map[self.s2].zone_id)
 
@@ -747,7 +747,7 @@ class TestStopMerger(util.TestCase):
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.a_schedule.add_stop_object(s3)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
         self.assertEquals(self.fm.a_merge_map[self.s1].zone_id,
                           self.fm.a_merge_map[s3].zone_id)
@@ -761,8 +761,8 @@ class TestStopMerger(util.TestCase):
         self.s2.location_type = 1
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
-        merged_stops = self.fm.GetMergedSchedule().get_stop_list()
+        self.fm.merge_schedules()
+        merged_stops = self.fm.get_merged_schedule().get_stop_list()
         self.assertEquals(len(merged_stops), 1)
         self.assertEquals(merged_stops[0].location_type, 1)
 
@@ -773,9 +773,9 @@ class TestStopMerger(util.TestCase):
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
         try:
-            self.fm.MergeSchedules()
+            self.fm.merge_schedules()
             self.fail("Expecting MergeError")
-        except merge.SameIdButNotMerged as merge_error:
+        except merge.same_id_but_not_merged as merge_error:
             self.assertTrue(("%s" % merge_error).find("location_type") != -1)
 
     def AssertS1ParentIsS2(self):
@@ -792,7 +792,7 @@ class TestStopMerger(util.TestCase):
         self.s1.parent_station = self.s2.stop_id
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.a_schedule.add_stop_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.AssertS1ParentIsS2()
 
     def testParentRelationshipAfterMerge(self):
@@ -802,7 +802,7 @@ class TestStopMerger(util.TestCase):
         self.fm.a_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
         self.fm.b_schedule.add_stop_object(s3)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.AssertS1ParentIsS2()
 
     def testParentRelationshipWithNewParentid(self):
@@ -815,8 +815,8 @@ class TestStopMerger(util.TestCase):
         self.fm.a_schedule.add_stop_object(s3)
         self.fm.b_schedule.add_stop_object(self.s1)
         self.fm.b_schedule.add_stop_object(self.s2)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
         self.assertNotEquals(s3._migrated_entity.stop_id,
                              self.s2._migrated_entity.stop_id)
         # Check that s2 got a new id
@@ -839,19 +839,19 @@ class TestStopMerger(util.TestCase):
 
     def testSetLargestStopDistanceSmall(self):
         largest_stop_distance = self._AddStopsApart() * 0.5
-        self.sm.SetLargestStopDistance(largest_stop_distance)
+        self.sm.set_largest_stop_distance(largest_stop_distance)
         self.assertEquals(self.sm.largest_stop_distance, largest_stop_distance)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
-        self.assertEquals(len(self.fm.GetMergedSchedule().get_stop_list()), 2)
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
+        self.assertEquals(len(self.fm.get_merged_schedule().get_stop_list()), 2)
         self.accumulator.assertExpectedProblemsReported(self)
 
     def testSetLargestStopDistanceLarge(self):
         largest_stop_distance = self._AddStopsApart() * 2.0
-        self.sm.SetLargestStopDistance(largest_stop_distance)
+        self.sm.set_largest_stop_distance(largest_stop_distance)
         self.assertEquals(self.sm.largest_stop_distance, largest_stop_distance)
-        self.fm.MergeSchedules()
-        self.assertEquals(len(self.fm.GetMergedSchedule().get_stop_list()), 1)
+        self.fm.merge_schedules()
+        self.assertEquals(len(self.fm.get_merged_schedule().get_stop_list()), 1)
 
 
 class TestRouteMerger(util.TestCase):
@@ -866,9 +866,9 @@ class TestRouteMerger(util.TestCase):
         self.problem_reporter = TestingProblemReporter(self.accumulator)
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
-        self.fm.AddMerger(merge.AgencyMerger(self.fm))
+        self.fm.add_merger(merge.AgencyMerger(self.fm))
         self.rm = merge.RouteMerger(self.fm)
-        self.fm.AddMerger(self.rm)
+        self.fm.add_merger(self.rm)
 
         akwargs = {'id': 'a1',
                    'agency_name': 'a1',
@@ -891,16 +891,16 @@ class TestRouteMerger(util.TestCase):
     def testMerge(self):
         self.fm.a_schedule.add_route_object(self.r1)
         self.fm.b_schedule.add_route_object(self.r2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_route_list()), 1)
         r = merged_schedule.get_route_list()[0]
         self.assert_(self.fm.a_merge_map[self.r1] is r)
         self.assert_(self.fm.b_merge_map[self.r2] is r)
         CheckAttribs(self.r2, r, self.fields, self.assertEquals)
         self.assertEquals(r.agency_id, self.fm.a_merge_map[self.a1].agency_id)
-        self.assertEquals(self.rm.GetMergeStats(), (1, 0, 0))
+        self.assertEquals(self.rm.get_merge_stats(), (1, 0, 0))
 
         # check that the id is preserved
         self.assertEquals(self.fm.a_merge_map[self.r1].route_id, self.r1.route_id)
@@ -910,15 +910,15 @@ class TestRouteMerger(util.TestCase):
         self.r2.agency_id = None
         self.fm.a_schedule.add_route_object(self.r1)
         self.fm.b_schedule.add_route_object(self.r2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
 
-        merged_schedule = self.fm.GetMergedSchedule()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_route_list()), 1)
         r = merged_schedule.get_route_list()[0]
         CheckAttribs(self.r2, r, self.fields, self.assertEquals)
         # Merged route has copy of default agency_id
         self.assertEquals(r.agency_id, self.a1.agency_id)
-        self.assertEquals(self.rm.GetMergeStats(), (1, 0, 0))
+        self.assertEquals(self.rm.get_merge_stats(), (1, 0, 0))
 
         # check that the id is preserved
         self.assertEquals(self.fm.a_merge_map[self.r1].route_id, self.r1.route_id)
@@ -926,8 +926,8 @@ class TestRouteMerger(util.TestCase):
     def testMigrateNoAgency(self):
         self.r1.agency_id = None
         self.fm.a_schedule.add_route_object(self.r1)
-        self.fm.MergeSchedules()
-        merged_schedule = self.fm.GetMergedSchedule()
+        self.fm.merge_schedules()
+        merged_schedule = self.fm.get_merged_schedule()
         self.assertEquals(len(merged_schedule.get_route_list()), 1)
         r = merged_schedule.get_route_list()[0]
         CheckAttribs(self.r1, r, self.fields, self.assertEquals)
@@ -938,18 +938,18 @@ class TestRouteMerger(util.TestCase):
         self.r2.route_id = 'r2'
         self.fm.a_schedule.add_route_object(self.r1)
         self.fm.b_schedule.add_route_object(self.r2)
-        self.fm.MergeSchedules()
-        self.assertEquals(len(self.fm.GetMergedSchedule().get_route_list()), 2)
-        self.assertEquals(self.rm.GetMergeStats(), (0, 1, 1))
+        self.fm.merge_schedules()
+        self.assertEquals(len(self.fm.get_merged_schedule().get_route_list()), 2)
+        self.assertEquals(self.rm.get_merge_stats(), (0, 1, 1))
 
     def testNoMerge_SameId(self):
         self.r2.route_short_name = 'different'
         self.fm.a_schedule.add_route_object(self.r1)
         self.fm.b_schedule.add_route_object(self.r2)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
-        self.assertEquals(len(self.fm.GetMergedSchedule().get_route_list()), 2)
-        self.assertEquals(self.rm.GetMergeStats(), (0, 1, 1))
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
+        self.assertEquals(len(self.fm.get_merged_schedule().get_route_list()), 2)
+        self.assertEquals(self.rm.get_merge_stats(), (0, 1, 1))
 
         # check that the merged ids are different
         self.assertNotEquals(self.fm.a_merge_map[self.r1].route_id,
@@ -968,8 +968,8 @@ class TestTripMerger(util.TestCase):
         self.problem_reporter = TestingProblemReporter(self.accumulator)
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
-        self.fm.AddDefaultMergers()
-        self.tm = self.fm.GetMerger(merge.TripMerger)
+        self.fm.add_default_mergers()
+        self.tm = self.fm.get_merger(merge.TripMerger)
 
         akwargs = {'id': 'a1',
                    'agency_name': 'a1',
@@ -1013,8 +1013,8 @@ class TestTripMerger(util.TestCase):
         a_schedule.add_shape_object(self.shape)
 
     def testMigrate(self):
-        self.accumulator.ExpectProblemClass(merge.MergeNotImplemented)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.merge_not_implemented)
+        self.fm.merge_schedules()
         self.accumulator.assertExpectedProblemsReported(self)
 
         r = self.fm.a_merge_map[self.r1]
@@ -1033,12 +1033,12 @@ class TestTripMerger(util.TestCase):
         self.assertEquals(st.stop, self.fm.a_merge_map[self.stop])
 
     def testReportsNotImplementedProblem(self):
-        self.accumulator.ExpectProblemClass(merge.MergeNotImplemented)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.merge_not_implemented)
+        self.fm.merge_schedules()
         self.accumulator.assertExpectedProblemsReported(self)
 
     def testMergeStats(self):
-        self.assert_(self.tm.GetMergeStats() is None)
+        self.assert_(self.tm.get_merge_stats() is None)
 
     def testConflictingTripid(self):
         a1_in_b = transitfeed.Agency(field_dict=self.a1)
@@ -1057,8 +1057,8 @@ class TestTripMerger(util.TestCase):
         self.fm.b_schedule.add_shape_object(shape_in_b)
         self.fm.b_schedule.add_trip_object(t1_in_b, validate=False)
         self.fm.b_schedule.add_service_period_object(s_in_b, validate=False)
-        self.accumulator.ExpectProblemClass(merge.MergeNotImplemented)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.merge_not_implemented)
+        self.fm.merge_schedules()
         # 3 trips moved to merged_schedule: from a_schedule t1, t2 and from
         # b_schedule t1
         trips = self.fm.merged_schedule.get_trip_list()
@@ -1079,7 +1079,7 @@ class TestFareMerger(util.TestCase):
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
         self.faremerger = merge.FareMerger(self.fm)
-        self.fm.AddMerger(self.faremerger)
+        self.fm.add_merger(self.faremerger)
 
         self.f1 = transitfeed.FareAttribute('f1', '10', 'ZAR', '1', '0')
         self.f2 = transitfeed.FareAttribute('f2', '10', 'ZAR', '1', '0')
@@ -1088,9 +1088,9 @@ class TestFareMerger(util.TestCase):
         self.f2.fare_id = self.f1.fare_id
         self.fm.a_schedule.add_fare_attribute_object(self.f1)
         self.fm.b_schedule.add_fare_attribute_object(self.f2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.assertEquals(len(self.fm.merged_schedule.get_fare_attribute_list()), 1)
-        self.assertEquals(self.faremerger.GetMergeStats(), (1, 0, 0))
+        self.assertEquals(self.faremerger.get_merge_stats(), (1, 0, 0))
 
         # check that the id is preserved
         self.assertEquals(self.fm.a_merge_map[self.f1].fare_id, self.f1.fare_id)
@@ -1100,10 +1100,10 @@ class TestFareMerger(util.TestCase):
         self.f2.price = 11.0
         self.fm.a_schedule.add_fare_attribute_object(self.f1)
         self.fm.b_schedule.add_fare_attribute_object(self.f2)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
         self.assertEquals(len(self.fm.merged_schedule.get_fare_attribute_list()), 2)
-        self.assertEquals(self.faremerger.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.faremerger.get_merge_stats(), (0, 1, 1))
 
         # check that the merged ids are different
         self.assertNotEquals(self.fm.a_merge_map[self.f1].fare_id,
@@ -1114,9 +1114,9 @@ class TestFareMerger(util.TestCase):
     def testNoMerge_DifferentId(self):
         self.fm.a_schedule.add_fare_attribute_object(self.f1)
         self.fm.b_schedule.add_fare_attribute_object(self.f2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.assertEquals(len(self.fm.merged_schedule.get_fare_attribute_list()), 2)
-        self.assertEquals(self.faremerger.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.faremerger.get_merge_stats(), (0, 1, 1))
 
         # check that the ids are preserved
         self.assertEquals(self.fm.a_merge_map[self.f1].fare_id, self.f1.fare_id)
@@ -1134,7 +1134,7 @@ class TestShapeMerger(util.TestCase):
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
         self.sm = merge.ShapeMerger(self.fm)
-        self.fm.AddMerger(self.sm)
+        self.fm.add_merger(self.sm)
 
         # setup some shapes
         # s1 and s2 have the same endpoints but take different paths
@@ -1159,10 +1159,10 @@ class TestShapeMerger(util.TestCase):
         self.s2.shape_id = self.s1.shape_id
         self.fm.a_schedule.add_shape_object(self.s1)
         self.fm.b_schedule.add_shape_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.assertEquals(len(self.fm.merged_schedule.get_shape_list()), 1)
         self.assertEquals(self.fm.merged_schedule.get_shape_list()[0], self.s2)
-        self.assertEquals(self.sm.GetMergeStats(), (1, 0, 0))
+        self.assertEquals(self.sm.get_merge_stats(), (1, 0, 0))
 
         # check that the id is preserved
         self.assertEquals(self.fm.a_merge_map[self.s1].shape_id, self.s1.shape_id)
@@ -1170,11 +1170,11 @@ class TestShapeMerger(util.TestCase):
     def testNoMerge_DifferentId(self):
         self.fm.a_schedule.add_shape_object(self.s1)
         self.fm.b_schedule.add_shape_object(self.s2)
-        self.fm.MergeSchedules()
+        self.fm.merge_schedules()
         self.assertEquals(len(self.fm.merged_schedule.get_shape_list()), 2)
         self.assertEquals(self.s1, self.fm.a_merge_map[self.s1])
         self.assertEquals(self.s2, self.fm.b_merge_map[self.s2])
-        self.assertEquals(self.sm.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.sm.get_merge_stats(), (0, 1, 1))
 
         # check that the ids are preserved
         self.assertEquals(self.fm.a_merge_map[self.s1].shape_id, self.s1.shape_id)
@@ -1184,12 +1184,12 @@ class TestShapeMerger(util.TestCase):
         self.s3.shape_id = self.s1.shape_id
         self.fm.a_schedule.add_shape_object(self.s1)
         self.fm.b_schedule.add_shape_object(self.s3)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
         self.assertEquals(len(self.fm.merged_schedule.get_shape_list()), 2)
         self.assertEquals(self.s1, self.fm.a_merge_map[self.s1])
         self.assertEquals(self.s3, self.fm.b_merge_map[self.s3])
-        self.assertEquals(self.sm.GetMergeStats(), (0, 1, 1))
+        self.assertEquals(self.sm.get_merge_stats(), (0, 1, 1))
 
         # check that the ids are different
         self.assertNotEquals(self.fm.a_merge_map[self.s1].shape_id,
@@ -1208,27 +1208,27 @@ class TestShapeMerger(util.TestCase):
         self.s3.shape_id = self.s1.shape_id
         self.fm.a_schedule.add_shape_object(self.s1)
         self.fm.b_schedule.add_shape_object(self.s3)
-        distance1 = merge.ApproximateDistanceBetweenPoints(
+        distance1 = merge.approximate_distance_between_points(
             self.s1.points[0][:2], self.s3.points[0][:2])
-        distance2 = merge.ApproximateDistanceBetweenPoints(
+        distance2 = merge.approximate_distance_between_points(
             self.s1.points[-1][:2], self.s3.points[-1][:2])
         return max(distance1, distance2)
 
     def testSetLargestShapeDistanceSmall(self):
         largest_shape_distance = self._AddShapesApart() * 0.5
-        self.sm.SetLargestShapeDistance(largest_shape_distance)
+        self.sm.set_largest_shape_distance(largest_shape_distance)
         self.assertEquals(self.sm.largest_shape_distance, largest_shape_distance)
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
-        self.fm.MergeSchedules()
-        self.assertEquals(len(self.fm.GetMergedSchedule().get_shape_list()), 2)
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
+        self.fm.merge_schedules()
+        self.assertEquals(len(self.fm.get_merged_schedule().get_shape_list()), 2)
         self.accumulator.assertExpectedProblemsReported(self)
 
     def testSetLargestShapeDistanceLarge(self):
         largest_shape_distance = self._AddShapesApart() * 2.0
-        self.sm.SetLargestShapeDistance(largest_shape_distance)
+        self.sm.set_largest_shape_distance(largest_shape_distance)
         self.assertEquals(self.sm.largest_shape_distance, largest_shape_distance)
-        self.fm.MergeSchedules()
-        self.assertEquals(len(self.fm.GetMergedSchedule().get_shape_list()), 1)
+        self.fm.merge_schedules()
+        self.assertEquals(len(self.fm.get_merged_schedule().get_shape_list()), 1)
 
 
 class TestFareRuleMerger(util.TestCase):
@@ -1241,8 +1241,8 @@ class TestFareRuleMerger(util.TestCase):
         self.problem_reporter = TestingProblemReporter(self.accumulator)
         self.fm = merge.FeedMerger(a_schedule, b_schedule, merged_schedule,
                                    self.problem_reporter)
-        self.fm.AddDefaultMergers()
-        self.fare_rule_merger = self.fm.GetMerger(merge.FareRuleMerger)
+        self.fm.add_default_mergers()
+        self.fare_rule_merger = self.fm.get_merger(merge.FareRuleMerger)
 
         akwargs = {'id': 'a1',
                    'agency_name': 'a1',
@@ -1280,9 +1280,9 @@ class TestFareRuleMerger(util.TestCase):
         self.fm.b_schedule.add_fare_rule_object(self.fr2)
 
     def testMerge(self):
-        self.accumulator.ExpectProblemClass(merge.FareRulesBroken)
-        self.accumulator.ExpectProblemClass(merge.MergeNotImplemented)
-        self.fm.MergeSchedules()
+        self.accumulator.ExpectProblemClass(merge.fare_rules_broken)
+        self.accumulator.ExpectProblemClass(merge.merge_not_implemented)
+        self.fm.merge_schedules()
 
         self.assertEquals(len(self.fm.merged_schedule.get_fare_attribute_list()), 2)
 
@@ -1306,7 +1306,7 @@ class TestFareRuleMerger(util.TestCase):
         self.accumulator.assertExpectedProblemsReported(self)
 
     def testMergeStats(self):
-        self.assert_(self.fare_rule_merger.GetMergeStats() is None)
+        self.assert_(self.fare_rule_merger.get_merge_stats() is None)
 
 
 class TestTransferMerger(util.TestCase):
@@ -1331,9 +1331,9 @@ class TestTransferMerger(util.TestCase):
                                                                     to_stop_id="1"))
         self.fm.b_schedule.add_transfer_object(transitfeed.Transfer(from_stop_id="0",
                                                                     to_stop_id="1"))
-        self.fm.AddMerger(merge.StopMerger(self.fm))
-        self.fm.AddMerger(merge.TransferMerger(self.fm))
-        self.fm.MergeSchedules()
+        self.fm.add_merger(merge.StopMerger(self.fm))
+        self.fm.add_merger(merge.TransferMerger(self.fm))
+        self.fm.merge_schedules()
         transfers = self.fm.merged_schedule.get_transfer_list()
         self.assertEquals(1, len(transfers))
         self.assertEquals("0", transfers[0].from_stop_id)
@@ -1341,7 +1341,7 @@ class TestTransferMerger(util.TestCase):
 
     def testToStopNotMerged(self):
         """When stops aren't merged transfer is duplicated."""
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
         stop0 = transitfeed.Stop(lat=30.0, lng=30.0, name="0", stop_id="0")
         stop1a = transitfeed.Stop(lat=30.1, lng=30.1, name="1a", stop_id="1")
         stop1b = transitfeed.Stop(lat=30.1, lng=30.1, name="1b", stop_id="1")
@@ -1357,9 +1357,9 @@ class TestTransferMerger(util.TestCase):
         self.fm.b_schedule.add_stop_object(transitfeed.Stop(field_dict=stop1b))
         self.fm.b_schedule.add_transfer_object(
             transitfeed.Transfer(from_stop_id="0", to_stop_id="1"))
-        self.fm.AddMerger(merge.StopMerger(self.fm))
-        self.fm.AddMerger(merge.TransferMerger(self.fm))
-        self.fm.MergeSchedules()
+        self.fm.add_merger(merge.StopMerger(self.fm))
+        self.fm.add_merger(merge.TransferMerger(self.fm))
+        self.fm.merge_schedules()
 
         transfers = self.fm.merged_schedule.get_transfer_list()
         self.assertEquals(2, len(transfers))
@@ -1379,7 +1379,7 @@ class TestTransferMerger(util.TestCase):
 
     def testFromStopNotMerged(self):
         """When stops aren't merged transfer is duplicated."""
-        self.accumulator.ExpectProblemClass(merge.SameIdButNotMerged)
+        self.accumulator.ExpectProblemClass(merge.same_id_but_not_merged)
         stop0 = transitfeed.Stop(lat=30.0, lng=30.0, name="0", stop_id="0")
         stop1a = transitfeed.Stop(lat=30.1, lng=30.1, name="1a", stop_id="1")
         stop1b = transitfeed.Stop(lat=30.1, lng=30.1, name="1b", stop_id="1")
@@ -1395,9 +1395,9 @@ class TestTransferMerger(util.TestCase):
         self.fm.b_schedule.add_stop_object(transitfeed.Stop(field_dict=stop1b))
         self.fm.b_schedule.add_transfer_object(
             transitfeed.Transfer(from_stop_id="1", to_stop_id="0"))
-        self.fm.AddMerger(merge.StopMerger(self.fm))
-        self.fm.AddMerger(merge.TransferMerger(self.fm))
-        self.fm.MergeSchedules()
+        self.fm.add_merger(merge.StopMerger(self.fm))
+        self.fm.add_merger(merge.TransferMerger(self.fm))
+        self.fm.merge_schedules()
 
         transfers = self.fm.merged_schedule.get_transfer_list()
         self.assertEquals(2, len(transfers))
@@ -1424,20 +1424,20 @@ class TestExceptionProblemAccumulator(util.TestCase):
     def testRaisesErrors(self):
         accumulator = transitfeed.ExceptionProblemAccumulator()
         problem_reporter = merge.MergeProblemReporter(accumulator)
-        self.assertRaises(merge.CalendarsNotDisjoint,
-                          problem_reporter.CalendarsNotDisjoint,
+        self.assertRaises(merge.calendars_not_disjoint,
+                          problem_reporter.calendars_not_disjoint,
                           self.dataset_merger)
 
     def testNoRaiseWarnings(self):
         accumulator = transitfeed.ExceptionProblemAccumulator()
         problem_reporter = merge.MergeProblemReporter(accumulator)
-        problem_reporter.MergeNotImplemented(self.dataset_merger)
+        problem_reporter.merge_not_implemented(self.dataset_merger)
 
     def testRaiseWarnings(self):
         accumulator = transitfeed.ExceptionProblemAccumulator(True)
         problem_reporter = merge.MergeProblemReporter(accumulator)
-        self.assertRaises(merge.MergeNotImplemented,
-                          problem_reporter.MergeNotImplemented,
+        self.assertRaises(merge.merge_not_implemented,
+                          problem_reporter.merge_not_implemented,
                           self.dataset_merger)
 
 
@@ -1455,10 +1455,10 @@ class TestHTMLProblemAccumulator(util.TestCase):
         self.dataset_merger = merge.TripMerger(None)
 
     def testGeneratesSomeHTML(self):
-        self.problem_reporter.CalendarsNotDisjoint(self.dataset_merger)
-        self.problem_reporter.MergeNotImplemented(self.dataset_merger)
-        self.problem_reporter.FareRulesBroken(self.dataset_merger)
-        self.problem_reporter.SameIdButNotMerged(self.dataset_merger,
+        self.problem_reporter.calendars_not_disjoint(self.dataset_merger)
+        self.problem_reporter.merge_not_implemented(self.dataset_merger)
+        self.problem_reporter.fare_rules_broken(self.dataset_merger)
+        self.problem_reporter.same_id_but_not_merged(self.dataset_merger,
                                                  'test', 'unknown reason')
 
         output_file = StringIO()
@@ -1480,16 +1480,16 @@ class MergeInSubprocessTestCase(util.TempDirTestCaseBase):
         zipfile_mem = StringIO(open(zip_path, 'rb').read())
         old_zip = zipfile.ZipFile(zipfile_mem, 'r')
 
-        content_dict = self.ConvertZipToDict(old_zip)
+        content_dict = self.convert_zip_to_dict(old_zip)
         content_dict[modify_file] = content_dict[modify_file].replace(old, new)
-        new_zipfile_mem = self.ConvertDictToZip(content_dict)
+        new_zipfile_mem = self.convert_dict_to_zip(content_dict)
 
         new_zip_path = os.path.join(self.tempdirpath, "modified.zip")
         open(new_zip_path, 'wb').write(new_zipfile_mem.getvalue())
         return new_zip_path
 
     def testCrashHandler(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath('merge.py'), '--no_browser',
              'IWantMyCrash', 'file2', 'fileout.zip'],
             expected_retcode=127)
@@ -1498,7 +1498,7 @@ class MergeInSubprocessTestCase(util.TempDirTestCaseBase):
         self.assertMatchesRegex(r'For testing the merge crash handler', crashout)
 
     def testMergeBadCommandLine(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath('merge.py'), '--no_browser'],
             expected_retcode=2)
         self.assertFalse(out)
@@ -1512,7 +1512,7 @@ class MergeInSubprocessTestCase(util.TempDirTestCaseBase):
         future_good_feed = self.CopyAndModifyTestData(
             self.GetPath('tests/data/good_feed.zip'), 'calendar.txt',
             '20070101', '20110101')
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath('merge.py'), '--no_browser',
              self.GetPath('tests/data/unused_stop'),
              future_good_feed,
@@ -1526,7 +1526,7 @@ class MergeInSubprocessTestCase(util.TempDirTestCaseBase):
         future_good_feed = self.CopyAndModifyTestData(
             self.GetPath('tests/data/good_feed.zip'), 'calendar.txt',
             '20070101', '20110101')
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath('merge.py'), '--no_browser',
              self.GetPath('tests/data/unused_stop'),
              future_good_feed],
@@ -1536,7 +1536,7 @@ class MergeInSubprocessTestCase(util.TempDirTestCaseBase):
         future_good_feed = self.CopyAndModifyTestData(
             self.GetPath('tests/data/good_feed.zip'), 'calendar.txt',
             '20070101', '20110101')
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath('merge.py'), '--no_browser',
              '--latest_version', '100.100.100',
              self.GetPath('tests/data/unused_stop'),

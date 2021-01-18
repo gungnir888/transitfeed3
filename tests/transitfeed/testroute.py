@@ -31,7 +31,7 @@ class SameShortLongNameTestCase(util.LoadTestCase):
 class RouteMemoryZipTestCase(util.MemoryZipTestCase):
     def assertLoadAndCheckExtraValues(self, schedule_file):
         """Load file-like schedule_file and check for extra route columns."""
-        load_problems = util.GetTestFailureProblemReporter(
+        load_problems = util.get_test_failure_problem_reporter(
             self, ("ExpirationDate", "UnrecognizedColumn"))
         loaded_schedule = transitfeed.Loader(schedule_file,
                                              loader_problems=load_problems,
@@ -57,7 +57,7 @@ class RouteMemoryZipTestCase(util.MemoryZipTestCase):
         schedule.add_route_object(route_n)
         saved_schedule_file = StringIO()
         schedule.write_google_transit_feed(saved_schedule_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         self.assertLoadAndCheckExtraValues(saved_schedule_file)
 
@@ -72,7 +72,7 @@ class RouteMemoryZipTestCase(util.MemoryZipTestCase):
             "AB,DTA,,Airport Bullfrog,3,,\n"
             "t,DTA,T,,3,foo,\n"
             "n,DTA,N,,3,,bar\n")
-        load1_problems = util.GetTestFailureProblemReporter(
+        load1_problems = util.get_test_failure_problem_reporter(
             self, ("ExpirationDate", "UnrecognizedColumn"))
         schedule = self.MakeLoaderAndLoad(loader_problems=load1_problems)
         saved_schedule_file = StringIO()
@@ -87,7 +87,7 @@ class RouteConstructorTestCase(util.TestCase):
         self.problems = transitfeed.ProblemReporter(self.accumulator)
 
     def tearDown(self):
-        self.accumulator.TearDownAssertNoMoreExceptions()
+        self.accumulator.tear_down_assert_no_more_exceptions()
 
     def testDefault(self):
         route = transitfeed.Route()
@@ -97,20 +97,20 @@ class RouteConstructorTestCase(util.TestCase):
         repr(route)
         self.assertEqual({}, dict(route))
 
-        e = self.accumulator.PopException('MissingValue')
+        e = self.accumulator.pop_exception('MissingValue')
         self.assertEqual('route_id', e.column_name)
-        e = self.accumulator.PopException('MissingValue')
+        e = self.accumulator.pop_exception('MissingValue')
         self.assertEqual('route_type', e.column_name)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertEqual('route_short_name', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testInitArgs(self):
         # route_type name
         route = transitfeed.Route(route_id='id1', short_name='22', route_type='Bus')
         repr(route)
         route.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals(3, route.route_type)  # converted to an int
         self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                            'route_type': '3'}, dict(route))
@@ -119,7 +119,7 @@ class RouteConstructorTestCase(util.TestCase):
         route = transitfeed.Route(route_id='i1', long_name='Twenty 2', route_type=1)
         repr(route)
         route.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals(1, route.route_type)  # kept as an int
         self.assertEquals({'route_id': 'i1', 'route_long_name': 'Twenty 2',
                            'route_type': '1'}, dict(route))
@@ -128,7 +128,7 @@ class RouteConstructorTestCase(util.TestCase):
         route = transitfeed.Route(route_id='id1', short_name='22', route_type='1')
         repr(route)
         route.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals(1, route.route_type)  # converted to an int
         self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                            'route_type': '1'}, dict(route))
@@ -138,10 +138,10 @@ class RouteConstructorTestCase(util.TestCase):
                                   route_type='8')
         repr(route)
         route.validate(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertEqual('route_type', e.column_name)
         self.assertEqual(1, e.type)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                            'route_type': '8'}, dict(route))
 
@@ -150,9 +150,9 @@ class RouteConstructorTestCase(util.TestCase):
                                   route_type='1foo')
         repr(route)
         route.validate(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertEqual('route_type', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                            'route_type': '1foo'}, dict(route))
 
@@ -161,7 +161,7 @@ class RouteConstructorTestCase(util.TestCase):
                                   agency_id='myage')
         repr(route)
         route.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                            'route_type': '1', 'agency_id': 'myage'}, dict(route))
 
@@ -180,7 +180,7 @@ class RouteConstructorTestCase(util.TestCase):
             'route_id': 'id1', 'route_short_name': '22', 'agency_id': 'myage',
             'route_type': '1', 'bikes_allowed': '1'})
         route.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals(
             {'route_id': 'id1', 'route_short_name': '22', 'agency_id': 'myage',
              'route_type': '1', 'bikes_allowed': '1'},
@@ -190,7 +190,7 @@ class RouteConstructorTestCase(util.TestCase):
             'route_id': 'id1', 'route_short_name': '22', 'agency_id': 'myage',
             'route_type': '1', 'my_column': 'v'})
         route.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals({'route_id': 'id1', 'route_short_name': '22',
                            'agency_id': 'myage', 'route_type': '1',
                            'my_column': 'v'}, dict(route))
@@ -299,7 +299,7 @@ class RouteValidationTestCase(util.ValidationTestCase):
         route.route_text_color = None  # black
         route.route_color = None  # white
         route.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # bad bikes_allowed
         route.bikes_allowed = '3'

@@ -378,7 +378,7 @@ class Trip(GtfsObjectBase):
         stoptimes = self.get_stop_times()
         return tuple(st.stop for st in stoptimes)
 
-    def add_headway_period_object(self, headway_period, problem_reporter):
+    def add_headway_period_object(self, problem_reporter):
         """Deprecated. Please use AddFrequencyObject instead."""
         warnings.warn("No longer supported. The HeadwayPeriod class was renamed to "
                       "Frequency, and all related functions were renamed "
@@ -660,9 +660,9 @@ class Trip(GtfsObjectBase):
                         'stop_sequence=%d has shape_dist_traveled=%f, which is larger '
                         'than the max shape_dist_traveled=%f of the corresponding '
                         'shape (shape_id=%s)' %
-                        (self.trip_id, st.stop_sequence, st.shape_dist_traveled,
-                         max_shape_dist, self.shape_id),
-                        problem_type=problems_module.TYPE_WARNING)
+                        (self.trip_id, st.stop_sequence, st.shape_dist_traveled, max_shape_dist, self.shape_id),
+                        problem_type=problems_module.TYPE_WARNING
+                    )
 
     def validate_distance_from_stop_to_shape(self, problems, stoptimes):
         if stoptimes:

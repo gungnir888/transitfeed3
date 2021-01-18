@@ -745,7 +745,7 @@ def profilerun_validation_output_from_options(feed, options):
     # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/286222
     # http://aspn.activestate.com/ASPN/Cookbook/ "The recipes are freely
     # available for review and use."
-    def _v_mb(VmKey):
+    def _v_mb(vm_key):
         """Return size from proc status in bytes."""
         _proc_status = '/proc/%d/status' % os.getpid()
         _scale = {'kB': 1024.0, 'mB': 1024.0*1024.0,
@@ -761,7 +761,7 @@ def profilerun_validation_output_from_options(feed, options):
             raise Exception("no proc file %s" % _proc_status)
         # get VmKey line e.g. 'VmRSS:  9999  kB\n ...'
         try:
-            i = v.index(VmKey)
+            i = v.index(vm_key)
             v = v[i:].split(None, 3)  # whitespace
         except Exception as e:
             print(e)

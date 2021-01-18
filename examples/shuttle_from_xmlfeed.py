@@ -22,9 +22,9 @@ from optparse import OptionParser
 import os.path
 import re
 import transitfeed
-import urllib
+import urllib.request
 
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree as Et
 
 
 class NoUnusedStopExceptionProblemReporter(transitfeed.ProblemReporter):
@@ -36,12 +36,12 @@ class NoUnusedStopExceptionProblemReporter(transitfeed.ProblemReporter):
         accumulator = transitfeed.ExceptionProblemAccumulator()
         transitfeed.ProblemReporter.__init__(self, accumulator)
 
-    def unused_stop(self, stop_id, stop_name):
+    def unused_stop(self, stop_id, stop_name, context=None, problem_type=transitfeed.TYPE_WARNING):
         pass
 
 
-def SaveFeed(input, output):
-    tree = ET.parse(urllib.urlopen(input))
+def save_feed(input_url, output):
+    tree = Et.parse(urllib.request.urlopen(input_url))
 
     schedule = transitfeed.Schedule()
     service_period = schedule.get_default_service_period()
@@ -63,22 +63,22 @@ def SaveFeed(input, output):
     agency = schedule.new_default_agency(name='GBus', url='http://shuttle/',
                                          timezone='America/Los_Angeles')
 
-    for xml_stop in tree.getiterator('stop'):
+    for xml_stop in list(tree.iter('stop')):
         stop = schedule.add_stop(lat=float(xml_stop.attrib['lat']),
                                  lng=float(xml_stop.attrib['lng']),
                                  name=xml_stop.attrib['name'])
         stops[xml_stop.attrib['id']] = stop
 
-    for xml_shuttleGroup in tree.getiterator('shuttleGroup'):
+    for xml_shuttleGroup in list(tree.iter('shuttleGroup')):
         if xml_shuttleGroup.attrib['name'] == 'Test':
             continue
         r = schedule.add_route(short_name="",
                                long_name=xml_shuttleGroup.attrib['name'], route_type='Bus')
-        for xml_route in xml_shuttleGroup.getiterator('route'):
+        for xml_route in list(xml_shuttleGroup.iter('route')):
             t = r.add_trip(schedule=schedule, headsign=xml_route.attrib['name'],
                            trip_id=xml_route.attrib['id'])
             trip_stops = []  # Build a list of (time, Stop) tuples
-            for xml_schedule in xml_route.getiterator('schedule'):
+            for xml_schedule in list(xml_route.iter('schedule')):
                 trip_stops.append((int(xml_schedule.attrib['time']) / 1000, stops[xml_schedule.attrib['stopId']]))
             trip_stops.sort()  # Sort by time
             for (time, stop) in trip_stops:
@@ -111,7 +111,7 @@ def main():
     (_, name) = os.path.split(options.output)
     path = options.output
 
-    SaveFeed(options.input, options.output)
+    save_feed(options.input, options.output)
 
     for command in options.execute:
         import subprocess

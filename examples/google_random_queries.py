@@ -21,7 +21,6 @@ polyline looks okay (no unnecassary loops, no jumps to a far away location) and
 look at the time of each leg. Also check the route names and headsigns are
 formatted correctly and not redundant.
 """
-from __future__ import print_function
 
 from datetime import datetime
 from datetime import timedelta
@@ -35,7 +34,7 @@ import urllib
 from urllib.parse import urlparse, urlunsplit, urlencode
 
 
-def Distance(lat0, lng0, lat1, lng1):
+def distance(lat0, lng0, lat1, lng1):
     """
     Compute the geodesic distance in meters between two points on the
     surface of the Earth.  The latitude and longitude angles are in
@@ -64,40 +63,40 @@ def Distance(lat0, lng0, lat1, lng1):
     return 6367000.0 * c
 
 
-def AddNoiseToLatLng(lat, lng):
+def add_noise_to_lat_lng(lat, lng):
     """Add up to 500m of error to each coordinate of lat, lng."""
-    m_per_tenth_lat = Distance(lat, lng, lat + 0.1, lng)
-    m_per_tenth_lng = Distance(lat, lng, lat, lng + 0.1)
+    m_per_tenth_lat = distance(lat, lng, lat + 0.1, lng)
+    m_per_tenth_lng = distance(lat, lng, lat, lng + 0.1)
     lat_per_100m = 1 / m_per_tenth_lat * 10
     lng_per_100m = 1 / m_per_tenth_lng * 10
     return (lat + (lat_per_100m * 5 * (random.random() * 2 - 1)),
             lng + (lng_per_100m * 5 * (random.random() * 2 - 1)))
 
 
-def GetRandomLocationsNearStops(schedule):
+def get_random_locations_near_stops(schedule):
     """Return a list of (lat, lng) tuples."""
     locations = []
     for s in schedule.get_stop_list():
-        locations.append(AddNoiseToLatLng(s.stop_lat, s.stop_lon))
+        locations.append(add_noise_to_lat_lng(s.stop_lat, s.stop_lon))
     return locations
 
 
-def GetRandomDatetime():
+def get_random_datetime():
     """Return a datetime in the next week."""
     seconds_offset = random.randint(0, 60 * 60 * 24 * 7)
     dt = datetime.today() + timedelta(seconds=seconds_offset)
     return dt.replace(second=0, microsecond=0)
 
 
-def FormatLatLng(lat_lng):
+def format_lat_lng(lat_lng):
     """Format a (lat, lng) tuple into a string for maps.google.com."""
     return "%0.6f,%0.6f" % lat_lng
 
 
-def LatLngsToGoogleUrl(source, destination, dt):
+def lat_lngs_to_google_url(source, destination, dt):
     """Return a URL for routing between two (lat, lng) at a datetime."""
-    params = {"saddr": FormatLatLng(source),
-              "daddr": FormatLatLng(destination),
+    params = {"saddr": format_lat_lng(source),
+              "daddr": format_lat_lng(destination),
               "time": dt.strftime("%I:%M%p"),
               "date": dt.strftime("%Y-%m-%d"),
               "dirflg": "r",
@@ -107,12 +106,12 @@ def LatLngsToGoogleUrl(source, destination, dt):
     return url
 
 
-def LatLngsToGoogleLink(source, destination):
+def lat_lngs_to_google_link(source, destination):
     """Return a string "<a ..." for a trip at a random time."""
-    dt = GetRandomDatetime()
+    dt = get_random_datetime()
     return "<a href='%s'>from:%s to:%s on %s</a>" % (
-        LatLngsToGoogleUrl(source, destination, dt),
-        FormatLatLng(source), FormatLatLng(destination),
+        lat_lngs_to_google_url(source, destination, dt),
+        format_lat_lng(source), format_lat_lng(destination),
         dt.ctime())
 
 
@@ -168,11 +167,11 @@ def write_output(title, locations, limit, f):
 
     f.write(output_prefix)
     for source, destination in zip(locations[0:limit], locations[1:limit + 1]):
-        f.write("<li>%s\n" % LatLngsToGoogleLink(source, destination))
+        f.write("<li>%s\n" % lat_lngs_to_google_link(source, destination))
         f.write(output_suffix)
 
 
-def ParentAndBaseName(path):
+def parent_and_base_name(path):
     """Given a path return only the parent name and file name as a string."""
     dirname, basename = os.path.split(path)
     dirname = dirname.rstrip(os.path.sep)
@@ -213,10 +212,10 @@ def main():
     loader = transitfeed.Loader(feed_path, loader_problems=transitfeed.ProblemReporter(),
                                 load_stop_times=False)
     schedule = loader.load()
-    locations = GetRandomLocationsNearStops(schedule)
+    locations = get_random_locations_near_stops(schedule)
     random.shuffle(locations)
     agencies = ", ".join([a.agency_name for a in schedule.get_agency_list()])
-    title = "%s (%s)" % (agencies, ParentAndBaseName(feed_path))
+    title = "%s (%s)" % (agencies, parent_and_base_name(feed_path))
 
     write_output(title,
                  locations,

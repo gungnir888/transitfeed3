@@ -29,7 +29,7 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
         schedule = self.MakeLoaderAndLoad()
         self.assertEquals(1, schedule.stops["STATION"].location_type)
         self.assertEquals(0, schedule.stops["BEATTY_AIRPORT"].location_type)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testBadLocationType(self):
         self.SetArchiveContents(
@@ -38,16 +38,16 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BEATTY_AIRPORT,Airport,36.868446,-116.784582,7\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,notvalid\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("location_type", e.column_name)
         self.assertEquals(3, e.row_num)
         self.assertEquals(0, e.type)
-        e = self.accumulator.PopException("InvalidValue")
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("location_type", e.column_name)
         self.assertEquals(2, e.row_num)
         self.assertEquals(1, e.type)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testBadLocationTypeAtSameLatLon(self):
         self.SetArchiveContents(
@@ -57,13 +57,13 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "STATION,Airport,36.868446,-116.784582,7,\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("parent_station", e.column_name)
-        e = self.accumulator.PopException("InvalidValue")
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("location_type", e.column_name)
         self.assertEquals(3, e.row_num)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStationUsed(self):
         self.SetArchiveContents(
@@ -72,9 +72,9 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BEATTY_AIRPORT,Airport,36.868446,-116.784582,1\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,\n")
-        schedule = self.MakeLoaderAndLoad()
-        self.accumulator.PopException("UsedStation")
-        self.accumulator.AssertNoMoreExceptions()
+        self.MakeLoaderAndLoad()
+        self.accumulator.pop_exception("UsedStation")
+        self.accumulator.assert_no_more_exceptions()
 
     def testParentNotFound(self):
         self.SetArchiveContents(
@@ -83,10 +83,10 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BEATTY_AIRPORT,Airport,36.868446,-116.784582,,STATION\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("parent_station", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testParentIsStop(self):
         self.SetArchiveContents(
@@ -95,10 +95,10 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BEATTY_AIRPORT,Airport,36.868446,-116.784582,,BULLFROG\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("parent_station", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testParentOfEntranceIsStop(self):
         self.SetArchiveContents(
@@ -107,13 +107,13 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BEATTY_AIRPORT,Airport,36.868446,-116.784582,7,BULLFROG\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("parent_station", e.column_name)
         self.assertTrue(e.format_problem().find("location_type=1") != -1)
-        e = self.accumulator.PopException("InvalidValue")
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("location_type", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStationWithParent(self):
         self.SetArchiveContents(
@@ -124,11 +124,11 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "STATION2,Airport 2,36.868000,-116.784000,1,\n"
             "BULLFROG,Bullfrog,36.868088,-116.784797,,STATION2\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("parent_station", e.column_name)
         self.assertEquals(3, e.row_num)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStationWithSelfParent(self):
         self.SetArchiveContents(
@@ -138,11 +138,11 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "STATION,Airport,36.868446,-116.784582,1,STATION\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEquals("parent_station", e.column_name)
         self.assertEquals(3, e.row_num)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStopNearToNonParentStation(self):
         self.SetArchiveContents(
@@ -152,18 +152,18 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BULLFROG,Bullfrog,36.868446,-116.784582,,\n"
             "BULLFROG_ST,Bullfrog,36.868446,-116.784582,1,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("StopsTooClose")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("StopsTooClose")
         self.assertMatchesRegex("BEATTY_AIRPORT", e.format_problem())
         self.assertMatchesRegex("BULLFROG", e.format_problem())
         self.assertMatchesRegex("are 0.00m apart", e.format_problem())
-        e = self.accumulator.PopException("DifferentStationTooClose")
+        e = self.accumulator.pop_exception("DifferentStationTooClose")
         self.assertMatchesRegex(
             "The parent_station of stop \"Airport\"", e.format_problem())
-        e = self.accumulator.PopException("DifferentStationTooClose")
+        e = self.accumulator.pop_exception("DifferentStationTooClose")
         self.assertMatchesRegex(
             "The parent_station of stop \"Bullfrog\"", e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStopTooFarFromParentStation(self):
         self.SetArchiveContents(
@@ -173,18 +173,18 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BEATTY_AIRPORT,Airport,36.880,-116.816,,BULLFROG_ST\n"  # ~ 90m far
             "BULLFROG,Bullfrog,36.881,-116.818,,BULLFROG_ST\n"  # ~ 150m far
             "STAGECOACH,Stagecoach,36.915,-116.751,,BULLFROG_ST\n")  # > 3km far
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("StopTooFarFromParentStation")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("StopTooFarFromParentStation")
         self.assertEqual(0, e.type)  # Error
         self.assertTrue(e.format_problem().find(
             "Stagecoach (ID STAGECOACH) is too far from its parent"
             " station Bullfrog (ID BULLFROG_ST)") != -1)
-        e = self.accumulator.PopException("StopTooFarFromParentStation")
+        e = self.accumulator.pop_exception("StopTooFarFromParentStation")
         self.assertEqual(1, e.type)  # Warning
         self.assertTrue(e.format_problem().find(
             "Bullfrog (ID BULLFROG) is too far from its parent"
             " station Bullfrog (ID BULLFROG_ST)") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStopTimeZone(self):
         self.SetArchiveContents(
@@ -197,11 +197,11 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
             "BULLFROG,Bullfrog,36.88108,-116.81797,,,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,,\n")
         self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("InvalidValue")
+        e = self.accumulator.pop_exception("InvalidValue")
         self.assertEqual(1, e.type)  # Warning
         self.assertEquals(2, e.row_num)
         self.assertEquals("stop_timezone", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     # Uncomment once validation is implemented
     # def testStationWithoutReference(self):
@@ -212,11 +212,11 @@ class StopHierarchyTestCase(util.MemoryZipTestCase):
     #      "STATION,Airport,36.868446,-116.784582,1,\n"
     #      "BULLFROG,Bullfrog,36.88108,-116.81797,,\n"
     #      "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-    #  schedule = self.MakeLoaderAndLoad()
-    #  e = self.accumulator.PopException("OtherProblem")
+    #  self.MakeLoaderAndLoad()
+    #  e = self.accumulator.pop_exception("OtherProblem")
     #  self.assertEquals("parent_station", e.column_name)
     #  self.assertEquals(2, e.row_num)
-    #  self.accumulator.AssertNoMoreExceptions()
+    #  self.accumulator.assert_no_more_exceptions()
 
 
 class StopSpacesTestCase(util.MemoryZipTestCase):
@@ -228,8 +228,8 @@ class StopSpacesTestCase(util.MemoryZipTestCase):
             "BEATTY_AIRPORT, ,Airport,36.868446,-116.784582, , ,\n"
             "BULLFROG,,Bullfrog,36.88108,-116.81797,,,\n"
             "STAGECOACH,,Stagecoach Hotel,36.915682,-116.751677,,,\n")
-        schedule = self.MakeLoaderAndLoad()
-        self.accumulator.AssertNoMoreExceptions()
+        self.MakeLoaderAndLoad()
+        self.accumulator.assert_no_more_exceptions()
 
     def testFieldsWithEmptyString(self):
         self.SetArchiveContents(
@@ -239,14 +239,14 @@ class StopSpacesTestCase(util.MemoryZipTestCase):
             'BULLFROG,Bullfrog,36.88108,-116.81797,,\n'
             'STAGECOACH,Stagecoach Hotel,36.915682,"",,STAGECOACH-STA\n'
             'STAGECOACH-STA,Stagecoach Hotel Station,36.915682,-116.751677,1,\n')
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException('MissingValue')
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception('MissingValue')
         self.assertEquals('stop_lat', e.column_name)
         self.assertEquals(2, e.row_num)
-        e = self.accumulator.PopException('MissingValue')
+        e = self.accumulator.pop_exception('MissingValue')
         self.assertEquals('stop_lon', e.column_name)
         self.assertEquals(4, e.row_num)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class StopBlankHeaders(util.MemoryZipTestCase):
@@ -262,11 +262,11 @@ class StopBlankHeaders(util.MemoryZipTestCase):
             elif row:
                 new.append(row + "," + str(i))  # Put a junk value in data rows
         self.SetArchiveContents("stops.txt", "\n".join(new))
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("CsvSyntax")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("CsvSyntax")
         self.assertTrue(e.format_problem().
                         find("header row should not contain any blank") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testBlankHeaderValueAtStart(self):
         # Modify the stops.txt added by MemoryZipTestCase.setUp. This allows the
@@ -280,11 +280,11 @@ class StopBlankHeaders(util.MemoryZipTestCase):
             elif row:
                 new.append(str(i) + "," + row)  # Put a junk value in data rows
         self.SetArchiveContents("stops.txt", "\n".join(new))
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("CsvSyntax")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("CsvSyntax")
         self.assertTrue(e.format_problem().
                         find("header row should not contain any blank") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testBlankHeaderValueInMiddle(self):
         # Modify the stops.txt added by MemoryZipTestCase.setUp. This allows the
@@ -300,13 +300,13 @@ class StopBlankHeaders(util.MemoryZipTestCase):
                 # Put a junk value in data rows
                 new.append(str(i) + "," + str(i) + "," + row)
         self.SetArchiveContents("stops.txt", "\n".join(new))
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException("CsvSyntax")
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception("CsvSyntax")
         self.assertTrue(e.format_problem().
                         find("header row should not contain any blank") != -1)
-        e = self.accumulator.PopException("UnrecognizedColumn")
+        e = self.accumulator.pop_exception("UnrecognizedColumn")
         self.assertEquals("test_name", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class BadLatLonInStopUnitTest(util.ValidationTestCase):
@@ -332,14 +332,14 @@ class BadLatLonInFileUnitTest(util.MemoryZipTestCase):
             "BEATTY_AIRPORT,Airport,0x20,140.00\n"
             "BULLFROG,Bullfrog,48.20001,140.0123\n"
             "STAGECOACH,Stagecoach Hotel,48.002,bogus\n")
-        schedule = self.MakeLoaderAndLoad()
-        e = self.accumulator.PopException('InvalidValue')
+        self.MakeLoaderAndLoad()
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertEquals(2, e.row_num)
         self.assertEquals("stop_lat", e.column_name)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertEquals(4, e.row_num)
         self.assertEquals("stop_lon", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class StopValidationTestCase(util.ValidationTestCase):
@@ -365,7 +365,7 @@ class StopValidationTestCase(util.ValidationTestCase):
         # empty strings or whitespaces should get reported as MissingValue
         stop.stop_lat = '50.0'
         stop.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         stop.stop_lat = '10f'
         self.ValidateAndExpectInvalidValue(stop, 'stop_lat')
         stop.stop_lat = 'None'
@@ -385,7 +385,7 @@ class StopValidationTestCase(util.ValidationTestCase):
         # empty strings or whitespaces should get reported as MissingValue
         stop.stop_lon = '50.0'
         stop.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         stop.stop_lon = '10f'
         self.ValidateAndExpectInvalidValue(stop, 'stop_lon')
         stop.stop_lon = 'None'
@@ -422,13 +422,13 @@ class StopValidationTestCase(util.ValidationTestCase):
         stop.stop_desc = 'Couch AT End Table'
         self.ValidateAndExpectInvalidValue(stop, 'stop_desc')
         stop.stop_desc = 'Edge of the Couch'
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         stop.stop_timezone = 'This_Timezone/Does_Not_Exist'
         self.ValidateAndExpectInvalidValue(stop, 'stop_timezone')
         stop.stop_timezone = 'America/Los_Angeles'
         stop.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # invalid wheelchair_boarding
         stop.wheelchair_boarding = '3'
@@ -441,9 +441,9 @@ class StopAttributes(util.ValidationTestCase):
         stop = transitfeed.Stop()
         stop.validate(self.problems)
         for name in "stop_id stop_name stop_lat stop_lon".split():
-            e = self.accumulator.PopException('MissingValue')
+            e = self.accumulator.pop_exception('MissingValue')
             self.assertEquals(name, e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         stop = transitfeed.Stop()
         # Test behaviour for unset and unknown attribute
@@ -451,13 +451,13 @@ class StopAttributes(util.ValidationTestCase):
         try:
             t = stop.new_column
             self.fail('Expecting AttributeError')
-        except AttributeError as e:
+        except AttributeError:
             pass  # Expected
         stop.stop_id = 'a'
         stop.stop_name = 'my stop'
         stop.new_column = 'val'
         stop.stop_lat = 5.909
-        stop.stop_lon = '40.02'
+        stop.stop_lon = 40.02
         self.assertEquals(stop.new_column, 'val')
         self.assertEquals(stop['new_column'], 'val')
         self.assertTrue(isinstance(stop['stop_lat'], str))
@@ -465,7 +465,7 @@ class StopAttributes(util.ValidationTestCase):
         self.assertTrue(isinstance(stop['stop_lon'], str))
         self.assertAlmostEqual(float(stop['stop_lon']), 40.02)
         stop.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         # After validation stop.stop_lon has been converted to a float
         self.assertAlmostEqual(stop.stop_lat, 5.909)
         self.assertAlmostEqual(stop.stop_lon, 40.02)
@@ -495,14 +495,14 @@ class StopAttributes(util.ValidationTestCase):
         schedule.add_stop_object(stop)
         stop.validate(self.problems)
         for name in "stop_name stop_lat stop_lon".split():
-            e = self.accumulator.PopException("MissingValue")
+            e = self.accumulator.pop_exception("MissingValue")
             self.assertEquals(name, e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         stop.new_column = "val"
         self.assertTrue("new_column" in schedule.get_table_columns("stops"))
 
         # Adding a duplicate stop_id fails
         schedule.add_stop_object(transitfeed.Stop(field_dict={"stop_id": "b"}))
-        self.accumulator.PopException("DuplicateID")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_exception("DuplicateID")
+        self.accumulator.assert_no_more_exceptions()

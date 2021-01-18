@@ -26,20 +26,24 @@ class UnrecognizedColumnRecorder(transitfeed.ProblemReporter):
     """Keeps track of unrecognized column errors."""
 
     def __init__(self, test_case):
-        self.accumulator = util.RecordingProblemAccumulator(test_case,
-                                                            ignore_types=("ExpirationDate",))
+        super().__init__(accumulator=None)
+        self.accumulator = util.RecordingProblemAccumulator(
+            test_case, ignore_types=("ExpirationDate",)
+        )
         self.column_errors = []
 
-    def unrecognized_column(self, file_name, column_name, context=None):
+    def unrecognized_column(self, file_name, column_name, context=None, problem_type=transitfeed.TYPE_WARNING):
         self.column_errors.append((file_name, column_name))
 
 
 # ensure that there are no exceptions when attempting to load
 # (so that the validator won't crash)
 class NoExceptionTestCase(util.RedirectStdOutTestCaseBase):
-    def runTest(self):
-        for feed in util.GetDataPathContents():
-            loader = transitfeed.Loader(util.DataPath(feed),
+
+    @staticmethod
+    def runTest():
+        for feed in util.get_data_path_contents():
+            loader = transitfeed.Loader(util.data_path(feed),
                                         loader_problems=transitfeed.ProblemReporter(),
                                         extra_validation=True)
             schedule = loader.load()
@@ -48,8 +52,7 @@ class NoExceptionTestCase(util.RedirectStdOutTestCaseBase):
 
 class EndOfLineCheckerTestCase(util.TestCase):
     def setUp(self):
-        self.accumulator = util.RecordingProblemAccumulator(
-            self, ("ExpirationDate"))
+        self.accumulator = util.RecordingProblemAccumulator(self, "ExpirationDate")
         self.problems = transitfeed.ProblemReporter(self.accumulator)
 
     def RunEndOfLineChecker(self, end_of_line_checker):
@@ -64,129 +67,131 @@ class EndOfLineCheckerTestCase(util.TestCase):
                                          "<StringIO>",
                                          self.problems)
         self.RunEndOfLineChecker(f)
-        e = self.accumulator.PopException("InvalidLineEnd")
+        e = self.accumulator.pop_exception("InvalidLineEnd")
         self.assertEqual(e.file_name, "<StringIO>")
         self.assertEqual(e.row_num, 1)
         self.assertEqual(e.bad_line_end, r"\r\r\n")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testInvalidLineEndToo(self):
         f = transitfeed.EndOfLineChecker(
             StringIO("line1\nline2\r\nline3\r\r\r\n"),
             "<StringIO>", self.problems)
         self.RunEndOfLineChecker(f)
-        e = self.accumulator.PopException("InvalidLineEnd")
+        e = self.accumulator.pop_exception("InvalidLineEnd")
         self.assertEqual(e.file_name, "<StringIO>")
         self.assertEqual(e.row_num, 3)
         self.assertEqual(e.bad_line_end, r"\r\r\r\n")
-        e = self.accumulator.PopException("OtherProblem")
+        e = self.accumulator.pop_exception("OtherProblem")
         self.assertEqual(e.file_name, "<StringIO>")
         self.assertTrue(e.description.find("consistent line end") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testEmbeddedCr(self):
         f = transitfeed.EndOfLineChecker(
             StringIO("line1\rline1b"),
             "<StringIO>", self.problems)
         self.RunEndOfLineChecker(f)
-        e = self.accumulator.PopException("OtherProblem")
+        e = self.accumulator.pop_exception("OtherProblem")
         self.assertEqual(e.file_name, "<StringIO>")
         self.assertEqual(e.row_num, 1)
         self.assertEqual(e.format_problem(),
                          "Line contains ASCII Carriage Return 0x0D, \\r")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testEmbeddedUtf8NextLine(self):
         f = transitfeed.EndOfLineChecker(
             StringIO("line1b\xc2\x85"),
             "<StringIO>", self.problems)
         self.RunEndOfLineChecker(f)
-        e = self.accumulator.PopException("OtherProblem")
+        e = self.accumulator.pop_exception("OtherProblem")
         self.assertEqual(e.file_name, "<StringIO>")
         self.assertEqual(e.row_num, 1)
         self.assertEqual(e.format_problem(),
                          "Line contains Unicode NEXT LINE SEPARATOR U+0085")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testEndOfLineMix(self):
         f = transitfeed.EndOfLineChecker(
             StringIO("line1\nline2\r\nline3\nline4"),
             "<StringIO>", self.problems)
         self.RunEndOfLineChecker(f)
-        e = self.accumulator.PopException("OtherProblem")
+        e = self.accumulator.pop_exception("OtherProblem")
         self.assertEqual(e.file_name, "<StringIO>")
         self.assertEqual(e.format_problem(),
                          "Found 1 CR LF \"\\r\\n\" line end (line 2) and "
                          "2 LF \"\\n\" line ends (lines 1, 3). A file must use a "
                          "consistent line end.")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testEndOfLineManyMix(self):
         f = transitfeed.EndOfLineChecker(
             StringIO("1\n2\n3\n4\n5\n6\n7\r\n8\r\n9\r\n10\r\n11\r\n"),
             "<StringIO>", self.problems)
         self.RunEndOfLineChecker(f)
-        e = self.accumulator.PopException("OtherProblem")
+        e = self.accumulator.pop_exception("OtherProblem")
         self.assertEqual(e.file_name, "<StringIO>")
         self.assertEqual(e.format_problem(),
                          "Found 5 CR LF \"\\r\\n\" line ends (lines 7, 8, 9, 10, "
                          "11) and 6 LF \"\\n\" line ends (lines 1, 2, 3, 4, 5, "
                          "...). A file must use a consistent line end.")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testLoad(self):
         loader = transitfeed.Loader(
-            util.DataPath("bad_eol.zip"),
+            util.data_path("bad_eol.zip"),
             loader_problems=self.problems,
             extra_validation=True)
         loader.load()
 
-        e = self.accumulator.PopException("OtherProblem")
+        e = self.accumulator.pop_exception("OtherProblem")
         self.assertEqual(e.file_name, "calendar.txt")
         self.assertTrue(re.search(
             r"Found 1 CR LF.* \(line 2\) and 2 LF .*\(lines 1, 3\)",
             e.format_problem()))
 
-        e = self.accumulator.PopException("InvalidLineEnd")
+        e = self.accumulator.pop_exception("InvalidLineEnd")
         self.assertEqual(e.file_name, "routes.txt")
         self.assertEqual(e.row_num, 5)
         self.assertTrue(e.format_problem().find(r"\r\r\n") != -1)
 
-        e = self.accumulator.PopException("OtherProblem")
+        e = self.accumulator.pop_exception("OtherProblem")
         self.assertEqual(e.file_name, "trips.txt")
         self.assertEqual(e.row_num, 1)
         self.assertTrue(re.search(
             r"contains ASCII Form Feed",
             e.format_problem()))
         # TODO(Tom): avoid this duplicate error for the same issue
-        e = self.accumulator.PopException("CsvSyntax")
+        e = self.accumulator.pop_exception("CsvSyntax")
         self.assertEqual(e.row_num, 1)
         self.assertTrue(re.search(
             r"header row should not contain any space char",
             e.format_problem()))
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class LoadFromZipTestCase(util.TestCase):
     def runTest(self):
         loader = transitfeed.Loader(
-            util.DataPath('good_feed.zip'),
-            loader_problems=util.GetTestFailureProblemReporter(self),
+            util.data_path('good_feed.zip'),
+            loader_problems=util.get_test_failure_problem_reporter(self),
             extra_validation=True)
         loader.load()
 
         # now try using Schedule.Load
         schedule = transitfeed.Schedule(
             problem_reporter=util.ExceptionProblemReporterNoExpiration())
-        schedule.load(util.DataPath('good_feed.zip'), extra_validation=True)
+        schedule.load(util.data_path('good_feed.zip'), extra_validation=True)
 
 
 class LoadAndRewriteFromZipTestCase(util.TestCase):
-    def runTest(self):
+
+    @staticmethod
+    def runTest():
         schedule = transitfeed.Schedule(
             problem_reporter=util.ExceptionProblemReporterNoExpiration())
-        schedule.load(util.DataPath('good_feed.zip'), extra_validation=True)
+        schedule.load(util.data_path('good_feed.zip'), extra_validation=True)
 
         # Finally see if write crashes
         schedule.write_google_transit_feed(tempfile.TemporaryFile())
@@ -195,7 +200,7 @@ class LoadAndRewriteFromZipTestCase(util.TestCase):
 class BasicMemoryZipTestCase(util.MemoryZipTestCase):
     def runTest(self):
         self.MakeLoaderAndLoad()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class ZipCompressionTestCase(util.MemoryZipTestCase):
@@ -204,15 +209,15 @@ class ZipCompressionTestCase(util.MemoryZipTestCase):
         self.zip.close()
         write_output = StringIO()
         schedule.write_google_transit_feed(write_output)
-        recompressedzip = zlib.compress(write_output.getvalue())
+        recompressed_zip = zlib.compress(write_output.getvalue().encode())
         write_size = len(write_output.getvalue())
-        recompressedzip_size = len(recompressedzip)
+        recompressed_zip_size = len(recompressed_zip)
         # If zlib can compress write_output it probably wasn't compressed
         self.assertFalse(
-            recompressedzip_size < write_size * 0.60,
+            recompressed_zip_size < write_size * 0.60,
             "Are you sure WriteGoogleTransitFeed wrote a compressed zip? "
             "Orginial size: %d  recompressed: %d" %
-            (write_size, recompressedzip_size))
+            (write_size, recompressed_zip_size))
 
 
 class LoadUnknownFileInZipTestCase(util.MemoryZipTestCase):
@@ -224,21 +229,21 @@ class LoadUnknownFileInZipTestCase(util.MemoryZipTestCase):
             "STATION,Airport,36.868446,-116.784582,1,\n"
             "BULLFROG,Bullfrog,36.88108,-116.81797,,\n"
             "STAGECOACH,Stagecoach Hotel,36.915682,-116.751677,,\n")
-        schedule = self.MakeLoaderAndLoad()
+        self.MakeLoaderAndLoad()
         e = self.accumulator.PopException('UnknownFile')
         self.assertEquals('stpos.txt', e.file_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TabDelimitedTestCase(util.MemoryZipTestCase):
     def runTest(self):
         # Create an extremely corrupt file by replacing each comma with a tab,
         # ignoring csv quoting.
-        for arcname in self.GetArchiveNames():
-            contents = self.GetArchiveContents(arcname)
-            self.SetArchiveContents(arcname, contents.replace(",", "\t"))
-        schedule = self.MakeLoaderAndLoad()
-        # Don't call self.accumulator.AssertNoMoreExceptions() because there are
+        for arc_name in self.GetArchiveNames():
+            contents = self.GetArchiveContents(arc_name)
+            self.SetArchiveContents(arc_name, contents.replace(",", "\t"))
+        self.MakeLoaderAndLoad()
+        # Don't call self.accumulator.assert_no_more_exceptions() because there are
         # lots of problems but I only care that the validator doesn't crash. In the
         # magical future the validator will stop when the csv is obviously hosed.
 
@@ -246,15 +251,15 @@ class TabDelimitedTestCase(util.MemoryZipTestCase):
 class LoadFromDirectoryTestCase(util.TestCase):
     def runTest(self):
         loader = transitfeed.Loader(
-            util.DataPath('good_feed'),
-            loader_problems=util.GetTestFailureProblemReporter(self),
+            util.data_path('good_feed'),
+            loader_problems=util.get_test_failure_problem_reporter(self),
             extra_validation=True)
         loader.load()
 
 
 class LoadUnknownFeedTestCase(util.TestCase):
     def runTest(self):
-        feed_name = util.DataPath('unknown_feed')
+        feed_name = util.data_path('unknown_feed')
         loader = transitfeed.Loader(
             feed_name,
             loader_problems=util.ExceptionProblemReporterNoExpiration(),
@@ -268,7 +273,7 @@ class LoadUnknownFeedTestCase(util.TestCase):
 
 class LoadUnknownFormatTestCase(util.TestCase):
     def runTest(self):
-        feed_name = util.DataPath('unknown_format.zip')
+        feed_name = util.data_path('unknown_format.zip')
         loader = transitfeed.Loader(
             feed_name,
             loader_problems=util.ExceptionProblemReporterNoExpiration(),
@@ -283,30 +288,22 @@ class LoadUnknownFormatTestCase(util.TestCase):
 class LoadUnrecognizedColumnsTestCase(util.TestCase):
     def runTest(self):
         problems = UnrecognizedColumnRecorder(self)
-        loader = transitfeed.Loader(util.DataPath('unrecognized_columns'),
+        loader = transitfeed.Loader(util.data_path('unrecognized_columns'),
                                     loader_problems=problems)
         loader.load()
         found_errors = set(problems.column_errors)
-        expected_errors = set([
-            ('agency.txt', 'agency_lange'),
-            ('stops.txt', 'stop_uri'),
-            ('routes.txt', 'Route_Text_Color'),
-            ('calendar.txt', 'leap_day'),
-            ('calendar_dates.txt', 'leap_day'),
-            ('trips.txt', 'sharpe_id'),
-            ('stop_times.txt', 'shapedisttraveled'),
-            ('stop_times.txt', 'drop_off_time'),
-            ('fare_attributes.txt', 'transfer_time'),
-            ('fare_rules.txt', 'source_id'),
-            ('frequencies.txt', 'superfluous'),
-            ('transfers.txt', 'to_stop')
-        ])
+        expected_errors = {('agency.txt', 'agency_lange'), ('stops.txt', 'stop_uri'),
+                           ('routes.txt', 'Route_Text_Color'), ('calendar.txt', 'leap_day'),
+                           ('calendar_dates.txt', 'leap_day'), ('trips.txt', 'sharpe_id'),
+                           ('stop_times.txt', 'shapedisttraveled'), ('stop_times.txt', 'drop_off_time'),
+                           ('fare_attributes.txt', 'transfer_time'), ('fare_rules.txt', 'source_id'),
+                           ('frequencies.txt', 'superfluous'), ('transfers.txt', 'to_stop')}
 
         # Now make sure we got the unrecognized column errors that we expected.
         not_expected = found_errors.difference(expected_errors)
-        self.failIf(not_expected, 'unexpected errors: %s' % str(not_expected))
+        self.failIf(bool(not_expected), 'unexpected errors: %s' % str(not_expected))
         not_found = expected_errors.difference(found_errors)
-        self.failIf(not_found, 'expected but not found: %s' % str(not_found))
+        self.failIf(bool(not_found), 'expected but not found: %s' % str(not_found))
 
 
 class LoadExtraCellValidationTestCase(util.LoadTestCase):
@@ -317,7 +314,7 @@ class LoadExtraCellValidationTestCase(util.LoadTestCase):
         e = self.accumulator.PopException("OtherProblem")
         self.assertEquals("routes.txt", e.file_name)
         self.assertEquals(4, e.row_num)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class LoadMissingCellValidationTestCase(util.LoadTestCase):
@@ -328,16 +325,15 @@ class LoadMissingCellValidationTestCase(util.LoadTestCase):
         e = self.accumulator.PopException("OtherProblem")
         self.assertEquals("routes.txt", e.file_name)
         self.assertEquals(4, e.row_num)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class LoadUnknownFileTestCase(util.TestCase):
     """Check that the validation detects unknown files."""
 
     def runTest(self):
-        feed_name = util.DataPath('unknown_file')
-        self.accumulator = util.RecordingProblemAccumulator(
-            self, ("ExpirationDate"))
+        feed_name = util.data_path('unknown_file')
+        self.accumulator = util.RecordingProblemAccumulator(self, "ExpirationDate")
         self.problems = transitfeed.ProblemReporter(self.accumulator)
         loader = transitfeed.Loader(
             feed_name,
@@ -346,7 +342,7 @@ class LoadUnknownFileTestCase(util.TestCase):
         loader.load()
         e = self.accumulator.PopException('UnknownFile')
         self.assertEqual('frecuencias.txt', e.file_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class LoadMissingAgencyTestCase(util.LoadTestCase):
@@ -382,7 +378,7 @@ class LoadMissingCalendarTestCase(util.LoadTestCase):
 class EmptyFileTestCase(util.TestCase):
     def runTest(self):
         loader = transitfeed.Loader(
-            util.DataPath('empty_file'),
+            util.data_path('empty_file'),
             loader_problems=util.ExceptionProblemReporterNoExpiration(),
             extra_validation=True
         )
@@ -396,7 +392,7 @@ class EmptyFileTestCase(util.TestCase):
 class MissingColumnTestCase(util.TestCase):
     def runTest(self):
         loader = transitfeed.Loader(
-            util.DataPath('missing_column'),
+            util.data_path('missing_column'),
             loader_problems=util.ExceptionProblemReporterNoExpiration(),
             extra_validation=True)
         try:
@@ -410,8 +406,8 @@ class MissingColumnTestCase(util.TestCase):
 class LoadUTF8BOMTestCase(util.TestCase):
     def runTest(self):
         loader = transitfeed.Loader(
-            util.DataPath('utf8bom'),
-            loader_problems=util.GetTestFailureProblemReporter(self),
+            util.data_path('utf8bom'),
+            loader_problems=util.get_test_failure_problem_reporter(self),
             extra_validation=True)
         loader.load()
 
@@ -422,7 +418,7 @@ class LoadUTF16TestCase(util.TestCase):
         accumulator = transitfeed.ExceptionProblemAccumulator()
         problem_reporter = transitfeed.ProblemReporter(accumulator)
         loader = transitfeed.Loader(
-            util.DataPath('utf16'),
+            util.data_path('utf16'),
             loader_problems=problem_reporter,
             extra_validation=True)
         try:
@@ -439,13 +435,13 @@ class BadUtf8TestCase(util.LoadTestCase):
     def runTest(self):
         self.load('bad_utf8')
         self.accumulator.PopException("UnrecognizedColumn")
-        self.accumulator.PopInvalidValue("agency_name", "agency.txt")
-        self.accumulator.PopInvalidValue("route_long_name", "routes.txt")
-        self.accumulator.PopInvalidValue("route_short_name", "routes.txt")
-        self.accumulator.PopInvalidValue("stop_headsign", "stop_times.txt")
-        self.accumulator.PopInvalidValue("stop_name", "stops.txt")
-        self.accumulator.PopInvalidValue("trip_headsign", "trips.txt")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("agency_name", "agency.txt")
+        self.accumulator.pop_invalid_value("route_long_name", "routes.txt")
+        self.accumulator.pop_invalid_value("route_short_name", "routes.txt")
+        self.accumulator.pop_invalid_value("stop_headsign", "stop_times.txt")
+        self.accumulator.pop_invalid_value("stop_name", "stops.txt")
+        self.accumulator.pop_invalid_value("trip_headsign", "trips.txt")
+        self.accumulator.assert_no_more_exceptions()
 
 
 class LoadNullTestCase(util.TestCase):
@@ -453,7 +449,7 @@ class LoadNullTestCase(util.TestCase):
         accumulator = transitfeed.ExceptionProblemAccumulator()
         problem_reporter = transitfeed.ProblemReporter(accumulator)
         loader = transitfeed.Loader(
-            util.DataPath('contains_null'),
+            util.data_path('contains_null'),
             loader_problems=problem_reporter,
             extra_validation=True)
         try:
@@ -475,82 +471,82 @@ class CsvDictTestCase(util.TestCase):
             zip_content=self.zip)
 
     def tearDown(self):
-        self.accumulator.TearDownAssertNoMoreExceptions()
+        self.accumulator.tear_down_assert_no_more_exceptions()
 
     def testEmptyFile(self):
         self.zip.writestr("test.txt", "")
         results = list(self.loader._read_csv_dict("test.txt", [], [], []))
         self.assertEquals([], results)
         self.accumulator.PopException("EmptyFile")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderOnly(self):
         self.zip.writestr("test.txt", "test_id,test_name")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderAndNewLineOnly(self):
         self.zip.writestr("test.txt", "test_id,test_name\n")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderWithSpaceBefore(self):
         self.zip.writestr("test.txt", " test_id, test_name\n")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderWithSpaceBeforeAfter(self):
         self.zip.writestr("test.txt", "test_id , test_name\n")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        e = self.accumulator.PopException("CsvSyntax")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.PopException("CsvSyntax")
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderQuoted(self):
         self.zip.writestr("test.txt", "\"test_id\", \"test_name\"\n")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderSpaceAfterQuoted(self):
         self.zip.writestr("test.txt", "\"test_id\" , \"test_name\"\n")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        e = self.accumulator.PopException("CsvSyntax")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.PopException("CsvSyntax")
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderSpaceInQuotesAfterValue(self):
         self.zip.writestr("test.txt", "\"test_id \",\"test_name\"\n")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        e = self.accumulator.PopException("CsvSyntax")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.PopException("CsvSyntax")
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderSpaceInQuotesBeforeValue(self):
         self.zip.writestr("test.txt", "\"test_id\",\" test_name\"\n")
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        e = self.accumulator.PopException("CsvSyntax")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.PopException("CsvSyntax")
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderEmptyColumnName(self):
         self.zip.writestr("test.txt", 'test_id,test_name,\n')
         results = list(self.loader._read_csv_dict("test.txt",
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([], results)
-        e = self.accumulator.PopException("CsvSyntax")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.PopException("CsvSyntax")
+        self.accumulator.assert_no_more_exceptions()
 
     def testHeaderAllUnknownColumnNames(self):
         self.zip.writestr("test.txt", 'id,nam\n')
@@ -559,7 +555,7 @@ class CsvDictTestCase(util.TestCase):
         self.assertEquals([], results)
         e = self.accumulator.PopException("CsvSyntax")
         self.assertTrue(e.format_problem().find("missing the header") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testFieldWithSpaces(self):
         self.zip.writestr("test.txt",
@@ -570,7 +566,7 @@ class CsvDictTestCase(util.TestCase):
         self.assertEquals([({"test_id": "id1", "test_name": "my name"}, 2,
                             ["test_id", "test_name"], ["id1", "my name"])],
                           results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testFieldWithOnlySpaces(self):
         self.zip.writestr("test.txt",
@@ -580,7 +576,7 @@ class CsvDictTestCase(util.TestCase):
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([({"test_id": "id1", "test_name": ""}, 2,
                             ["test_id", "test_name"], ["id1", ""])], results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testQuotedFieldWithSpaces(self):
         self.zip.writestr("test.txt",
@@ -593,7 +589,7 @@ class CsvDictTestCase(util.TestCase):
             [({"test_id": "id1", "test_name": "my name", "test_size": "234"}, 2,
               ["test_id", "test_name", "test_size"], ["id1", "my name", "234"])],
             results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testQuotedFieldWithCommas(self):
         self.zip.writestr("test.txt",
@@ -605,7 +601,7 @@ class CsvDictTestCase(util.TestCase):
             [({"id": "1", "name1": "brown, tom", "name2": "brown, \"tom\""}, 2,
               ["id", "name1", "name2"], ["1", "brown, tom", "brown, \"tom\""])],
             results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testUnknownColumn(self):
         # A small typo (omitting '_' in a header name) is detected
@@ -615,7 +611,7 @@ class CsvDictTestCase(util.TestCase):
         self.assertEquals([], results)
         e = self.accumulator.PopException("UnrecognizedColumn")
         self.assertEquals("testname", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDeprecatedColumn(self):
         self.zip.writestr("test.txt", "test_id,test_old\n")
@@ -627,7 +623,7 @@ class CsvDictTestCase(util.TestCase):
         e = self.accumulator.PopException("DeprecatedColumn")
         self.assertEquals("test_old", e.column_name)
         self.assertTrue("test_new" in e.reason)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDeprecatedColumnWithoutNewColumn(self):
         self.zip.writestr("test.txt", "test_id,test_old\n")
@@ -639,7 +635,7 @@ class CsvDictTestCase(util.TestCase):
         e = self.accumulator.PopException("DeprecatedColumn")
         self.assertEquals("test_old", e.column_name)
         self.assertTrue(not e.reason or "use the new column" not in e.reason)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDeprecatedValuesBeingRead(self):
         self.zip.writestr("test.txt",
@@ -655,7 +651,7 @@ class CsvDictTestCase(util.TestCase):
         self.assertEquals('old_value2', results[1][0]['test_old'])
         e = self.accumulator.PopException("DeprecatedColumn")
         self.assertEquals('test_old', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testMissingRequiredColumn(self):
         self.zip.writestr("test.txt", "test_id,test_size\n")
@@ -665,7 +661,7 @@ class CsvDictTestCase(util.TestCase):
         self.assertEquals([], results)
         e = self.accumulator.PopException("MissingColumn")
         self.assertEquals("test_name", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testRequiredNotInAllCols(self):
         self.zip.writestr("test.txt", "test_id,test_name,test_size\n")
@@ -675,7 +671,7 @@ class CsvDictTestCase(util.TestCase):
         self.assertEquals([], results)
         e = self.accumulator.PopException("UnrecognizedColumn")
         self.assertEquals("test_name", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testBlankLine(self):
         # line_num is increased for an empty line
@@ -687,7 +683,7 @@ class CsvDictTestCase(util.TestCase):
                                                   ["test_id", "test_name"], [], []))
         self.assertEquals([({"test_id": "id1", "test_name": "my name"}, 3,
                             ["test_id", "test_name"], ["id1", "my name"])], results)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testExtraComma(self):
         self.zip.writestr("test.txt",
@@ -700,7 +696,7 @@ class CsvDictTestCase(util.TestCase):
                           results)
         e = self.accumulator.PopException("OtherProblem")
         self.assertTrue(e.format_problem().find("too many cells") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testMissingComma(self):
         self.zip.writestr("test.txt",
@@ -712,7 +708,7 @@ class CsvDictTestCase(util.TestCase):
                             ["test_id", "test_name"], ["id1 my name"])], results)
         e = self.accumulator.PopException("OtherProblem")
         self.assertTrue(e.format_problem().find("missing cells") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDetectsDuplicateHeaders(self):
         self.zip.writestr(
@@ -728,12 +724,12 @@ class CsvDictTestCase(util.TestCase):
                                         transitfeed.Transfer.REQUIRED_FIELD_NAMES,
                                         transitfeed.Transfer.DEPRECATED_FIELD_NAMES))
 
-        self.accumulator.PopDuplicateColumn("transfers.txt", "from_stop_id", 2)
-        self.accumulator.PopDuplicateColumn("transfers.txt", "min_transfer_time", 4)
-        self.accumulator.PopDuplicateColumn("transfers.txt", "unknown", 2)
+        self.accumulator.pop_duplicate_column("transfers.txt", "from_stop_id", 2)
+        self.accumulator.pop_duplicate_column("transfers.txt", "min_transfer_time", 4)
+        self.accumulator.pop_duplicate_column("transfers.txt", "unknown", 2)
         e = self.accumulator.PopException("UnrecognizedColumn")
         self.assertEquals("unknown", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class ReadCsvTestCase(util.TestCase):
@@ -746,7 +742,7 @@ class ReadCsvTestCase(util.TestCase):
             zip_content=self.zip)
 
     def tearDown(self):
-        self.accumulator.TearDownAssertNoMoreExceptions()
+        self.accumulator.tear_down_assert_no_more_exceptions()
 
     def testDetectsDuplicateHeaders(self):
         self.zip.writestr(
@@ -761,12 +757,12 @@ class ReadCsvTestCase(util.TestCase):
                                    transitfeed.ServicePeriod.DEPRECATED_FIELD_NAMES
                                    ))
 
-        self.accumulator.PopDuplicateColumn("calendar.txt", "end_date", 3)
-        self.accumulator.PopDuplicateColumn("calendar.txt", "tuesday", 2)
-        self.accumulator.PopDuplicateColumn("calendar.txt", "unknown", 2)
+        self.accumulator.pop_duplicate_column("calendar.txt", "end_date", 3)
+        self.accumulator.pop_duplicate_column("calendar.txt", "tuesday", 2)
+        self.accumulator.pop_duplicate_column("calendar.txt", "unknown", 2)
         e = self.accumulator.PopException("UnrecognizedColumn")
         self.assertEquals("unknown", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDeprecatedColumn(self):
         self.zip.writestr("test.txt", "test_id,test_old\n")
@@ -778,7 +774,7 @@ class ReadCsvTestCase(util.TestCase):
         e = self.accumulator.PopException("DeprecatedColumn")
         self.assertEquals("test_old", e.column_name)
         self.assertTrue("test_new" in e.reason)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDeprecatedColumnWithoutNewColumn(self):
         self.zip.writestr("test.txt", "test_id,test_old\n")
@@ -790,7 +786,7 @@ class ReadCsvTestCase(util.TestCase):
         e = self.accumulator.PopException("DeprecatedColumn")
         self.assertEquals("test_old", e.column_name)
         self.assertTrue(not e.reason or "use the new column" not in e.reason)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class BasicParsingTestCase(util.TestCase):
@@ -813,8 +809,8 @@ class BasicParsingTestCase(util.TestCase):
 
     def test_MemoryDb(self):
         loader = transitfeed.Loader(
-            util.DataPath('good_feed.zip'),
-            loader_problems=util.GetTestFailureProblemReporter(self),
+            util.data_path('good_feed.zip'),
+            loader_problems=util.get_test_failure_problem_reporter(self),
             extra_validation=True,
             memory_db=True)
         schedule = loader.load()
@@ -823,8 +819,8 @@ class BasicParsingTestCase(util.TestCase):
 
     def test_TemporaryFile(self):
         loader = transitfeed.Loader(
-            util.DataPath('good_feed.zip'),
-            loader_problems=util.GetTestFailureProblemReporter(self),
+            util.data_path('good_feed.zip'),
+            loader_problems=util.get_test_failure_problem_reporter(self),
             extra_validation=True,
             memory_db=False)
         schedule = loader.load()
@@ -832,10 +828,10 @@ class BasicParsingTestCase(util.TestCase):
         self.assertLoadedStopTimesCorrectly(schedule)
 
     def test_NoLoadStopTimes(self):
-        problems = util.GetTestFailureProblemReporter(
+        problems = util.get_test_failure_problem_reporter(
             self, ignore_types=("ExpirationDate", "UnusedStop", "OtherProblem"))
         loader = transitfeed.Loader(
-            util.DataPath('good_feed.zip'),
+            util.data_path('good_feed.zip'),
             loader_problems=problems,
             extra_validation=True,
             load_stop_times=False)

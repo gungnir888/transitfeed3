@@ -24,12 +24,12 @@ class DuplicateStopSequenceTestCase(util.TestCase):
             self, ("ExpirationDate", "NoServiceExceptions"))
         problems = transitfeed.ProblemReporter(accumulator)
         schedule = transitfeed.Schedule(problem_reporter=problems)
-        schedule.load(util.DataPath('duplicate_stop_sequence'),
+        schedule.load(util.data_path('duplicate_stop_sequence'),
                       extra_validation=True)
-        e = accumulator.PopException('InvalidValue')
+        e = accumulator.pop_exception('InvalidValue')
         self.assertEqual('stop_sequence', e.column_name)
         self.assertEqual(10, e.value)
-        accumulator.AssertNoMoreExceptions()
+        accumulator.assert_no_more_exceptions()
 
 
 class MissingEndpointTimesTestCase(util.TestCase):
@@ -38,18 +38,18 @@ class MissingEndpointTimesTestCase(util.TestCase):
             self, ('ExpirationDate', 'NoServiceExceptions'))
         problems = transitfeed.ProblemReporter(accumulator)
         schedule = transitfeed.Schedule(problem_reporter=problems)
-        schedule.load(util.DataPath('missing_endpoint_times'),
+        schedule.load(util.data_path('missing_endpoint_times'),
                       extra_validation=True)
-        e = accumulator.PopInvalidValue('arrival_time')
+        e = accumulator.pop_invalid_value('arrival_time')
         self.assertEqual('', e.value)
-        e = accumulator.PopInvalidValue('departure_time')
+        e = accumulator.pop_invalid_value('departure_time')
         self.assertEqual('', e.value)
 
 
 class TripMemoryZipTestCase(util.MemoryZipTestCase):
     def assertLoadAndCheckExtraValues(self, schedule_file):
         """Load file-like schedule_file and check for extra trip columns."""
-        load_problems = util.GetTestFailureProblemReporter(
+        load_problems = util.get_test_failure_problem_reporter(
             self, ("ExpirationDate", "UnrecognizedColumn"))
         loaded_schedule = transitfeed.Loader(schedule_file,
                                              loader_problems=load_problems,
@@ -78,7 +78,7 @@ class TripMemoryZipTestCase(util.MemoryZipTestCase):
         trip2.add_stop_time(stop=schedule.get_stop("STAGECOACH"), stop_time="09:30:00")
         saved_schedule_file = StringIO()
         schedule.write_google_transit_feed(saved_schedule_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         self.assertLoadAndCheckExtraValues(saved_schedule_file)
 
@@ -95,7 +95,7 @@ class TripMemoryZipTestCase(util.MemoryZipTestCase):
             "stop_times.txt",
             "AB2,09:00:00,09:00:00,BULLFROG,1\n"
             "AB2,09:30:00,09:30:00,STAGECOACH,2\n")
-        load1_problems = util.GetTestFailureProblemReporter(
+        load1_problems = util.get_test_failure_problem_reporter(
             self, ("ExpirationDate", "UnrecognizedColumn"))
         schedule = self.MakeLoaderAndLoad(loader_problems=load1_problems)
         saved_schedule_file = StringIO()
@@ -128,7 +128,7 @@ class TripValidationTestCase(util.ValidationTestCase):
         trip.bikes_allowed = '1'
         trip.wheelchair_accessible = '2'
         trip.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         repr(trip)  # shouldn't crash
 
         # missing route ID
@@ -166,22 +166,22 @@ class TripValidationTestCase(util.ValidationTestCase):
         # check because trip is not in a schedule.
         trip.route_id = '054C-notfound'
         schedule.add_trip_object(trip, self.problems, True)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertEqual('route_id', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         trip.route_id = '054C'
 
         # Make sure calling Trip.Validate validates that route_id and service_id
         # are found in the schedule.
         trip.service_id = 'WEEK-notfound'
         trip.validate(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertEqual('service_id', e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         trip.service_id = 'WEEK'
 
         trip.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # expect no problems for non-overlapping periods
         trip.add_frequency("06:00:00", "12:00:00", 600)
@@ -189,7 +189,7 @@ class TripValidationTestCase(util.ValidationTestCase):
         trip.add_frequency("04:00:00", "05:00:00", 1000)
         trip.add_frequency("12:00:00", "19:00:00", 700)
         trip.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         trip.clear_frequencies()
 
         # overlapping headway periods
@@ -209,7 +209,7 @@ class TripValidationTestCase(util.ValidationTestCase):
         trip.add_frequency("06:00:00", "18:00:00", 1200)
         self.ValidateAndExpectOtherProblem(trip)
         trip.clear_frequencies()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TripSequenceValidationTestCase(util.ValidationTestCase):
@@ -230,10 +230,10 @@ class TripSequenceValidationTestCase(util.ValidationTestCase):
         trip._add_stop_time_object_unordered(stoptime2, schedule)
         trip._add_stop_time_object_unordered(stoptime3, schedule)
         trip.validate(self.problems)
-        e = self.accumulator.PopException('OtherProblem')
+        e = self.accumulator.pop_exception('OtherProblem')
         self.assertTrue(e.format_problem().find('Timetravel detected') != -1)
         self.assertTrue(e.format_problem().find('number 2 in trip 054C-00') != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TripServiceIDValidationTestCase(util.ValidationTestCase):
@@ -292,12 +292,12 @@ class TripHasStopTimeValidationTestCase(util.ValidationTestCase):
         # but no stops
         trip.add_frequency("01:00:00", "12:00:00", 600)
         schedule.validate(self.problems)
-        self.accumulator.PopException('OtherProblem')  # pop first warning
-        e = self.accumulator.PopException('OtherProblem')  # pop frequency error
+        self.accumulator.pop_exception('OtherProblem')  # pop first warning
+        e = self.accumulator.pop_exception('OtherProblem')  # pop frequency error
         self.assertTrue(e.format_problem().find('Frequencies defined, but') != -1)
         self.assertTrue(e.format_problem().find('given in trip 054C-00') != -1)
         self.assertEquals(transitfeed.TYPE_ERROR, e.type)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         trip.clear_frequencies()
 
         # Add a stop, but with only one stop passengers have nowhere to exit!
@@ -346,11 +346,11 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
         schedule.add_stop_object(stop)
         trip.add_stop_time(stop, arrival_time="5:18:00", departure_time="5:19:00",
                            stop_sequence=2, shape_dist_traveled=2)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         schedule.validate(self.problems)
-        e = self.accumulator.PopException('OtherProblem')
+        e = self.accumulator.pop_exception('OtherProblem')
         self.assertMatchesRegex('shape_dist_traveled=2', e.format_problem())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # Error if the distance decreases.
         shape.add_point(36.421288, -117.133132, 2)
@@ -361,25 +361,25 @@ class ShapeDistTraveledOfStopTimeValidationTestCase(util.ValidationTestCase):
                                         departure_time="5:29:00", stop_sequence=3,
                                         shape_dist_traveled=1.7)
         trip.add_stop_time_object(stoptime, schedule=schedule)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         schedule.validate(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('stop STOP4 has', e.format_problem())
         self.assertMatchesRegex('shape_dist_traveled=1.7', e.format_problem())
         self.assertMatchesRegex('distance was 2.0.', e.format_problem())
         self.assertEqual(e.type, transitfeed.TYPE_ERROR)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # Warning if distance remains the same between two stop_times
         stoptime.shape_dist_traveled = 2.0
         trip.replace_stop_time_object(stoptime, schedule=schedule)
         schedule.validate(self.problems)
-        e = self.accumulator.PopException('InvalidValue')
+        e = self.accumulator.pop_exception('InvalidValue')
         self.assertMatchesRegex('stop STOP4 has', e.format_problem())
         self.assertMatchesRegex('shape_dist_traveled=2.0', e.format_problem())
         self.assertMatchesRegex('distance was 2.0.', e.format_problem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class StopMatchWithShapeTestCase(util.ValidationTestCase):
@@ -406,10 +406,10 @@ class StopMatchWithShapeTestCase(util.ValidationTestCase):
                            stop_sequence=1, shape_dist_traveled=1)
 
         schedule.validate(self.problems)
-        e = self.accumulator.PopException('StopTooFarFromShapeWithDistTraveled')
+        e = self.accumulator.pop_exception('StopTooFarFromShapeWithDistTraveled')
         self.assertTrue(e.format_problem().find('Demo Stop 2') != -1)
         self.assertTrue(e.format_problem().find('1344 meters away') != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TripAddStopTimeObjectTestCase(util.ValidationTestCase):
@@ -417,7 +417,7 @@ class TripAddStopTimeObjectTestCase(util.ValidationTestCase):
         schedule = transitfeed.Schedule(problem_reporter=self.problems)
         schedule.add_agency("\xc8\x8b Fly Agency", "http://iflyagency.com",
                             "America/Los_Angeles")
-        service_period = schedule.get_default_service_period().set_date_has_service('20070101')
+        schedule.get_default_service_period().set_date_has_service('20070101')
         stop1 = schedule.add_stop(lng=140, lat=48.2, name="Stop 1")
         stop2 = schedule.add_stop(lng=140.001, lat=48.201, name="Stop 2")
         route = schedule.add_route("B", "Beta", "Bus")
@@ -447,16 +447,14 @@ class TripAddStopTimeObjectTestCase(util.ValidationTestCase):
                                                        arrival_secs=30,
                                                        departure_secs=30),
                                   schedule=schedule, loader_problems=self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TripReplaceStopTimeObjectTestCase(util.TestCase):
     def runTest(self):
         schedule = transitfeed.Schedule()
-        schedule.add_agency("\xc8\x8b Fly Agency", "http://iflyagency.com",
-                            "America/Los_Angeles")
-        service_period = \
-            schedule.get_default_service_period().set_date_has_service('20070101')
+        schedule.add_agency("\xc8\x8b Fly Agency", "http://iflyagency.com", "America/Los_Angeles")
+        schedule.get_default_service_period().set_date_has_service('20070101')
         stop1 = schedule.add_stop(lng=140, lat=48.2, name="Stop 1")
         route = schedule.add_route("B", "Beta", "Bus")
         trip = route.add_trip(schedule, "bus trip")
@@ -464,7 +462,6 @@ class TripReplaceStopTimeObjectTestCase(util.TestCase):
                                         arrival_secs=10,
                                         departure_secs=10)
         trip.add_stop_time_object(stoptime, schedule=schedule)
-        stoptimes = trip.get_stop_times()
         stoptime.departure_secs = 20
         trip.replace_stop_time_object(stoptime, schedule=schedule)
         stoptimes = trip.get_stop_times()
@@ -608,21 +605,21 @@ class TripClearStopTimesTestCase(util.TestCase):
 class InvalidRouteAgencyTestCase(util.LoadTestCase):
     def runTest(self):
         self.load('invalid_route_agency')
-        self.accumulator.PopInvalidValue("agency_id", "routes.txt")
-        self.accumulator.PopInvalidValue("route_id", "trips.txt")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("agency_id", "routes.txt")
+        self.accumulator.pop_invalid_value("route_id", "trips.txt")
+        self.accumulator.assert_no_more_exceptions()
 
 
 class InvalidAgencyIdsTestCase(util.LoadTestCase):
     def runTest(self):
         self.load('invalid_agency_ids')
-        self.accumulator.PopException('OtherProblem')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_exception('OtherProblem')
+        self.accumulator.assert_no_more_exceptions()
 
 
 class AddStopTimeParametersTestCase(util.TestCase):
     def runTest(self):
-        problem_reporter = util.GetTestFailureProblemReporter(self)
+        problem_reporter = util.get_test_failure_problem_reporter(self)
         schedule = transitfeed.Schedule(problem_reporter=problem_reporter)
         route = schedule.add_route(short_name="10", long_name="", route_type="Bus")
         stop = schedule.add_stop(40, -128, "My stop")
@@ -654,8 +651,8 @@ class AddFrequencyValidationTestCase(util.ValidationTestCase):
             self.assertEqual(0, len(trip.get_frequency_tuples()))
 
     def ExpectMissingValue(self, start_time, end_time, headway, column_name):
+        trip = transitfeed.Trip()
         try:
-            trip = transitfeed.Trip()
             trip.add_frequency(start_time, end_time, headway)
             self.fail("Expected MissingValue error on %s" % column_name)
         except transitfeed.MissingValue as e:
@@ -703,7 +700,7 @@ class GetTripTimeTestCase(util.TestCase):
     """Test for GetStopTimeTrips and GetTimeInterpolatedStops"""
 
     def setUp(self):
-        problems = util.GetTestFailureProblemReporter(self)
+        problems = util.get_test_failure_problem_reporter(self)
         schedule = transitfeed.Schedule(problem_reporter=problems)
         self.schedule = schedule
         schedule.add_agency("Agency", "http://iflyagency.com",
@@ -761,7 +758,7 @@ class GetTripTimeTestCase(util.TestCase):
         # Temporarily replace the problem reporter so that adding the first
         # StopTime without a time doesn't throw an exception.
         old_problems = self.schedule.problem_reporter
-        self.schedule.problem_reporter = util.GetTestFailureProblemReporter(
+        self.schedule.problem_reporter = util.get_test_failure_problem_reporter(
             self, ("OtherProblem",))
         self.trip3.AddStopTime(self.stop3, schedule=self.schedule)
         self.schedule.problem_reporter = old_problems
@@ -797,16 +794,16 @@ class GetTripTimeTestCase(util.TestCase):
     def testGetTrips(self):
         self.assertEqual(
             set([t.trip_id for t in self.stop1.get_trips(self.schedule)]),
-            set([self.trip1.trip_id]))
+            {self.trip1.trip_id})
         self.assertEqual(
             set([t.trip_id for t in self.stop2.get_trips(self.schedule)]),
-            set([self.trip1.trip_id, self.trip2.trip_id]))
+            {self.trip1.trip_id, self.trip2.trip_id})
         self.assertEqual(
             set([t.trip_id for t in self.stop3.get_trips(self.schedule)]),
-            set([self.trip1.trip_id, self.trip2.trip_id]))
+            {self.trip1.trip_id, self.trip2.trip_id})
         self.assertEqual(
             set([t.trip_id for t in self.stop4.get_trips(self.schedule)]),
-            set([self.trip1.trip_id, self.trip2.trip_id]))
+            {self.trip1.trip_id, self.trip2.trip_id})
         self.assertEqual(
             set([t.trip_id for t in self.stop5.get_trips(self.schedule)]),
             set())
@@ -816,7 +813,7 @@ class GetFrequencyTimesTestCase(util.TestCase):
     """Test for GetFrequencyStartTimes and GetFrequencyStopTimes"""
 
     def setUp(self):
-        problems = util.GetTestFailureProblemReporter(self)
+        problems = util.get_test_failure_problem_reporter(self)
         schedule = transitfeed.Schedule(problem_reporter=problems)
         self.schedule = schedule
         schedule.add_agency("Agency", "http://iflyagency.com",
@@ -867,7 +864,7 @@ class GetFrequencyTimesTestCase(util.TestCase):
         # StopTimes are instantiated as they're read from the DB so they can't be
         # compared directly, but checking {arrival,departure}_secs should be enough
         # to catch most errors.
-        headway_stoptimes_list = self.trip1.get_frequency_stop_times()
+        self.trip1.get_frequency_stop_times()
         headway_arrival_secs = []
         headway_departure_secs = []
         for stoptimes in stoptimes_list:

@@ -32,23 +32,23 @@ class FeedInfoTestCase(util.MemoryZipTestCase):
                                 "feed_publisher_name,feed_publisher_url,feed_lang\n"
                                 "DTA,http://google.com,en")
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testDifferentLanguage(self):
         self.SetArchiveContents("feed_info.txt",
                                 "feed_publisher_name,feed_publisher_url,feed_lang\n"
                                 "DTA,http://google.com,pt")
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.PopInvalidValue("feed_lang")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("feed_lang")
+        self.accumulator.assert_no_more_exceptions()
 
     def testInvalidPublisherUrl(self):
         self.SetArchiveContents("feed_info.txt",
                                 "feed_publisher_name,feed_publisher_url,feed_lang\n"
                                 "DTA,htttp://google.com,en")
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.PopInvalidValue("feed_publisher_url")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("feed_publisher_url")
+        self.accumulator.assert_no_more_exceptions()
 
     def testValidityDatesNoErrors(self):
         self.SetArchiveContents("feed_info.txt",
@@ -56,7 +56,7 @@ class FeedInfoTestCase(util.MemoryZipTestCase):
                                 "feed_start_date,feed_end_date\n"
                                 "DTA,http://google.com,en,20101201,20101231")
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testValidityDatesInvalid(self):
         self.SetArchiveContents("feed_info.txt",
@@ -64,9 +64,9 @@ class FeedInfoTestCase(util.MemoryZipTestCase):
                                 "feed_start_date,feed_end_date\n"
                                 "DTA,http://google.com,en,10/01/12,10/31/12")
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.PopInvalidValue("feed_end_date")
-        self.accumulator.PopInvalidValue("feed_start_date")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("feed_end_date")
+        self.accumulator.pop_invalid_value("feed_start_date")
+        self.accumulator.assert_no_more_exceptions()
 
     def testValidityDatesInverted(self):
         self.SetArchiveContents("feed_info.txt",
@@ -74,8 +74,8 @@ class FeedInfoTestCase(util.MemoryZipTestCase):
                                 "feed_start_date,feed_end_date\n"
                                 "DTA,http://google.com,en,20101231,20101201")
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.PopInvalidValue("feed_end_date")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("feed_end_date")
+        self.accumulator.assert_no_more_exceptions()
 
     def testDeprectatedFieldNames(self):
         self.SetArchiveContents("feed_info.txt",
@@ -89,7 +89,7 @@ class FeedInfoTestCase(util.MemoryZipTestCase):
         self.assertEquals("feed_valid_until", e.column_name)
         e = self.accumulator.PopException("DeprecatedColumn")
         self.assertEquals("feed_timezone", e.column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class FeedInfoServiceGapsTestCase(util.MemoryZipTestCase):
@@ -127,4 +127,4 @@ class FeedInfoServiceGapsTestCase(util.MemoryZipTestCase):
                           exception.first_day_without_service)
         self.assertEquals(date(2009, 6, 19),
                           exception.last_day_without_service)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()

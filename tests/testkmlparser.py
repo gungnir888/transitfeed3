@@ -25,8 +25,8 @@ import unittest
 class TestStopsParsing(util.GetPathTestCase):
     def testSingleStop(self):
         feed = transitfeed.Schedule()
-        kmlFile = self.GetTestDataPath('one_stop.kml')
-        kmlparser.KMLParser().parse(kmlFile, feed)
+        kml_file = self.GetTestDataPath('one_stop.kml')
+        kmlparser.KMLParser().parse(kml_file, feed)
         stops = feed.get_stop_list()
         self.assertEqual(1, len(stops))
         stop = stops[0]
@@ -38,8 +38,8 @@ class TestStopsParsing(util.GetPathTestCase):
 
     def testSingleShape(self):
         feed = transitfeed.Schedule()
-        kmlFile = self.GetTestDataPath('one_line.kml')
-        kmlparser.KMLParser().parse(kmlFile, feed)
+        kml_file = self.GetTestDataPath('one_line.kml')
+        kmlparser.KMLParser().parse(kml_file, feed)
         shapes = feed.get_shape_list()
         self.assertEqual(1, len(shapes))
         shape = shapes[0]
@@ -57,7 +57,7 @@ class TestStopsParsing(util.GetPathTestCase):
 class FullTests(util.TempDirTestCaseBase):
     def testNormalRun(self):
         shutil.copyfile(self.GetTestDataPath('one_stop.kml'), 'one_stop.kml')
-        (out, err) = self.CheckCallWithPath(
+        self.check_call_with_path(
             [self.GetPath('kmlparser.py'), 'one_stop.kml', 'one_stop.zip'])
         # There will be lots of problems, but ignore them
         accumulator = util.RecordingProblemAccumulator(self)
@@ -67,19 +67,19 @@ class FullTests(util.TempDirTestCaseBase):
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testCommandLineError(self):
-        (out, err) = self.CheckCallWithPath([self.GetPath('kmlparser.py')],
+        (out, err) = self.check_call_with_path([self.GetPath('kmlparser.py')],
                                             expected_retcode=2)
         self.assertMatchesRegex(r'did not provide .+ arguments', err)
         self.assertMatchesRegex(r'[Uu]sage:', err)
         self.assertFalse(os.path.exists('transitfeedcrash.txt'))
 
     def testCrashHandler(self):
-        (out, err) = self.CheckCallWithPath(
+        (out, err) = self.check_call_with_path(
             [self.GetPath('kmlparser.py'), 'IWantMyCrash', 'output.zip'],
             stdin_str="\n", expected_retcode=127)
         self.assertMatchesRegex(r'Yikes', out)
-        crashout = open('transitfeedcrash.txt').read()
-        self.assertMatchesRegex(r'For testCrashHandler', crashout)
+        crash_out = open('transitfeedcrash.txt').read()
+        self.assertMatchesRegex(r'For testCrashHandler', crash_out)
 
 
 if __name__ == '__main__':

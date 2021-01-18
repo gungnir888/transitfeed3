@@ -60,7 +60,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
         headway_period3.add_to_schedule(self.schedule, self.problems)
         headway_period4.add_to_schedule(self.schedule, self.problems)
         self.trip.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.trip.clear_frequencies()
 
     def testOverlappingPeriods(self):
@@ -79,7 +79,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
         headway_period2.add_to_schedule(self.schedule, self.problems)
         self.ValidateAndExpectOtherProblem(self.trip)
         self.trip.clear_frequencies()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testPeriodWithInvalidTripId(self):
         headway_period1 = transitfeed.Frequency({'trip_id': 'foo',
@@ -120,7 +120,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
                         "exact_times": "1"})
         frequency.validate_before_add(self.problems)
         self.assertEquals(frequency.get_exact_times(), 1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testExactTimesAsIntValue(self):
         # Test that exact_times None converts to 0
@@ -144,7 +144,7 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
                         "exact_times": 1})
         frequency.validate_before_add(self.problems)
         self.assertEquals(frequency.get_exact_times(), 1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testExactTimesInvalidValues(self):
         # Test that exact_times 15 raises error
@@ -153,13 +153,13 @@ class FrequencyValidationTestCase(util.ValidationTestCase):
                         "end_time": "23:01:00", "headway_secs": "1800",
                         "exact_times": 15})
         frequency.validate_before_add(self.problems)
-        self.accumulator.PopInvalidValue("exact_times")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("exact_times")
+        self.accumulator.assert_no_more_exceptions()
         # Test that exact_times "yes" raises error
         frequency = transitfeed.Frequency(
             field_dict={"trip_id": "AB1,10", "start_time": "10:00:00",
                         "end_time": "23:01:00", "headway_secs": "1800",
                         "exact_times": "yes"})
         frequency.validate_before_add(self.problems)
-        self.accumulator.PopInvalidValue("exact_times")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value("exact_times")
+        self.accumulator.assert_no_more_exceptions()

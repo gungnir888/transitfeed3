@@ -15,15 +15,12 @@ to Google Transit format."""
 # motivation to port it. Please see the examples directory for better
 # examples.
 
-try:  # py2
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 import csv
 import datetime
 import optparse
 import sys
-import urllib
+import urllib.parse
 import zipfile
 
 # Zurich tram lines
@@ -69,7 +66,19 @@ SPECIAL_CITIES = {
 }
 
 
-def ReadCSV(s, cols):
+def parse_date(x):
+    return datetime.date(int(x[:4]), int(x[4:6]), int(x[6:8]))
+
+
+def month_num(x):
+    return int(x[:4]) * 12 + int(x[4:6])
+
+
+def read(zip_file, name, prefix=""):
+    return (prefix + zip_file.read(name)).splitlines()
+
+
+def read_csv(s, cols):
     csv_dialect = csv.Sniffer().sniff(s[0])
     reader = csv.reader(s, csv_dialect)
     header = next(reader)
@@ -79,34 +88,33 @@ def ReadCSV(s, cols):
             col_index[i] = header.index(cols[i])
 
     for row in reader:
-        result = [None] * len(cols)
+        result = []
         for i in range(len(cols)):
             ci = col_index[i]
             if ci >= 0:
-                result[i] = row[ci].decode('iso-8859-1').strip()
+                result[i] = row[ci]
+            else:
+                result[i] = None
         yield result
 
 
-def ConvertCH1903(x, y):
-    "Converts coordinates from the 1903 Swiss national grid system to WGS-84."
-    yb = (x - 600000.0) / 1e6;
-    xb = (y - 200000.0) / 1e6;
-    lam = 2.6779094 \
-          + 4.728982 * yb \
-          + 0.791484 * yb * xb \
-          + 0.1306 * yb * xb * xb \
-          - 0.0436 * yb * yb * yb
+def convert_ch1903(x, y):
+    """Converts coordinates from the 1903 Swiss national grid system to WGS-84."""
+    yb = (x - 600000.0) / 1e6
+    xb = (y - 200000.0) / 1e6
+    lam = 2.6779094 + 4.728982 * yb + 0.791484 * yb * xb + 0.1306 * yb * xb ** 2 - 0.0436 * yb ** 2 * yb
+
     phi = 16.9023892 \
-          + 3.238372 * xb \
-          - 0.270978 * yb * yb \
-          - 0.002582 * xb * xb \
-          - 0.0447 * yb * yb * xb \
-          - 0.0140 * xb * xb * xb
-    return (phi * 100.0 / 36.0, lam * 100.0 / 36.0)
+        + 3.238372 * xb \
+        - 0.270978 * yb ** 2 \
+        - 0.002582 * xb ** 2 \
+        - 0.0447 * yb ** 2 * xb \
+        - 0.0140 * xb ** 3
+    return phi * 100.0 / 36.0, lam * 100.0 / 36.0
 
 
-def EncodeForCSV(x):
-    "Encodes one value for CSV."
+def encode_for_csv(x):
+    """Encodes one value for CSV."""
     k = x.encode('utf-8')
     if ',' in k or '"' in k:
         return '"%s"' % k.replace('"', '""')
@@ -114,9 +122,9 @@ def EncodeForCSV(x):
         return k
 
 
-def WriteRow(stream, values):
-    "Writes one row of comma-separated values to stream."
-    stream.write(','.join([EncodeForCSV(val) for val in values]))
+def write_row(stream, values):
+    """Writes one row of comma-separated values to stream."""
+    stream.write(','.join([encode_for_csv(val) for val in values]))
     stream.write('\n')
 
 
@@ -154,11 +162,12 @@ class DivaImporter:
         self.goodTrips = {}
         self._drop_unadvertised_lines = drop_unadvertised_lines
 
-    def DemangleName(self, name):
-        "Applies some simple heuristics to split names into (city, name)."
-
-        # Handle special cases where our heuristcs doesn't work.
+    @staticmethod
+    def demangle_name(name):
+        """Applies some simple heuristics to split names into (city, name)."""
+        # Handle special cases where our heuristics doesn't work.
         # Example:"Triemli" --> ("Triemli", "Zurich").
+
         if name in SPECIAL_NAMES:
             return SPECIAL_NAMES[name]
 
@@ -181,55 +190,54 @@ class DivaImporter:
             # "Zurich Enge": First word of station name designates the city
             nam = names[0]
             city = nam.split(' ')[0]
-        return (nam, SPECIAL_CITIES.get(city, city))
+        return nam, SPECIAL_CITIES.get(city, city)
 
-    def Import(self, inpath):
-        inzip = zipfile.ZipFile(inpath, mode="r")
-        read = lambda name, prefix="": (prefix + inzip.read(name)).splitlines()
+    def import_feed(self, in_path):
+        in_zip = zipfile.ZipFile(in_path, mode="r")
+
         # The advertised lines file has no column headers.
-        self.ImportStations(read('rec_ort.mdv'), read('bedienendeLinien_google.csv',
-                                                      "ORT_NR;LI_NR;;;;"))
-        self.ImportRoutes(read('rec_lin_ber.mdv'))
-        self.ImportPatterns(read('lid_verlauf.mdv'))
-        self.ImportServices(read('tagesart_merkmal.mdv'),
-                            read('firmenkalender.mdv'))
-        self.ImportTrafficRestrictions(read('vb_regio.mdv'))
-        self.ImportBoarding(read('bedverb.mdv'))
-        self.ImportStopTimes(read('lid_fahrzeitart.mdv'))
-        self.ImportTrips(read('rec_frt.mdv'))
+        self.import_stations(
+            read(in_zip, 'rec_ort.mdv'), read(in_zip, 'bedienendeLinien_google.csv', "ORT_NR;LI_NR;;;;")
+        )
+        self.import_routes(read(in_zip, 'rec_lin_ber.mdv'))
+        self.import_patterns(read(in_zip, 'lid_verlauf.mdv'))
+        self.import_services(read(in_zip, 'tagesart_merkmal.mdv'),
+                             read(in_zip, 'firmenkalender.mdv'))
+        self.import_traffic_restrictions(read(in_zip, 'vb_regio.mdv'))
+        self.import_boarding(read(in_zip, 'bedverb.mdv'))
+        self.import_stop_times(read(in_zip, 'lid_fahrzeitart.mdv'))
+        self.import_trips(read(in_zip, 'rec_frt.mdv'))
 
-    def ImportStations(self, station_file, adv_file):
-        "Imports the rec_ort.mdv file."
-        for id, name, x, y, uic_code in \
-                ReadCSV(station_file, ['ORT_NR', 'ORT_NAME',
-                                       'ORT_POS_X', 'ORT_POS_Y', 'ORT_NR_NATIONAL']):
+    def import_stations(self, station_file, adv_file):
+        """Imports the rec_ort.mdv file."""
+        for idd, name, x, y, uic_code in \
+                read_csv(station_file, ['ORT_NR', 'ORT_NAME', 'ORT_POS_X', 'ORT_POS_Y', 'ORT_NR_NATIONAL']):
             station = Station()
-            station.id = id
+            station.id = idd
             station.position = self.coord_converter(float(x), float(y))
             station.uic_code = ''
             if uic_code and len(uic_code) == 7 and uic_code[:2] == '85':
                 station.uic_code = uic_code
-            station.name, station.city = self.DemangleName(name)
+            station.name, station.city = self.demangle_name(name)
             station.country = 'CH'
             station.url = 'http://fahrplan.zvv.ch/?to.0=' + \
-                          urllib.quote(name.encode('iso-8859-1'))
+                          urllib.parse.quote(name.encode('iso-8859-1'))
             station.advertised_lines = set()
-            self.stations[id] = station
-        for station_id, line_id in ReadCSV(adv_file, ['ORT_NR', 'LI_NR']):
+            self.stations[idd] = station
+        for station_id, line_id in read_csv(adv_file, ['ORT_NR', 'LI_NR']):
             if station_id in self.stations:
                 # Line ids in this file have leading zeroes, remove.
                 self.stations[station_id].advertised_lines.add(line_id.lstrip("0"))
             else:
-                print("Warning, advertised lines file references " \
-                      "unknown station, id " + station_id)
+                print("Warning, advertised lines file references unknown station, id " + station_id)
 
-    def ImportRoutes(self, s):
-        "Imports the rec_lin_ber.mdv file."
+    def import_routes(self, s):
+        """Imports the rec_lin_ber.mdv file."""
         # the line id is really qualified with an area_id (BEREICH_NR), but the
         # table of advertised lines does not include area. Fortunately, it seems
         # that line ids are unique across all areas, so we can just throw it away.
         for line_id, name in \
-                ReadCSV(s, ['LI_NR', 'LINIEN_BEZ_DRUCK']):
+                read_csv(s, ['LI_NR', 'LINIEN_BEZ_DRUCK']):
             route = Route()
             route.id = line_id
             route.name = name
@@ -246,10 +254,11 @@ class DivaImporter:
                     route.color_text = "FFFF00"
             self.routes[route.id] = route
 
-    def ImportPatterns(self, s):
-        "Imports the lid_verlauf.mdv file."
+    def import_patterns(self, s):
+        """Imports the lid_verlauf.mdv file."""
+
         for line, strli, direction, seq, station_id in \
-                ReadCSV(s, ['LI_NR', 'STR_LI_VAR', 'LI_RI_NR', 'LI_LFD_NR', 'ORT_NR']):
+                read_csv(s, ['LI_NR', 'STR_LI_VAR', 'LI_RI_NR', 'LI_LFD_NR', 'ORT_NR']):
             pattern_id = u'Pat.%s.%s.%s' % (line, strli, direction)
             pattern = self.patterns.get(pattern_id, None)
             if not pattern:
@@ -263,10 +272,11 @@ class DivaImporter:
                 pattern.stops.extend([None] * (seq - len(pattern.stops) + 1))
             pattern.stops[seq] = station_id
 
-    def ImportBoarding(self, drop_off_file):
-        "Reads the bedverb.mdv file."
+    def import_boarding(self, drop_off_file):
+        """Reads the bedverb.mdv file."""
+
         for trip_id, seq, code in \
-                ReadCSV(drop_off_file, ['FRT_FID', 'LI_LFD_NR', 'BEDVERB_CODE']):
+                read_csv(drop_off_file, ['FRT_FID', 'LI_LFD_NR', 'BEDVERB_CODE']):
             key = (trip_id, int(seq) - 1)
             if code == 'A':
                 self.pickup_type[key] = '1'  # '1' = no pick-up
@@ -280,63 +290,62 @@ class DivaImporter:
                 raise ValueError('Unexpected code in bedverb.mdv; '
                                  'FRT_FID=%s BEDVERB_CODE=%s' % (trip_id, code))
 
-    def ImportServices(self, daytype_file, days_file):
+    def import_services(self, day_type_file, days_file):
         daytypes = {}  # 'j06' --> {20060713:1, 20060714:1, ...}
         schedules = {}  # {'j06':1, 'p27':1}
-        for schedule, daytype, date in \
-                ReadCSV(days_file, ['FPL_KUERZEL', 'TAGESART_NR', 'BETRIEBSTAG']):
+        for schedule, day_type, date in \
+                read_csv(days_file, ['FPL_KUERZEL', 'TAGESART_NR', 'BETRIEBSTAG']):
             schedule = schedule.strip()
-            daytypes.setdefault('%s.%s' % (schedule, daytype), {})[int(date)] = 1
+            daytypes.setdefault('%s.%s' % (schedule, day_type), {})[int(date)] = 1
             schedules[schedule] = 1
         schedules = schedules.keys()
 
         service_days = {}  # 'Cj06.H9' --> {20060713:1, 20060714:1, ...}
-        for daytype, service_id in \
-                ReadCSV(daytype_file, ['TAGESART_NR', 'TAGESMERKMAL_NR']):
+        for day_type, service_id in \
+                read_csv(day_type_file, ['TAGESART_NR', 'TAGESMERKMAL_NR']):
             for schedule in schedules:
                 service = 'C%s.%s' % (schedule, service_id)
-                for date in daytypes['%s.%s' % (schedule, daytype)].iterkeys():
+                for date in daytypes['%s.%s' % (schedule, day_type)].iterkeys():
                     service_days.setdefault(service, {})[date] = 1
-        for k in service_days.iterkeys():
+        for k in service_days.keys():
             self.services[k] = service_days[k].keys()
             self.services[k].sort()
 
-    def ImportTrafficRestrictions(self, restrictions_file):
-        "Reads the vb_regio.mdv file."
-        ParseDate = lambda x: datetime.date(int(x[:4]), int(x[4:6]), int(x[6:8]))
-        MonthNr = lambda x: int(x[:4]) * 12 + int(x[4:6])
-        for schedule, id, bitmask, start_date, end_date in \
-                ReadCSV(restrictions_file,
-                        ['FPL_KUERZEL', 'VB', 'VB_DATUM', 'DATUM_VON', 'DATUM_BIS']):
-            id = u"VB%s.%s" % (schedule, id)
-            bitmask = bitmask.strip()
+    def import_traffic_restrictions(self, restrictions_file):
+        """Reads the vb_regio.mdv file."""
+
+        columns = ['FPL_KUERZEL', 'VB', 'VB_DATUM', 'DATUM_VON', 'DATUM_BIS']
+        for schedule, idd, bit_mask, start_date, end_date in read_csv(restrictions_file, cols=columns):
+            idd = u"VB%s.%s" % (schedule, idd)
+            bit_mask = bit_mask.strip()
             dates = {}
 
             # This is ugly as hell, I know. I briefly explain what I do:
-            # 8 characters in the bitmask equal a month ( 8 * 4bits = 32, no month has
+            # 8 characters in the bit_mask equal a month ( 8 * 4bits = 32, no month has
             # more than 31 days, so it's ok).
-            # Then I check if the current day of the month is in the bitmask (by
-            # shifting the bit by x days and comparing it to the bitmask).
+            # Then I check if the current day of the month is in the bit_mask (by
+            # shifting the bit by x days and comparing it to the bit_mask).
             # If so I calculate back what year month and actual day I am in
             # (very disgusting) and mark that date...
-            for i in range(MonthNr(end_date) - MonthNr(start_date) + 1):
-                mask = int(bitmask[i * 8:i * 8 + 8], 16)
+            for i in range(month_num(end_date) - month_num(start_date) + 1):
+                mask = int(bit_mask[i * 8:i * 8 + 8], 16)
                 for d in range(32):
                     if 1 << d & mask:
-                        year = int(start_date[0:4]) + ((int(start_date[4:6]) + i - 1)) / 12
+                        year = int(start_date[0:4]) + (int(start_date[4:6]) + i - 1) / 12
                         month = ((int(start_date[4:6]) + i - 1) % 12) + 1
                         day = d + 1
                         cur_date = str(year) + ("0" + str(month))[-2:] + ("0" + str(day))[-2:]
                         dates[int(cur_date)] = 1
-            self.services[id] = dates.keys()
-            self.services[id].sort()
+            self.services[idd] = dates.keys()
+            self.services[idd].sort()
 
-    def ImportStopTimes(self, stoptimes_file):
-        "Imports the lid_fahrzeitart.mdv file."
+    def import_stop_times(self, stoptimes_file):
+        """Imports the lid_fahrzeitart.mdv file."""
+
         for line, strli, direction, seq, stoptime_id, drive_secs, wait_secs in \
-                ReadCSV(stoptimes_file,
-                        ['LI_NR', 'STR_LI_VAR', 'LI_RI_NR', 'LI_LFD_NR',
-                         'FGR_NR', 'FZT_REL', 'HZEIT']):
+                read_csv(stoptimes_file,
+                         ['LI_NR', 'STR_LI_VAR', 'LI_RI_NR', 'LI_LFD_NR',
+                          'FGR_NR', 'FZT_REL', 'HZEIT']):
             pattern = self.patterns[u'Pat.%s.%s.%s' % (line, strli, direction)]
             stoptimes = pattern.stoptimes.setdefault(stoptime_id, [])
             seq = int(seq) - 1
@@ -345,27 +354,27 @@ class DivaImporter:
             assert len(stoptimes) == seq  # fails if seq not in order
             stoptimes.append((drive_secs, wait_secs))
 
-    def ImportTrips(self, trips_file):
-        "Imports the rec_frt.mdv file."
+    def import_trips(self, trips_file):
+        """Imports the rec_frt.mdv file."""
+
         for trip_id, trip_starttime, line, strli, direction, \
             stoptime_id, schedule_id, daytype_id, restriction_id, \
             dest_station_id, dest_stop_id, trip_type in \
-                ReadCSV(trips_file,
-                        ['FRT_FID', 'FRT_START', 'LI_NR', 'STR_LI_VAR', 'LI_RI_NR',
-                         'FGR_NR', 'FPL_KUERZEL', 'TAGESMERKMAL_NR', 'VB',
-                         'FRT_HP_AUS', 'HALTEPUNKT_NR_ZIEL', 'FAHRTART_NR']):
+                read_csv(trips_file,
+                         ['FRT_FID', 'FRT_START', 'LI_NR', 'STR_LI_VAR', 'LI_RI_NR',
+                          'FGR_NR', 'FPL_KUERZEL', 'TAGESMERKMAL_NR', 'VB',
+                          'FRT_HP_AUS', 'HALTEPUNKT_NR_ZIEL', 'FAHRTART_NR']):
             if trip_type != '1':
-                print("skipping Trip ", trip_id, line, direction, \
-                      dest_station_id, trip_type)
+                print("skipping Trip ", trip_id, line, direction, dest_station_id, trip_type)
                 continue  # 1=normal, 2=empty, 3=from depot, 4=to depot, 5=other
             trip = Trip()
             # The trip_id (FRT_FID) field is not unique in the vbz data, as of Dec 2009
-            # to prevent overwritingimported trips when we key them by trip.id
+            # to prevent overwriting imported trips when we key them by trip.id
             # we should make trip.id unique, by combining trip_id and line
-            trip.id = ("%s_%s") % (trip_id, line)
+            trip.id = "%s_%s" % (trip_id, line)
             trip.starttime = int(trip_starttime)
             trip.route = self.routes[line]
-            dest_station = self.stations[dest_station_id]
+            # dest_station = self.stations[dest_station_id]
             pattern_id = u'Pat.%s.%s.%s' % (line, strli, direction)
             trip.pattern = self.patterns[pattern_id]
             trip.stoptimes = trip.pattern.stoptimes[stoptime_id]
@@ -375,65 +384,67 @@ class DivaImporter:
                 service_id = u'C%s.%s' % (schedule_id, daytype_id)
             trip.service_id = service_id
             assert len(self.services[service_id]) > 0
-            assert not trip.id in self.trips
+            assert trip.id not in self.trips
             self.trips[trip.id] = trip
 
-    def write(self, outpath):
-        "Writes a .zip file in Google Transit format."
-        out = zipfile.ZipFile(outpath, mode="w", compression=zipfile.ZIP_DEFLATED)
-        for filename, func in [('agency.txt', self.WriteAgency),
-                               ('calendar.txt', self.WriteCalendar),
-                               ('calendar_dates.txt', self.WriteCalendarDates),
-                               ('routes.txt', self.WriteRoutes),
-                               ('trips.txt', self.WriteTrips),
-                               ('stops.txt', self.WriteStations),
-                               ('stop_times.txt', self.WriteStopTimes)]:
+    def write(self, out_path):
+        """Writes a .zip file in Google Transit format."""
+
+        out = zipfile.ZipFile(out_path, mode="w", compression=zipfile.ZIP_DEFLATED)
+        for filename, func in [('agency.txt', self.write_agency),
+                               ('calendar.txt', self.write_calendar),
+                               ('calendar_dates.txt', self.write_calendar_dates),
+                               ('routes.txt', self.write_routes),
+                               ('trips.txt', self.write_trips),
+                               ('stops.txt', self.write_stations),
+                               ('stop_times.txt', self.write_stop_times)]:
             s = StringIO()
             func(s)
             out.writestr(filename, s.getvalue())
         out.close()
 
-    def WriteAgency(self, out):
+    @staticmethod
+    def write_agency(out):
         out.write('agency_name,agency_url,agency_lang,agency_timezone\n')
         out.write('VBZ,http://www.vbz.ch/,de,Europe/Zurich\n')
 
-    def WriteRoutes(self, out):
+    def write_routes(self, out):
         out.write('route_id,route_short_name,route_long_name,route_type,'
                   'route_color,route_text_color\n')
-        k = [(r.id, r) for r in self.routes.itervalues()]
+        k = [(r.id, r) for r in self.routes.values()]
         k.sort()
-        for id, route in k:
-            name = EncodeForCSV(route.name)
+        for idd, route in k:
+            name = encode_for_csv(route.name)
             out.write('%s,%s,%s,%s,%s,%s\n' % (
-                id, name, name, route.type, route.color, route.color_text))
+                idd, name, name, route.type, route.color, route.color_text))
 
-    def WriteStations(self, out):
+    def write_stations(self, out):
         out.write('stop_id,stop_uic_code,stop_name,stop_city,stop_country,'
                   'stop_lat,stop_lon,stop_url\n')
-        stations = [(s.id, s) for s in self.stations.itervalues()]
+        stations = [(s.id, s) for s in self.stations.values()]
         stations.sort()
-        for id, s in stations:
-            WriteRow(out,
-                     [id, s.uic_code, s.name, s.city, s.country,
-                      str(s.position[0]), str(s.position[1]), s.url])
+        for idd, s in stations:
+            write_row(out,
+                      [idd, s.uic_code, s.name, s.city, s.country,
+                       str(s.position[0]), str(s.position[1]), s.url])
 
-    def WriteCalendar(self, out):
+    def write_calendar(self, out):
         out.write('service_id,monday,tuesday,wednesday,thursday,'
                   'friday,saturday,sunday,start_date,end_date\n')
         for service_id, service in self.services.items():
             out.write('%s,0,0,0,0,0,0,0,%d,%d\n' %
-                      (EncodeForCSV(service_id), service[0], service[-1]))
+                      (encode_for_csv(service_id), service[0], service[-1]))
 
-    def WriteCalendarDates(self, out):
+    def write_calendar_dates(self, out):
         out.write('service_id,date,exception_type\n')
         for service_id, service in self.services.items():
-            encoded_service_id = EncodeForCSV(service_id)
+            encoded_service_id = encode_for_csv(service_id)
             for date in service:
                 out.write('%s,%d,1\n' % (encoded_service_id, date))
 
-    def WriteTrips(self, out):
+    def write_trips(self, out):
         out.write('trip_id,route_id,service_id,trip_headsign\n')
-        trips = [(t.id, t) for t in self.trips.itervalues()]
+        trips = [(t.id, t) for t in self.trips.values()]
         trips.sort()
         for (trip_id, trip) in trips:
             if (not len(trip.pattern.stops)) or (None in trip.pattern.stops):
@@ -441,15 +452,16 @@ class DivaImporter:
                 continue
             self.goodTrips[trip_id] = True
             headsign = self.stations[trip.pattern.stops[-1]].name
-            WriteRow(out, [trip.id, trip.route.id, trip.service_id, headsign])
+            write_row(out, [trip.id, trip.route.id, trip.service_id, headsign])
 
-    def FormatTime(self, t):
+    @staticmethod
+    def format_time(t):
         return "%02d:%02d:%02d" % (t / 3600, (t % 3600) / 60, t % 60)
 
-    def WriteStopTimes(self, out):
+    def write_stop_times(self, out):
         out.write('trip_id,stop_sequence,stop_id,arrival_time,departure_time,'
                   'pickup_type,drop_off_type\n')
-        trips = [(t.id, t) for t in self.trips.itervalues()]
+        trips = [(t.id, t) for t in self.trips.values()]
         trips.sort()
         for (trip_id, trip) in trips:
             if trip_id not in self.goodTrips:
@@ -462,11 +474,11 @@ class DivaImporter:
                 station = self.stations[trip.pattern.stops[seq]]
                 if not self._drop_unadvertised_lines or \
                         trip.route.id in station.advertised_lines:
-                    WriteRow(out, [trip.id, str(seq + 1), station.id,
-                                   self.FormatTime(time),
-                                   self.FormatTime(time + wait_time),
-                                   self.pickup_type.get((trip.id, seq), '0'),
-                                   self.drop_off_type.get((trip.id, seq), '0')])
+                    write_row(out, [trip.id, str(seq + 1), station.id,
+                                    self.format_time(time),
+                                    self.format_time(time + wait_time),
+                                    self.pickup_type.get((trip.id, seq), '0'),
+                                    self.drop_off_type.get((trip.id, seq), '0')])
                 time += wait_time
 
 
@@ -494,8 +506,8 @@ def main(argv):
     if options.out_file is None:
         raise SystemExit('Please provide a value to the --out_file flag.')
 
-    importer = DivaImporter(ConvertCH1903, options.drop_unadvertised_lines)
-    importer.Import(options.in_file)
+    importer = DivaImporter(convert_ch1903, options.drop_unadvertised_lines)
+    importer.import_feed(options.in_file)
     importer.write(options.out_file)
     print('Wrote output to', options.out_file)
 

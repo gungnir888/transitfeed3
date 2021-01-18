@@ -25,7 +25,7 @@ class DuplicateStopTestCase(util.TestCase):
         schedule = transitfeed.Schedule(
             problem_reporter=util.ExceptionProblemReporterNoExpiration())
         try:
-            schedule.load(util.DataPath('duplicate_stop'), extra_validation=True)
+            schedule.load(util.data_path('duplicate_stop'), extra_validation=True)
             self.fail('OtherProblem exception expected')
         except transitfeed.OtherProblem:
             pass
@@ -36,7 +36,7 @@ class DuplicateScheduleIDTestCase(util.TestCase):
         schedule = transitfeed.Schedule(
             problem_reporter=util.ExceptionProblemReporterNoExpiration())
         try:
-            schedule.load(util.DataPath('duplicate_schedule_id'),
+            schedule.load(util.data_path('duplicate_schedule_id'),
                           extra_validation=True)
             self.fail('DuplicateID exception expected')
         except transitfeed.DuplicateID:
@@ -122,7 +122,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
         schedule.validate(self.problems)
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testOverlapSameServicePeriod(self):
         schedule, route, sp1 = self.schedule, self.route, self.sp1
@@ -144,7 +144,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
         self.assertEqual(e.trip_id2, 'CITY2')
         self.assertEqual(e.block_id, 'BLOCK')
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testOverlapDifferentServicePeriods(self):
         schedule, route, sp1, sp2 = self.schedule, self.route, self.sp1, self.sp2
@@ -181,7 +181,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
         self.assertEqual(e.trip_id2, 'CITY4')
         self.assertEqual(e.block_id, 'BLOCK')
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # If service period overlap calculation caching is working correctly,
         # we expect only two calls to get_service_period(), one each for sp1 and
@@ -203,7 +203,7 @@ class OverlappingBlockTripsTestCase(util.TestCase):
 
         schedule.validate(self.problems)
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class StopsNearEachOther(util.MemoryZipTestCase):
@@ -217,7 +217,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         schedule = self.MakeLoaderAndLoad()
         e = self.accumulator.PopException('StopsTooClose')
         self.assertTrue(e.format_problem().find("1.11m apart") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testJustFarEnough(self):
         self.SetArchiveContents(
@@ -228,7 +228,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
             "STAGECOACH,Stagecoach Hotel,48.20016,140\n")
         schedule = self.MakeLoaderAndLoad()
         # Stops are 2.2m apart
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testSameLocation(self):
         self.SetArchiveContents(
@@ -240,7 +240,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         schedule = self.MakeLoaderAndLoad()
         e = self.accumulator.PopException('StopsTooClose')
         self.assertTrue(e.format_problem().find("0.00m apart") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStationsTooNear(self):
         self.SetArchiveContents(
@@ -255,7 +255,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         e = self.accumulator.PopException('StationsTooClose')
         self.assertTrue(e.format_problem().find("1.11m apart") != -1)
         self.assertTrue(e.format_problem().find("BEATTY_AIRPORT_STATION") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testStopNearNonParentStation(self):
         self.SetArchiveContents(
@@ -271,7 +271,7 @@ class StopsNearEachOther(util.MemoryZipTestCase):
         self.assertTrue(re.search(
             r"parent_station of.*BULLFROG.*station.*BULLFROG_STATION.* 1.11m apart",
             fmt), fmt)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class NoServiceExceptionsTestCase(util.MemoryZipTestCase):
@@ -280,7 +280,7 @@ class NoServiceExceptionsTestCase(util.MemoryZipTestCase):
         self.RemoveArchive("calendar_dates.txt")
         self.MakeLoaderAndLoad()
         e = self.accumulator.PopException("NoServiceExceptions")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNoExceptionsWhenFeedActiveForShortPeriodOfTime(self):
         self.SetArchiveContents(
@@ -291,7 +291,7 @@ class NoServiceExceptionsTestCase(util.MemoryZipTestCase):
             "WE,0,0,0,0,0,1,1,20070101,20070331\n")
         self.RemoveArchive("calendar_dates.txt")
         self.MakeLoaderAndLoad()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testEmptyCalendarDates(self):
         self.SetArchiveContents(
@@ -300,7 +300,7 @@ class NoServiceExceptionsTestCase(util.MemoryZipTestCase):
         self.MakeLoaderAndLoad()
         e = self.accumulator.PopException("EmptyFile")
         e = self.accumulator.PopException("NoServiceExceptions")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testCalendarDatesWithHeaderOnly(self):
         self.SetArchiveContents(
@@ -308,7 +308,7 @@ class NoServiceExceptionsTestCase(util.MemoryZipTestCase):
             "service_id,date,exception_type\n")
         self.MakeLoaderAndLoad()
         e = self.accumulator.PopException("NoServiceExceptions")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testCalendarDatesWithAddedServiceException(self):
         self.SetArchiveContents(
@@ -316,7 +316,7 @@ class NoServiceExceptionsTestCase(util.MemoryZipTestCase):
             "service_id,date,exception_type\n"
             "FULLW,20070101,1\n")
         self.MakeLoaderAndLoad()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testCalendarDatesWithRemovedServiceException(self):
         self.SetArchiveContents(
@@ -324,7 +324,7 @@ class NoServiceExceptionsTestCase(util.MemoryZipTestCase):
             "service_id,date,exception_type\n"
             "FULLW,20070101,2\n")
         self.MakeLoaderAndLoad()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class GetServicePeriodsActiveEachDateTestCase(util.TestCase):
@@ -445,7 +445,7 @@ class DuplicateTripTestCase(util.ValidationTestCase):
         e = self.accumulator.PopException('DuplicateTrip')
         self.assertTrue(e.format_problem().find('t1 of route') != -1)
         self.assertTrue(e.format_problem().find('t2 of route') != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
@@ -480,7 +480,7 @@ class StopBelongsToBothSubwayAndBusTestCase(util.ValidationTestCase):
         self.assertTrue(e.format_problem().find("Stop stop1") != -1)
         self.assertTrue(e.format_problem().find("subway (ID=1)") != -1)
         self.assertTrue(e.format_problem().find("bus line (ID=0)") != -1)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class UnusedStopAgencyTestCase(util.LoadTestCase):
@@ -489,7 +489,7 @@ class UnusedStopAgencyTestCase(util.LoadTestCase):
         e = self.accumulator.PopException("UnusedStop")
         self.assertEqual("Bogus Stop (Demo)", e.stop_name)
         self.assertEqual("BOGUS", e.stop_id)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
@@ -545,7 +545,7 @@ class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
             self.two_weeks,  # calendar_dates
             "", "")  # feed_info
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testExpirationDateCausedByServicePeriod(self):
         # test with no validity dates specified in feed_info.txt
@@ -556,14 +556,14 @@ class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
         self.MakeLoaderAndLoad(self.problems)
         e = self.accumulator.PopException("ExpirationDate")
         self.assertTrue("calendar.txt" in e.expiration_origin_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         # test with good validity dates specified in feed_info.txt
         self.prepareArchiveContents(
             self.two_weeks_ago, self.two_weeks,  # calendar
             self.one_week,  # calendar_dates
             self.two_weeks_ago, self.two_months)  # feed_info
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testFutureServiceCausedByServicePeriod(self):
         # test with no validity dates specified in feed_info.txt
@@ -574,14 +574,14 @@ class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
         self.MakeLoaderAndLoad(self.problems)
         e = self.accumulator.PopException("FutureService")
         self.assertTrue("calendar.txt" in e.start_date_origin_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         # Test with good validity dates specified in feed_info.txt
         self.prepareArchiveContents(
             self.one_week, self.two_months,  # calendar
             self.two_weeks,  # calendar_dates
             self.two_weeks_ago, self.two_months)  # feed_info
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testExpirationDateCausedByServicePeriodDateException(self):
         # Test with no validity dates specified in feed_info.txt
@@ -592,14 +592,14 @@ class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
         self.MakeLoaderAndLoad(self.problems)
         e = self.accumulator.PopException("ExpirationDate")
         self.assertTrue("calendar_dates.txt" in e.expiration_origin_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         # Test with good validity dates specified in feed_info.txt
         self.prepareArchiveContents(
             self.two_weeks_ago, self.one_week,  # calendar
             self.two_weeks,  # calendar_dates
             self.two_weeks_ago, self.two_months)  # feed_info
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testFutureServiceCausedByServicePeriodDateException(self):
         # Test with no validity dates specified in feed_info.txt
@@ -610,14 +610,14 @@ class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
         self.MakeLoaderAndLoad(self.problems)
         e = self.accumulator.PopException("FutureService")
         self.assertTrue("calendar_dates.txt" in e.start_date_origin_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         # Test with good validity dates specified in feed_info.txt
         self.prepareArchiveContents(
             self.two_weeks, self.two_months,  # calendar
             self.one_week,  # calendar_dates
             self.two_weeks_ago, self.two_months)  # feed_info
         self.MakeLoaderAndLoad(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testExpirationDateCausedByFeedInfo(self):
         self.prepareArchiveContents(
@@ -627,7 +627,7 @@ class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
         self.MakeLoaderAndLoad(self.problems)
         e = self.accumulator.PopException("ExpirationDate")
         self.assertTrue("feed_info.txt" in e.expiration_origin_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testFutureServiceCausedByFeedInfo(self):
         self.prepareArchiveContents(
@@ -637,7 +637,7 @@ class ScheduleStartAndExpirationDatesTestCase(util.MemoryZipTestCase):
         self.MakeLoaderAndLoad(self.problems)
         e = self.accumulator.PopException("FutureService")
         self.assertTrue("feed_info.txt" in e.start_date_origin_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class DuplicateStopValidationTestCase(util.ValidationTestCase):
@@ -688,7 +688,7 @@ class DuplicateStopValidationTestCase(util.ValidationTestCase):
         schedule.add_stop_object(stop3)
         trip.AddStopTime(stop3, arrival_time="12:10:00", departure_time="12:10:00")
         schedule.validate()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         stop4 = transitfeed.Stop()
         stop4.stop_id = "STOP4"
@@ -699,7 +699,7 @@ class DuplicateStopValidationTestCase(util.ValidationTestCase):
         trip.AddStopTime(stop4, arrival_time="12:15:00", departure_time="12:15:00")
         schedule.validate()
         e = self.accumulator.PopException('StopsTooClose')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class DuplicateTripIDValidationTestCase(util.TestCase):
@@ -978,4 +978,4 @@ class ServiceGapsTestCase(util.MemoryZipTestCase):
             self.assertEquals(last_exception_date,
                               exception.last_day_without_service)
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()

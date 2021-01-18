@@ -33,17 +33,21 @@ class TransferObjectTestCase(util.ValidationTestCase):
         # references to other tables aren't checked without schedule so this
         # validates even though from_stop_id and to_stop_id are invalid.
         transfer.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         self.assertEquals("S1", transfer.from_stop_id)
         self.assertEquals("S2", transfer.to_stop_id)
         self.assertEquals(1, transfer.transfer_type)
         self.assertEquals(None, transfer.min_transfer_time)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
-        transfer = transitfeed.Transfer(field_dict={"from_stop_id": "S1", \
-                                                    "to_stop_id": "S2", \
-                                                    "transfer_type": "2", \
-                                                    "min_transfer_time": "2"})
+        transfer = transitfeed.Transfer(
+            field_dict={
+                "from_stop_id": "S1",
+                "to_stop_id": "S2",
+                "transfer_type": "2",
+                "min_transfer_time": "2"
+            }
+        )
         self.assertEquals("S1", transfer.from_stop_id)
         self.assertEquals("S2", transfer.to_stop_id)
         self.assertEquals(2, transfer.transfer_type)
@@ -53,77 +57,101 @@ class TransferObjectTestCase(util.ValidationTestCase):
         self.assertEquals("S2", transfer.to_stop_id)
         self.assertEquals(2, transfer.transfer_type)
         self.assertEquals(2, transfer.min_transfer_time)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
-        transfer = transitfeed.Transfer(field_dict={"from_stop_id": "S1", \
-                                                    "to_stop_id": "S2", \
-                                                    "transfer_type": "-4", \
-                                                    "min_transfer_time": "2"})
+        transfer = transitfeed.Transfer(
+            field_dict={
+                "from_stop_id": "S1",
+                "to_stop_id": "S2",
+                "transfer_type": "-4",
+                "min_transfer_time": "2"
+            }
+        )
         self.assertEquals("S1", transfer.from_stop_id)
         self.assertEquals("S2", transfer.to_stop_id)
         self.assertEquals("-4", transfer.transfer_type)
         self.assertEquals(2, transfer.min_transfer_time)
         transfer.validate(self.problems)
-        e = self.accumulator.PopInvalidValue("transfer_type")
-        e = self.accumulator.PopException(
+        self.accumulator.pop_invalid_value("transfer_type")
+        self.accumulator.PopException(
             "MinimumTransferTimeSetWithInvalidTransferType")
         self.assertEquals("S1", transfer.from_stop_id)
         self.assertEquals("S2", transfer.to_stop_id)
         self.assertEquals("-4", transfer.transfer_type)
         self.assertEquals(2, transfer.min_transfer_time)
 
-        transfer = transitfeed.Transfer(field_dict={"from_stop_id": "S1", \
-                                                    "to_stop_id": "S2", \
-                                                    "transfer_type": "", \
-                                                    "min_transfer_time": "-1"})
+        transfer = transitfeed.Transfer(
+            field_dict={
+                "from_stop_id": "S1",
+                "to_stop_id": "S2",
+                "transfer_type": "",
+                "min_transfer_time": "-1"
+            }
+        )
         self.assertEquals(0, transfer.transfer_type)
         transfer.validate(self.problems)
         # It's negative *and* transfer_type is not 2
-        e = self.accumulator.PopException(
+        self.accumulator.PopException(
             "MinimumTransferTimeSetWithInvalidTransferType")
-        e = self.accumulator.PopInvalidValue("min_transfer_time")
+        self.accumulator.pop_invalid_value("min_transfer_time")
 
         # Non-integer min_transfer_time with transfer_type == 2
-        transfer = transitfeed.Transfer(field_dict={"from_stop_id": "S1", \
-                                                    "to_stop_id": "S2", \
-                                                    "transfer_type": "2", \
-                                                    "min_transfer_time": "foo"})
+        transfer = transitfeed.Transfer(
+            field_dict={
+                "from_stop_id": "S1",
+                "to_stop_id": "S2",
+                "transfer_type": "2",
+                "min_transfer_time": "foo"
+            }
+        )
         self.assertEquals("foo", transfer.min_transfer_time)
         transfer.validate(self.problems)
-        e = self.accumulator.PopInvalidValue("min_transfer_time")
+        self.accumulator.pop_invalid_value("min_transfer_time")
 
         # Non-integer min_transfer_time with transfer_type != 2
-        transfer = transitfeed.Transfer(field_dict={"from_stop_id": "S1", \
-                                                    "to_stop_id": "S2", \
-                                                    "transfer_type": "1", \
-                                                    "min_transfer_time": "foo"})
+        transfer = transitfeed.Transfer(
+            field_dict={
+                "from_stop_id": "S1",
+                "to_stop_id": "S2",
+                "transfer_type": "1",
+                "min_transfer_time": "foo"
+            }
+        )
         self.assertEquals("foo", transfer.min_transfer_time)
         transfer.validate(self.problems)
         # It's not an integer *and* transfer_type is not 2
-        e = self.accumulator.PopException(
+        self.accumulator.PopException(
             "MinimumTransferTimeSetWithInvalidTransferType")
-        e = self.accumulator.PopInvalidValue("min_transfer_time")
+        self.accumulator.pop_invalid_value("min_transfer_time")
 
         # Fractional min_transfer_time with transfer_type == 2
-        transfer = transitfeed.Transfer(field_dict={"from_stop_id": "S1", \
-                                                    "to_stop_id": "S2", \
-                                                    "transfer_type": "2", \
-                                                    "min_transfer_time": "2.5"})
+        transfer = transitfeed.Transfer(
+            field_dict={
+                "from_stop_id": "S1",
+                "to_stop_id": "S2",
+                "transfer_type": "2",
+                "min_transfer_time": "2.5"
+            }
+        )
         self.assertEquals("2.5", transfer.min_transfer_time)
         transfer.validate(self.problems)
-        e = self.accumulator.PopInvalidValue("min_transfer_time")
+        self.accumulator.pop_invalid_value("min_transfer_time")
 
         # Fractional min_transfer_time with transfer_type != 2
-        transfer = transitfeed.Transfer(field_dict={"from_stop_id": "S1", \
-                                                    "to_stop_id": "S2", \
-                                                    "transfer_type": "1", \
-                                                    "min_transfer_time": "2.5"})
+        transfer = transitfeed.Transfer(
+            field_dict={
+                "from_stop_id": "S1",
+                "to_stop_id": "S2",
+                "transfer_type": "1",
+                "min_transfer_time": "2.5"
+            }
+        )
         self.assertEquals("2.5", transfer.min_transfer_time)
         transfer.validate(self.problems)
         # It's not an integer *and* transfer_type is not 2
-        e = self.accumulator.PopException(
+        self.accumulator.PopException(
             "MinimumTransferTimeSetWithInvalidTransferType")
-        e = self.accumulator.PopInvalidValue("min_transfer_time")
+        self.accumulator.pop_invalid_value("min_transfer_time")
 
         # simple successes
         transfer = transitfeed.Transfer()
@@ -134,7 +162,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         transfer.validate(self.problems)
         transfer.transfer_type = 3
         transfer.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # transfer_type is out of range
         transfer.transfer_type = 4
@@ -152,15 +180,15 @@ class TransferObjectTestCase(util.ValidationTestCase):
         self.ValidateAndExpectInvalidValue(transfer, "min_transfer_time")
         transfer.min_transfer_time = 4 * 3600
         transfer.validate(self.problems)
-        e = self.accumulator.PopInvalidValue("min_transfer_time")
+        e = self.accumulator.pop_invalid_value("min_transfer_time")
         self.assertEquals(e.type, transitfeed.TYPE_WARNING)
         transfer.min_transfer_time = 25 * 3600
         transfer.validate(self.problems)
-        e = self.accumulator.PopInvalidValue("min_transfer_time")
+        e = self.accumulator.pop_invalid_value("min_transfer_time")
         self.assertEquals(e.type, transitfeed.TYPE_ERROR)
         transfer.min_transfer_time = 250
         transfer.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # missing stop ids
         transfer.from_stop_id = ""
@@ -182,7 +210,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         transfer.min_transfer_time = 600
         repr(transfer)  # shouldn't crash
         transfer.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # only from_stop_id is present in schedule
         schedule = transitfeed.Schedule()
@@ -196,18 +224,17 @@ class TransferObjectTestCase(util.ValidationTestCase):
         transfer.from_stop_id = "unexist"
         transfer.to_stop_id = stop1.stop_id
         self.ValidateAndExpectInvalidValue(transfer, "from_stop_id")
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # Transfer can only be added to a schedule once because _schedule is set
         transfer = transitfeed.Transfer()
         transfer.from_stop_id = stop1.stop_id
         transfer.to_stop_id = stop1.stop_id
         schedule.add_transfer_object(transfer)
-        self.assertRaises(AssertionError, schedule.AddTransferObject, transfer)
+        self.assertRaises(AssertionError, schedule.add_transfer_object, transfer)
 
     def testValidationSpeedDistanceAllTransferTypes(self):
         schedule = transitfeed.Schedule()
-        transfer = transitfeed.Transfer(schedule=schedule)
         stop1 = schedule.add_stop(1, 0, "stop 1")
         stop2 = schedule.add_stop(0, 1, "stop 2")
         transfer = transitfeed.Transfer(schedule=schedule)
@@ -234,7 +261,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
             self.assertEquals(e.type, transitfeed.TYPE_WARNING)
             self.assertEquals(e.from_stop_id, stop1.stop_id)
             self.assertEquals(e.to_stop_id, stop2.stop_id)
-            self.accumulator.AssertNoMoreExceptions()
+            self.accumulator.assert_no_more_exceptions()
 
             # from_stop_id and to_stop_id are present in schedule
             # and too far away (should be error)
@@ -258,7 +285,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
             self.assertEquals(e.type, transitfeed.TYPE_WARNING)
             self.assertEquals(e.from_stop_id, stop1.stop_id)
             self.assertEquals(e.to_stop_id, stop2.stop_id)
-            self.accumulator.AssertNoMoreExceptions()
+            self.accumulator.assert_no_more_exceptions()
 
     def testSmallTransferTimeTriggersWarning(self):
         # from_stop_id and to_stop_id are present in schedule
@@ -278,7 +305,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         self.assertEquals(e.type, transitfeed.TYPE_WARNING)
         self.assertEquals(e.from_stop_id, stop1.stop_id)
         self.assertEquals(e.to_stop_id, stop2.stop_id)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testVeryCloseStationsDoNotTriggerWarning(self):
         # from_stop_id and to_stop_id are present in schedule
@@ -295,7 +322,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         transfer.min_transfer_time = 1
         repr(transfer)  # shouldn't crash
         transfer.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testCustomAttribute(self):
         """Add unknown attributes to a Transfer and make sure they are saved."""
@@ -309,10 +336,10 @@ class TransferObjectTestCase(util.ValidationTestCase):
 
         saved_schedule_file = StringIO()
         schedule.write_google_transit_feed(saved_schedule_file)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # Ignore NoServiceExceptions error to keep the test simple
-        load_problems = util.GetTestFailureProblemReporter(
+        load_problems = util.get_test_failure_problem_reporter(
             self, ("ExpirationDate", "UnrecognizedColumn", "NoServiceExceptions"))
         loaded_schedule = transitfeed.Loader(saved_schedule_file,
                                              loader_problems=load_problems,
@@ -336,7 +363,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         self.assertEquals('(from_stop_id, to_stop_id)', e.column_name)
         self.assertEquals('(stop1, stop2)', e.value)
         self.assertTrue(e.is_warning())
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
         # Check that both transfers were kept
         self.assertEquals(transfer1, schedule.get_transfer_list()[0])
         self.assertEquals(transfer2, schedule.get_transfer_list()[1])
@@ -345,7 +372,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         transfer3 = transitfeed.Transfer(from_stop_id="stop1", to_stop_id="stop3")
         schedule.add_transfer_object(transfer3)
         self.assertEquals(3, len(schedule.get_transfer_list()))
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # GetTransferIter should return all Transfers
         transfer4 = transitfeed.Transfer(from_stop_id="stop1")
@@ -353,7 +380,7 @@ class TransferObjectTestCase(util.ValidationTestCase):
         self.assertEquals(
             ",stop2,stop2,stop3",
             ",".join(sorted(t["to_stop_id"] for t in schedule.get_transfer_iter())))
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TransferValidationTestCase(util.MemoryZipTestCase):
@@ -369,22 +396,22 @@ class TransferValidationTestCase(util.MemoryZipTestCase):
             "BULLFROG,DOESNOTEXISTEITHER,2\n"
             "DOESNOTEXIT,DOESNOTEXISTEITHER,2\n"
             ",,2\n")
-        schedule = self.MakeLoaderAndLoad()
+        self.MakeLoaderAndLoad()
         # First row
-        e = self.accumulator.PopInvalidValue('from_stop_id')
+        self.accumulator.pop_invalid_value('from_stop_id')
         # Second row
-        e = self.accumulator.PopMissingValue('from_stop_id')
+        self.accumulator.pop_missing_value('from_stop_id')
         # Third row
-        e = self.accumulator.PopMissingValue('to_stop_id')
+        self.accumulator.pop_missing_value('to_stop_id')
         # Fourth row
-        e = self.accumulator.PopInvalidValue('to_stop_id')
+        self.accumulator.pop_invalid_value('to_stop_id')
         # Fifth row
-        e = self.accumulator.PopInvalidValue('from_stop_id')
-        e = self.accumulator.PopInvalidValue('to_stop_id')
+        self.accumulator.pop_invalid_value('from_stop_id')
+        self.accumulator.pop_invalid_value('to_stop_id')
         # Sixth row
-        e = self.accumulator.PopMissingValue('from_stop_id')
-        e = self.accumulator.PopMissingValue('to_stop_id')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_missing_value('from_stop_id')
+        self.accumulator.pop_missing_value('to_stop_id')
+        self.accumulator.assert_no_more_exceptions()
 
     def testDuplicateTransfer(self):
         self.AppendToArchiveContents(
@@ -411,12 +438,12 @@ class TransferValidationTestCase(util.MemoryZipTestCase):
         self.assertTrue(e.is_warning())
         self.assertEquals('transfers.txt', e.file_name)
         self.assertEquals(3, e.row_num)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         saved_schedule_file = StringIO()
         schedule.write_google_transit_feed(saved_schedule_file)
-        self.accumulator.AssertNoMoreExceptions()
-        load_problems = util.GetTestFailureProblemReporter(
+        self.accumulator.assert_no_more_exceptions()
+        load_problems = util.get_test_failure_problem_reporter(
             self, ("ExpirationDate", "DuplicateID"))
         loaded_schedule = transitfeed.Loader(saved_schedule_file,
                                              loader_problems=load_problems,

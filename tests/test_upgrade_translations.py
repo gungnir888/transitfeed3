@@ -20,10 +20,10 @@ class TestTranslationsConverter(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_convert_translations(self):
-        testdata_dir = os.path.join(os.path.dirname(__file__), 'data/upgrade_translations')
+        test_data_dir = os.path.join(os.path.dirname(__file__), 'data/upgrade_translations')
         output_dir = os.path.join(self.test_dir, 'new-feed')
-        want_feed_dir = os.path.join(testdata_dir, 'new-feed')
-        converter = TranslationsConverter(os.path.join(testdata_dir, 'old-feed'))
+        want_feed_dir = os.path.join(test_data_dir, 'new-feed')
+        converter = TranslationsConverter(os.path.join(test_data_dir, 'old-feed'))
         converter.convert_translations(output_dir)
         for filename in sorted(os.listdir(want_feed_dir)):
             if not filename.endswith('.txt'):

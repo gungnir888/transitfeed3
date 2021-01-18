@@ -31,8 +31,7 @@ For line geometries, information about shapes is extracted from a kml file.
 import re
 import transitfeed
 from transitfeed import util
-import xml.dom.minidom as minidom
-
+from xml.dom import minidom
 
 class Placemark:
     def __init__(self):

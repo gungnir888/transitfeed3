@@ -49,7 +49,7 @@ def check_call(cmd, expected_retcode=0, stdin_str="", **kwargs):
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, stdin=subprocess.PIPE,
                              **kwargs)
-        (out, err) = p.communicate(stdin_str)
+        out, err = p.communicate(stdin_str)
         retcode = p.returncode
     except Exception as e:
         raise Exception("When running %s: %s" % (cmd, e))
@@ -61,15 +61,15 @@ def check_call(cmd, expected_retcode=0, stdin_str="", **kwargs):
         raise Exception(
             "Child '%s' returned %d. Output:\n%s\n%s\n" %
             (cmd, retcode, out, err))
-    return (out, err)
+    return out, err
 
 
-def DataPath(path):
+def data_path(path):
     here = os.path.dirname(__file__)
     return os.path.join(here, 'data', path)
 
 
-def GetDataPathContents():
+def get_data_path_contents():
     here = os.path.dirname(__file__)
     return sorted(os.listdir(os.path.join(here, 'data')))
 
@@ -138,7 +138,8 @@ class TempDirTestCaseBase(GetPathTestCase):
         shutil.rmtree(self.tempdirpath)
         GetPathTestCase.tearDown(self)
 
-    def CheckCallWithPath(self, cmd, expected_retcode=0, stdin_str=""):
+    @staticmethod
+    def check_call_with_path(cmd, expected_retcode=0, stdin_str=""):
         """Run python script cmd[0] with args cmd[1:], making sure 'import
         transitfeed' will use the module in this source tree. Raises an Exception
         if the return code is not expected_retcode. Returns a tuple of strings,
@@ -174,34 +175,36 @@ class TempDirTestCaseBase(GetPathTestCase):
         return check_call(cmd, expected_retcode=expected_retcode, shell=False,
                           env=env, stdin_str=stdin_str)
 
-    def ConvertZipToDict(self, zip):
+    @staticmethod
+    def convert_zip_to_dict(zip_file):
         """Converts a zip file into a dictionary.
 
         Arguments:
-            zip: The zipfile whose contents are to be converted to a dictionary.
+            zip_file: The zipfile whose contents are to be converted to a dictionary.
 
         Returns:
             A dictionary mapping filenames to file contents."""
 
         zip_dict = {}
-        for archive_name in zip.namelist():
-            zip_dict[archive_name] = zip.read(archive_name)
-        zip.close()
+        for archive_name in zip_file.namelist():
+            zip_dict[archive_name] = zip_file.read(archive_name)
+        zip_file.close()
         return zip_dict
 
-    def ConvertDictToZip(self, dict):
+    @staticmethod
+    def convert_dict_to_zip(dictionary):
         """Converts a dictionary to an in-memory zipfile.
 
         Arguments:
-            dict: A dictionary mapping file names to file contents
+            dictionary: A dictionary mapping file names to file contents
 
         Returns:
             The new file's in-memory contents as a file-like object."""
         zipfile_mem = StringIO()
-        zip = zipfile.ZipFile(zipfile_mem, 'a')
-        for arcname, contents in dict.items():
-            zip.writestr(arcname, contents)
-        zip.close()
+        zip_file = zipfile.ZipFile(zipfile_mem, 'a')
+        for arc_name, contents in dictionary.items():
+            zip_file.writestr(arc_name, contents)
+        zip_file.close()
         return zipfile_mem
 
 
@@ -325,7 +328,8 @@ class MemoryZipTestCase(TestCase):
         for (arcname, contents) in self.zip_contents.items():
             self.zip.writestr(arcname, contents)
 
-    def DumpZipFile(self, zf):
+    @staticmethod
+    def DumpZipFile(zf):
         """Print the contents of something zipfile can open, such as a StringIO."""
         # Handy for debugging
         z = zipfile.ZipFile(zf)
@@ -340,19 +344,19 @@ class LoadTestCase(TestCase):
 
     def load(self, feed_name):
         loader = transitfeed.Loader(
-            DataPath(feed_name), loader_problems=self.problems, extra_validation=True)
+            data_path(feed_name), loader_problems=self.problems, extra_validation=True)
         loader.load()
 
     def ExpectInvalidValue(self, feed_name, column_name):
         self.load(feed_name)
-        self.accumulator.PopInvalidValue(column_name)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.pop_invalid_value(column_name)
+        self.accumulator.assert_no_more_exceptions()
 
     def ExpectMissingFile(self, feed_name, file_name):
         self.load(feed_name)
-        e = self.accumulator.PopException("MissingFile")
+        e = self.accumulator.pop_exception("MissingFile")
         self.assertEqual(file_name, e.file_name)
-        # Don't call AssertNoMoreExceptions() because a missing file causes
+        # Don't call assert_no_more_exceptions() because a missing file causes
         # many errors.
 
 
@@ -366,12 +370,12 @@ class ValidationTestCase(TestCase):
         self.problems = transitfeed.ProblemReporter(self.accumulator)
 
     def tearDown(self):
-        self.accumulator.TearDownAssertNoMoreExceptions()
+        self.accumulator.tear_down_assert_no_more_exceptions()
 
-    def ExpectNoProblems(self, object):
-        self.accumulator.AssertNoMoreExceptions()
-        object.validate(self.problems)
-        self.accumulator.AssertNoMoreExceptions()
+    def ExpectNoProblems(self, obj):
+        self.accumulator.assert_no_more_exceptions()
+        obj.validate(self.problems)
+        self.accumulator.assert_no_more_exceptions()
 
     # TODO: think about Expect*Closure methods. With the
     # RecordingProblemAccumulator it is now possible to replace
@@ -383,55 +387,55 @@ class ValidationTestCase(TestCase):
     # making it easy and clear to test the return value of o.method(...) and
     # easier to test for a sequence of problems caused by one call.
     # neun@ 2011-01-18: for the moment I don't remove the Expect*InClosure methods
-    # as they allow enforcing an AssertNoMoreExceptions() before validation.
+    # as they allow enforcing an assert_no_more_exceptions() before validation.
     # When removing them we do have to make sure that each "logical test block"
-    # before an Expect*InClosure usage really ends with AssertNoMoreExceptions.
+    # before an Expect*InClosure usage really ends with assert_no_more_exceptions.
     # See http://codereview.appspot.com/4020041/
-    def ValidateAndExpectMissingValue(self, object, column_name):
-        self.accumulator.AssertNoMoreExceptions()
-        object.validate(self.problems)
+    def ValidateAndExpectMissingValue(self, obj, column_name):
+        self.accumulator.assert_no_more_exceptions()
+        obj.validate(self.problems)
         self.ExpectException('MissingValue', column_name)
 
     def ExpectMissingValueInClosure(self, column_name, c):
-        self.accumulator.AssertNoMoreExceptions()
-        rv = c()
+        self.accumulator.assert_no_more_exceptions()
+        c()
         self.ExpectException('MissingValue', column_name)
 
-    def ValidateAndExpectInvalidValue(self, object, column_name,
+    def ValidateAndExpectInvalidValue(self, obj, column_name,
                                       value=INVALID_VALUE):
-        self.accumulator.AssertNoMoreExceptions()
-        object.validate(self.problems)
+        self.accumulator.assert_no_more_exceptions()
+        obj.validate(self.problems)
         self.ExpectException('InvalidValue', column_name, value)
 
     def ExpectInvalidValueInClosure(self, column_name, value=INVALID_VALUE,
                                     c=None):
-        self.accumulator.AssertNoMoreExceptions()
-        rv = c()
+        self.accumulator.assert_no_more_exceptions()
+        c()
         self.ExpectException('InvalidValue', column_name, value)
 
-    def ValidateAndExpectInvalidFloatValue(self, object, value):
-        self.accumulator.AssertNoMoreExceptions()
-        object.validate(self.problems)
+    def ValidateAndExpectInvalidFloatValue(self, obj, value):
+        self.accumulator.assert_no_more_exceptions()
+        obj.validate(self.problems)
         self.ExpectException('InvalidFloatValue', None, value)
 
-    def ValidateAndExpectOtherProblem(self, object):
-        self.accumulator.AssertNoMoreExceptions()
-        object.validate(self.problems)
+    def ValidateAndExpectOtherProblem(self, obj):
+        self.accumulator.assert_no_more_exceptions()
+        obj.validate(self.problems)
         self.ExpectException('OtherProblem')
 
     def ExpectOtherProblemInClosure(self, c):
-        self.accumulator.AssertNoMoreExceptions()
-        rv = c()
+        self.accumulator.assert_no_more_exceptions()
+        c()
         self.ExpectException('OtherProblem')
 
-    def ValidateAndExpectDateOutsideValidRange(self, object, column_name,
+    def ValidateAndExpectDateOutsideValidRange(self, obj, column_name,
                                                value=INVALID_VALUE):
-        self.accumulator.AssertNoMoreExceptions()
-        object.validate(self.problems)
+        self.accumulator.assert_no_more_exceptions()
+        obj.validate(self.problems)
         self.ExpectException('DateOutsideValidRange', column_name, value)
 
     def ExpectException(self, type_name, column_name=None, value=INVALID_VALUE):
-        e = self.accumulator.PopException(type_name)
+        e = self.accumulator.pop_exception(type_name)
         if column_name:
             self.assertEqual(column_name, e.column_name)
         if value != INVALID_VALUE:
@@ -439,7 +443,7 @@ class ValidationTestCase(TestCase):
         # these should not throw any exceptions
         e.format_problem()
         e.format_context()
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def SimpleSchedule(self):
         """Return a minimum schedule that will load without warnings."""
@@ -465,12 +469,14 @@ class ValidationTestCase(TestCase):
 
 # TODO(anog): Revisit this after we implement proper per-exception level change
 class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
-    """Save all problems for later inspection.
+    """
+    Save all problems for later inspection.
 
     Args:
       test_case: a unittest.TestCase object on which to report problems
       ignore_types: sequence of string type names that will be ignored by the
-      ProblemAccumulator"""
+      problem accumulator
+    """
 
     def __init__(self, test_case, ignore_types=None):
         self.exceptions = []
@@ -490,31 +496,32 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
         traceback_list = traceback.format_list(traceback.extract_stack()[-7:-1])
         self.exceptions.append((e, ''.join(traceback_list)))
 
-    def PopException(self, type_name):
+    def pop_exception(self, type_name):
         """Return the first exception, which must be a type_name."""
         if not self._sorted:
-            self._SortExceptionGroups()
+            self._sort_exception_groups()
             self._sorted = True
         e = self.exceptions.pop(0)
         e_name = e[0].__class__.__name__
-        self._test_case.assertEqual(e_name, type_name,
-                                    "%s != %s\n%s" %
-                                    (e_name, type_name, self.format_exception(*e)))
+        self._test_case.assertEqual(
+            e_name, type_name,
+            "%s != %s\n%s" % (e_name, type_name, self.format_exception(*e))
+        )
         return e[0]
 
-    def format_exception(self, exce, tb):
+    @staticmethod
+    def format_exception(exception, tb):
         return ("%s\nwith gtfs file context %s\nand traceback\n%s" %
-                (exce.format_problem(), exce.format_context(), tb))
+                (exception.format_problem(), exception.format_context(), tb))
 
-    def TearDownAssertNoMoreExceptions(self):
+    def tear_down_assert_no_more_exceptions(self):
         """Assert that there are no unexpected problems left after a test has run.
 
            This function should be called on a test's tearDown. For more information
-           please see AssertNoMoreExceptions"""
-        assert len(self.exceptions) == 0, \
-            "see util.RecordingProblemAccumulator.AssertNoMoreExceptions"
+           please see assert_no_more_exceptions"""
+        assert len(self.exceptions) == 0, "see util.RecordingProblemAccumulator.assert_no_more_exceptions"
 
-    def AssertNoMoreExceptions(self):
+    def assert_no_more_exceptions(self):
         """Check that no unexpected problems were reported.
 
         Every test that uses a RecordingProblemReporter should end with a call to
@@ -526,7 +533,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
             exceptions_as_text.append(self.format_exception(e, tb))
         # If the assertFalse below fails the test will abort and tearDown is
         # called. Some tearDown methods assert that self.exceptions is empty as
-        # protection against a test that doesn't end with AssertNoMoreExceptions
+        # protection against a test that doesn't end with assert_no_more_exceptions
         # and has exceptions remaining in the RecordingProblemReporter. It would
         # be nice to trigger a normal test failure in tearDown but the idea was
         # rejected (http://bugs.python.org/issue5531).
@@ -534,7 +541,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
         self._test_case.assertFalse(exceptions_as_text,
                                     "\n".join(exceptions_as_text))
 
-    def PopColumnSpecificException(self, type_name, column_name, file_name=None):
+    def pop_column_specific_exception(self, type_name, column_name, file_name=None):
         """Pops and validates column-specific exceptions from the accumulator.
 
         Asserts that the exception is of the given type, and originated in the
@@ -548,32 +555,32 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
         Returns:
             the exception object
         """
-        e = self.PopException(type_name)
+        e = self.pop_exception(type_name)
         self._test_case.assertEquals(column_name, e.column_name)
         if file_name:
             self._test_case.assertEquals(file_name, e.file_name)
         return e
 
-    def PopInvalidValue(self, column_name, file_name=None):
-        return self.PopColumnSpecificException("InvalidValue", column_name,
+    def pop_invalid_value(self, column_name, file_name=None):
+        return self.pop_column_specific_exception("InvalidValue", column_name,
                                                file_name)
 
-    def PopMissingValue(self, column_name, file_name=None):
-        return self.PopColumnSpecificException("MissingValue", column_name,
+    def pop_missing_value(self, column_name, file_name=None):
+        return self.pop_column_specific_exception("MissingValue", column_name,
                                                file_name)
 
-    def PopDateOutsideValidRange(self, column_name, file_name=None):
-        return self.PopColumnSpecificException("DateOutsideValidRange", column_name,
+    def pop_date_outside_valid_range(self, column_name, file_name=None):
+        return self.pop_column_specific_exception("DateOutsideValidRange", column_name,
                                                file_name)
 
-    def PopDuplicateColumn(self, file_name, header, count):
-        e = self.PopException("DuplicateColumn")
+    def pop_duplicate_column(self, file_name, header, count):
+        e = self.pop_exception("DuplicateColumn")
         self._test_case.assertEquals(file_name, e.file_name)
         self._test_case.assertEquals(header, e.header)
         self._test_case.assertEquals(count, e.count)
         return e
 
-    def _SortExceptionGroups(self):
+    def _sort_exception_groups(self):
         """Applies a consistent order to exceptions for repeatable testing.
 
         Exceptions are only sorted when multiple exceptions of the same type appear
@@ -590,7 +597,7 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
         exception_group = []
         current_exception_type = None
 
-        def ProcessExceptionGroup():
+        def process_exception_group():
             exception_group.sort(key=lambda x: x[0].get_order_key())
             sorted_exceptions.extend(exception_group)
 
@@ -598,10 +605,10 @@ class RecordingProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
             e = e_tuple[0]
             if e.__class__ != current_exception_type:
                 current_exception_type = e.__class__
-                ProcessExceptionGroup()
+                process_exception_group()
                 exception_group = []
             exception_group.append(e_tuple)
-        ProcessExceptionGroup()
+        process_exception_group()
         self.exceptions = sorted_exceptions
 
 
@@ -623,8 +630,7 @@ class TestFailureProblemAccumulator(transitfeed.ProblemAccumulatorInterface):
             "%s: %s\n%s" % (exception_class, formatted_problem, formatted_context))
 
 
-def GetTestFailureProblemReporter(test_case,
-                                  ignore_types=("ExpirationDate",)):
+def get_test_failure_problem_reporter(test_case, ignore_types=("ExpirationDate",)):
     accumulator = TestFailureProblemAccumulator(test_case, ignore_types)
     problems = transitfeed.ProblemReporter(accumulator)
     return problems
@@ -641,5 +647,5 @@ class ExceptionProblemReporterNoExpiration(transitfeed.ProblemReporter):
         accumulator = transitfeed.ExceptionProblemAccumulator(raise_warnings=True)
         transitfeed.ProblemReporter.__init__(self, accumulator)
 
-    def expiration_date(self, expiration, context=None):
+    def expiration_date(self, expiration, expiration_origin_file, context=None):
         pass  # We don't want to give errors about our test data

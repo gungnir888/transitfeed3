@@ -66,8 +66,6 @@ Translations in GTFS-Translations format.
   trips,trip_headsign,es,Palacio,,,To Palace
 """
 
-from __future__ import print_function
-
 import csv
 import os
 import os.path

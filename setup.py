@@ -24,7 +24,7 @@ for help on creating Windows executables.
 from distutils.core import setup
 import glob
 import os.path
-from transitfeed import __version__ as VERSION
+from transitfeed import __version__ as transitfeed_version
 
 try:
     import py2exe
@@ -53,14 +53,14 @@ if has_py2exe:
     kwargs['data_files'] = \
         [('schedule_viewer_files',
           glob.glob(os.path.join('gtfsscheduleviewer', 'files', '*')))]
-    options['py2exe'] = {'dist_dir': 'transitfeed-windows-binary-%s' % VERSION}
+    options['py2exe'] = {'dist_dir': 'transitfeed-windows-binary-%s' % transitfeed_version}
 
 setup(
-    version=VERSION,
+    version=transitfeed_version,
     name='transitfeed',
     url='https://github.com/google/transitfeed/',
     download_url='https://github.com/google/transitfeed/archive/'
-                 '%s.tar.gz' % VERSION,
+                 '%s.tar.gz' % transitfeed_version,
     maintainer='Multiple',
     maintainer_email='transitfeed@googlegroups.com',
     description='GTFS library and tools',
@@ -99,7 +99,8 @@ if has_py2exe:
     import zipfile
 
     # Open the library.zip file for appending additional files.
-    zipfile_path = os.path.join(options['py2exe']['dist_dir'], 'library.zip')
+    path_list = [options['py2exe']['dist_dir'], 'library.zip']
+    zipfile_path = os.path.join(*path_list)
     z = zipfile.ZipFile(zipfile_path, 'a')
 
     # Sometime between pytz-2008a and pytz-2008i common_timezones started to

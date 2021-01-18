@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
 import datetime
-import re
 import time
 
 from . import problems as problems_module
@@ -33,8 +31,7 @@ class ServicePeriod:
                             ] + _DAYS_OF_WEEK
     FIELD_NAMES = REQUIRED_FIELD_NAMES  # no optional fields in this one
     DEPRECATED_FIELD_NAMES = []  # no deprecated fields so far
-    _REQUIREDFIELD_NAMES_CALENDAR_DATES = ['service_id', 'date',
-                                            'exception_type']
+    _REQUIREDFIELD_NAMES_CALENDAR_DATES = ['service_id', 'date', 'exception_type']
     FIELD_NAMES_CALENDAR_DATES = \
         _REQUIREDFIELD_NAMES_CALENDAR_DATES  # no optional fields in this one
     _DEPRECATEDFIELD_NAMES_CALENDAR_DATES = []  # no deprecated fields so far
@@ -45,7 +42,7 @@ class ServicePeriod:
     _EXCEPTION_TYPE_ADD = 1
     _EXCEPTION_TYPE_REMOVE = 2
 
-    def __init__(self, id=None, field_list=None):
+    def __init__(self, idd=None, field_list=None):
         self.original_day_values = []
         if field_list:
             self.service_id = field_list[self.FIELD_NAMES.index('service_id')]
@@ -59,7 +56,7 @@ class ServicePeriod:
             self.start_date = field_list[self.FIELD_NAMES.index('start_date')]
             self.end_date = field_list[self.FIELD_NAMES.index('end_date')]
         else:
-            self.service_id = id
+            self.service_id = idd
             self.day_of_week = [False] * 7
             self.start_date = None
             self.end_date = None
@@ -100,7 +97,7 @@ class ServicePeriod:
         elif end is None:
             end = start
         # If start and end are None we did a little harmless shuffling
-        return (start, end)
+        return start, end
 
     def get_calendar_field_values_tuple(self):
         """Return the tuple of calendar.txt values or None if this ServicePeriod
@@ -155,7 +152,7 @@ class ServicePeriod:
         Returns:
           None
         """
-        assert (dow >= 0 and dow < 7)
+        assert (0 <= dow < 7)
         self.day_of_week[dow] = has_service
 
     def set_weekday_service(self, has_service=True):

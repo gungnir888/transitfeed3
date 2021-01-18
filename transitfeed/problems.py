@@ -25,7 +25,9 @@ MAX_DISTANCE_BETWEEN_STOP_AND_PARENT_STATION_ERROR = 1000.0
 
 
 class Error(Exception):
-  """The base exception class for this module."""
+    """The base exception class for this module."""
+
+    pass
 
 
 class ProblemReporter:
@@ -485,7 +487,7 @@ class ExceptionWithContext(Exception):
         if hasattr(self, 'file_name'):
             text += self.file_name
         if hasattr(self, 'row_num'):
-            text += ":%i" % self.row_num
+            text += ":%i" % int(self.row_num)
         if hasattr(self, 'column_name'):
             text += " column %s" % self.column_name
         return text

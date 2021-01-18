@@ -9,6 +9,7 @@ verify_ssl = true
 pytz = "*"
 py2exe = "*"
 urllib3 = "*"
+gdal = "*"
 
 [requires]
 python_version = "3.8"

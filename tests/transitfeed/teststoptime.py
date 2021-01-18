@@ -127,7 +127,7 @@ class StopTimeValidationTestCase(util.ValidationTestCase):
         transitfeed.StopTime(self.problems, stop, timepoint=None)
         transitfeed.StopTime(self.problems, stop, timepoint=1)
         transitfeed.StopTime(self.problems, stop, timepoint='1')
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TooFastTravelTestCase(util.ValidationTestCase):
@@ -145,8 +145,7 @@ class TooFastTravelTestCase(util.ValidationTestCase):
         self.trip.add_stop_time(stop, arrival_secs=time, departure_secs=time)
         for i, (dist_delta, time_delta) in enumerate(dist_time_list):
             stop = self.schedule.add_stop(
-                magic_lat, stop.stop_lon + dist_delta * 0.00001,
-                           "Demo Stop %d" % (i + 1))
+                magic_lat, stop.stop_lon + dist_delta * 0.00001, "Demo Stop %d" % (i + 1))
             time += time_delta
             self.trip.add_stop_time(stop, arrival_secs=time, departure_secs=time)
 
@@ -155,40 +154,40 @@ class TooFastTravelTestCase(util.ValidationTestCase):
                                   (1616, 60)])
 
         self.trip.validate(self.problems)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
         self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.format_problem())
         self.assertMatchesRegex(r'1691 meters in 60 seconds', e.format_problem())
         self.assertMatchesRegex(r'\(101 km/h\)', e.format_problem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         self.route.route_type = 4  # Ferry with max_speed 80
         self.trip.validate(self.problems)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
         self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.format_problem())
         self.assertMatchesRegex(r'1691 meters in 60 seconds', e.format_problem())
         self.assertMatchesRegex(r'\(101 km/h\)', e.format_problem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
         self.assertMatchesRegex(r'Stop 1 to Demo Stop 2', e.format_problem())
         self.assertMatchesRegex(r'1616 meters in 60 seconds', e.format_problem())
         self.assertMatchesRegex(r'97 km/h', e.format_problem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # Run test without a route_type
         self.route.route_type = None
         self.trip.validate(self.problems)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex(r'High speed travel detected', e.format_problem())
         self.assertMatchesRegex(r'Stop 0 to Demo Stop 1', e.format_problem())
         self.assertMatchesRegex(r'1691 meters in 60 seconds', e.format_problem())
         self.assertMatchesRegex(r'101 km/h', e.FormatProblem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNoTimeDelta(self):
         # See comments where TooFastTravel is called in transitfeed.py to
@@ -199,37 +198,37 @@ class TooFastTravelTestCase(util.ValidationTestCase):
                                   (1691, 0)])
 
         self.trip.validate(self.problems)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex('High speed travel detected', e.FormatProblem())
         self.assertMatchesRegex('Stop 2 to Demo Stop 3', e.FormatProblem())
         self.assertMatchesRegex('1691 meters in 0 seconds', e.FormatProblem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         self.route.route_type = 4  # Ferry with max_speed 80
         self.trip.validate(self.problems)
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex('High speed travel detected', e.FormatProblem())
         self.assertMatchesRegex('Stop 0 to Demo Stop 1', e.FormatProblem())
         self.assertMatchesRegex('1616 meters in 0 seconds', e.FormatProblem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex('High speed travel detected', e.FormatProblem())
         self.assertMatchesRegex('Stop 2 to Demo Stop 3', e.FormatProblem())
         self.assertMatchesRegex('1691 meters in 0 seconds', e.FormatProblem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
         # Run test without a route_type
         self.route.route_type = None
         self.trip.validate(self.problems)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex('High speed travel detected', e.FormatProblem())
         self.assertMatchesRegex('Stop 2 to Demo Stop 3', e.FormatProblem())
         self.assertMatchesRegex('1691 meters in 0 seconds', e.FormatProblem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNoTimeDeltaNotRounded(self):
         # See comments where TooFastTravel is called in transitfeed.py to
@@ -240,12 +239,12 @@ class TooFastTravelTestCase(util.ValidationTestCase):
                                   (10, 0)])
 
         self.trip.validate(self.problems)
-        e = self.accumulator.PopException('TooFastTravel')
+        e = self.accumulator.pop_exception('TooFastTravel')
         self.assertMatchesRegex('High speed travel detected', e.FormatProblem())
         self.assertMatchesRegex('Stop 1 to Demo Stop 2', e.FormatProblem())
         self.assertMatchesRegex('10 meters in 0 seconds', e.FormatProblem())
         self.assertEqual(e.type, transitfeed.TYPE_WARNING)
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
 
 class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
@@ -254,8 +253,7 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
     def setUp(self):
 
         # We ignore the lack of service dates ("OtherProblem")
-        self.accumulator = util.RecordingProblemAccumulator(
-            self, ("OtherProblem"))
+        self.accumulator = util.RecordingProblemAccumulator(self, "OtherProblem")
         self.problems = transitfeed.ProblemReporter(self.accumulator)
 
         self.schedule = transitfeed.Schedule(problem_reporter=self.problems)
@@ -285,7 +283,7 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
         self.schedule.validate(self.problems)
 
-        e = self.accumulator.PopException('TooManyConsecutiveStopTimesWithSameTime')
+        e = self.accumulator.pop_exception('TooManyConsecutiveStopTimesWithSameTime')
         self.assertEqual(e.trip_id, 'CITY1')
         self.assertEqual(e.number_of_stop_times, 6)
         self.assertEqual(e.stop_time, '06:05:00')
@@ -294,7 +292,7 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
                          "Trip CITY1 has 6 consecutive stop times all with the same " \
                          "arrival/departure time: 06:05:00.")
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNotTooManyConsecutiveStopTimesWithSameTime(self):
         trip = self.trip
@@ -305,7 +303,7 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
         self.schedule.validate(self.problems)
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testTooManyConsecutiveStopTimesWithSameTimeAtStart(self):
         trip = self.trip
@@ -315,12 +313,12 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
         self.schedule.validate(self.problems)
 
-        e = self.accumulator.PopException('TooManyConsecutiveStopTimesWithSameTime')
+        e = self.accumulator.pop_exception('TooManyConsecutiveStopTimesWithSameTime')
         self.assertEqual(e.trip_id, 'CITY1')
         self.assertEqual(e.number_of_stop_times, 6)
         self.assertEqual(e.stop_time, '06:05:00')
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testTooManyConsecutiveStopTimesWithSameTimeAtEnd(self):
         trip = self.trip
@@ -330,12 +328,12 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
         self.schedule.validate(self.problems)
 
-        e = self.accumulator.PopException('TooManyConsecutiveStopTimesWithSameTime')
+        e = self.accumulator.pop_exception('TooManyConsecutiveStopTimesWithSameTime')
         self.assertEqual(e.trip_id, 'CITY1')
         self.assertEqual(e.number_of_stop_times, 6)
         self.assertEqual(e.stop_time, '06:05:00')
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testTooManyConsecutiveStopTimesWithUnspecifiedTimes(self):
         trip = self.trip
@@ -346,12 +344,12 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
         self.schedule.validate(self.problems)
 
-        e = self.accumulator.PopException('TooManyConsecutiveStopTimesWithSameTime')
+        e = self.accumulator.pop_exception('TooManyConsecutiveStopTimesWithSameTime')
         self.assertEqual(e.trip_id, 'CITY1')
         self.assertEqual(e.number_of_stop_times, 6)
         self.assertEqual(e.stop_time, '06:05:00')
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()
 
     def testNotTooManyConsecutiveStopTimesWithUnspecifiedTimes(self):
         trip = self.trip
@@ -362,4 +360,4 @@ class TooManyConsecutiveStopTimesWithSameTime(util.TestCase):
 
         self.schedule.validate(self.problems)
 
-        self.accumulator.AssertNoMoreExceptions()
+        self.accumulator.assert_no_more_exceptions()

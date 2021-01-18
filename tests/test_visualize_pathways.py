@@ -11,11 +11,10 @@ def get_file_contents(filename):
 
 class TestVisualizePathways(unittest.TestCase):
     def test_gtfs_to_graphviz(self):
-        testdata_dir = os.path.join(os.path.dirname(__file__),
-                                    'data/au-sydney-entrances')
+        test_data_dir = os.path.join(os.path.dirname(__file__), 'data/au-sydney-entrances')
         golden_data = get_file_contents(
-            os.path.join(testdata_dir, 'au-sydney-entrances.dot'))
-        reader = visualize_pathways.GtfsReader(testdata_dir)
+            os.path.join(test_data_dir, 'au-sydney-entrances.dot'))
+        reader = visualize_pathways.GtfsReader(test_data_dir)
         self.assertEqual(
             str(visualize_pathways.gtfs_to_graphviz(reader)),
             golden_data)
